@@ -37,7 +37,7 @@ sleepstudy$Days <- as.integer(sleepstudy$Days)
 ggplot(sleepstudy, aes(x = Days, y = Reaction)) + 
   geom_point() + stat_smooth(method = "lm") + facet_wrap(~Subject)
 # slope and intercept are different
-fm1 <- lmer(Reaction ~ Days + (Days|Subject), sleepstudy)
+fm1 <- lmer(Reaction ~ 1+Days + (1+Days|Subject), sleepstudy)
 summary(fm1)
 
 ##### NULLABOR PACKAGE #####
