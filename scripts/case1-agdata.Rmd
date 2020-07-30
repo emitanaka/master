@@ -1,0 +1,33 @@
+---
+title: "Case: Agricultural Data"
+date: "`Sys.Date()`"
+output:
+  html_document
+---
+
+```{r setup, warning = FALSE, message = FALSE}
+library(agridat) # various ag data sets
+library(sommer) # for fitting mixed models
+library(tidyverse)
+data(bridges.cucumber)
+df <- bridges.cucumber %>% 
+  mutate(rowf = factor(row),
+         colf = factor(col))
+A <- diag(nlevels(df$gen))
+rownames(A) <- colnames(A) <- levels(df$gen)
+```
+
+```{r data-summary}
+skimr::skim(df)
+```
+
+
+```{r}
+fit <- mmer(yield ~ 1 + loc,
+            random =~ vs(ds(loc), gen, Gu = A),
+            rcov =~ units,
+            data = df)
+
+ranef(fit)
+```
+
