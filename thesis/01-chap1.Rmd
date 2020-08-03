@@ -16,6 +16,101 @@ This is where you introduce the main ideas of your thesis, and an overview of th
 
 Later chapters should be divided into coherent pieces describing your analysis. The final chapter should provide some concluding remarks, discussion, ideas for future research, and so on. Appendixes can contain additional material that don't fit into any chapters, but that you want to put on record. For example, additional tables, output, etc.
 
+## Linear Mixed Model
+
+The linear mixed model may be expressed as
+$$\underset{(n_i \times 1)}{\mathbf{y}_i} = \underset{(n_i \times p)}{\mathbf{X}_i} \underset{(p\times 1)}{\boldsymbol{\beta}} + \underset{(n_i \times q)}{\mathbf{Z}_i}\underset{(q \times 1)}{\mathbf{b}_i} + \underset{(n_i \times 1)}{\mathbf{e}_i}$$
+where there are $i = 1, 2, \ldots, g$ nonoverlapping groups.
+
+$$\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \mathbf{Zb}+\mathbf{e}$$
+
+The Gaussian LMM is coupled with
+\begin{align*}
+   \begin{bmatrix}
+      \mathbf{b} \\ \mathbf{e}
+   \end{bmatrix}
+   \sim \mathcal{N}\left(\begin{bmatrix}\mathbf{0} \\ \mathbf{0} \end{bmatrix}, \begin{bmatrix} \mathbf{\Gamma} & \mathbf{0} \\ \mathbf{0} & \mathbf{R} \end{bmatrix}\right)
+\end{align*}
+
+Based on the model, the marginal distribution of $mathbf{y}$ is
+\begin{align*}
+   \mathbf{y} \sim \mathcal{N}(\mathbf{X} \boldsymbol{\beta}, \mathbf{\Omega})
+\end{align*}
+where $\mathbf{\Omega} = \mathbf{Z\Gamma Z}^\top + \mathbf{R}$, and the conditional distribution of $mathbf{y}$ given $\mathbf{b}$ is given by
+\begin{align*}
+   \mathbf{y}|\mathbf{b} \sim \mathcal{N}(\mathbf{X} \boldsymbol{\beta} + \mathbf{Zb},\mathbf{R})
+\end{align*}
+
+The joint density function of $\mathbf{y}$ and $\mathbf{b}$ is defined as
+\begin{align*}
+   f(\mathbf{y}, \mathbf{b}) &= g(\mathbf{y}|\mathbf{b})h(\mathbf{b}) \\
+   &= const \times \exp\left(-\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})-\frac{1}{2}\mathbf{b}^\top \mathbf{\Gamma}^{-1} \mathbf{b}\right)
+\end{align*}
+
+\begin{align*}
+    \frac{\partial f(\mathbf{y}, \boldsymbol{b})}{\partial \mathbf{\beta}} &\propto \frac{(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb}) + \mathbf{b}^\top \mathbf{\Gamma}^{-1} \mathbf{b}}{\partial \boldsymbol{\beta}} \\
+    &\propto \frac{-\mathbf{y}^\top \mathbf{R}^{-1}\mathbf{X}\boldsymbol{\beta} - \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Zb} + \mathbf{b}^\top \mathbf{Z}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta}}{\partial \boldsymbol{\beta}} \\
+    &= -2 \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} + 2\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta} + 2\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Zb} = 0 \\
+    &\Rightarrow \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta} + \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Zb} = \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y}
+\end{align*}
+
+\begin{align*}
+    \frac{\partial f(\mathbf{y}, \boldsymbol{b})}{\partial \mathbf{b}} &\propto \frac{(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb}) + \mathbf{b}^\top \mathbf{\Gamma}^{-1} \mathbf{b}}{\partial \mathbf{b}} \\
+    &\propto \frac{-\mathbf{y}^\top \mathbf{R}^{-1}\mathbf{Zb} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1}\mathbf{Zb} -\mathbf{b^\top Z^\top R}^{-1}\mathbf{y} + \mathbf{b^\top Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta}+ \mathbf{b^\top Z^\top R}^{-1}\mathbf{Zb} + \mathbf{b^\top}\mathbf{\Gamma}^{-1}\mathbf{b}}{\partial \mathbf{b}} \\
+    &= -2\mathbf{Z^\top R}^{-1}\mathbf{y} + 2\mathbf{Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta} + 2\mathbf{Z^\top R}^{-1}\mathbf{Zb} + 2\mathbf{\Gamma}^{-1}\mathbf{b} = 0\\
+    &\Rightarrow \mathbf{Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta} + \mathbf{Z^\top R}^{-1}\mathbf{Zb} + \mathbf{\Gamma}^{-1}\mathbf{b} = \mathbf{Z^\top R}^{-1}\mathbf{y}
+\end{align*}
+
+\begin{align*}
+    \begin{pmatrix} \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X} & \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z} \\ \mathbf{Z^\top R}^{-1}\mathbf{X} & \mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} 
+    \end{pmatrix}
+    \begin{pmatrix} \boldsymbol{\beta} \\ \mathbf{b} \end{pmatrix}
+    =
+    \begin{pmatrix}
+    \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} \\ \mathbf{Z^\top R}^{-1}\mathbf{y}
+    \end{pmatrix}
+\end{align*}
+
+Write the coefficient matrix as:
+\begin{align*}
+    \mathbf{C} = \begin{bmatrix} \mathbf{C}_{XX} & \mathbf{C}_{XZ} \\ \mathbf{C}_{ZX} & \mathbf{C}_{ZZ}\end{bmatrix}
+\end{align*}
+Then, the model can be shown as,
+\begin{align*}
+    \mathbf{C}_{XX}\boldsymbol{\beta} + \mathbf{C}_{XZ} \mathbf{b} &= \mathbf{c}_{Xy} \\
+    \mathbf{C}_{ZX}\boldsymbol{\beta} +\mathbf{C}_{ZZ} \mathbf{b} &= \mathbf{c}_{Zy}
+\end{align*}
+From the second equation, we can get $$\mathbf{b} = \mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy} - \mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX}\boldsymbol{\beta}$$
+
+By substituting into the first equation,
+$$(\mathbf{C}_{XX} - \mathbf{C}_{XZ}\mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX})\boldsymbol{\beta} = \mathbf{c}_{Xy} - \mathbf{C}_{XZ}\mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy}$$
+where
+\begin{align*}
+    & \mathbf{C}_{XX} - \mathbf{C}_{XZ}\mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX}\\
+    &=  \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X} - \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}\mathbf{X} \\
+    &=\mathbf{X}^\top (\mathbf{R}^{-1} - \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1})\mathbf{X} \\
+    &= \mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X}
+\end{align*}
+Then,
+\begin{align*}
+    \boldsymbol{\beta} &= (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1}(\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} -  \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}\mathbf{y}) \\
+    &= (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1}\mathbf{X}^\top(\mathbf{R}^{-1} - \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1})\mathbf{y} \\
+    &= (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y}
+\end{align*}
+
+Then, using the 
+\begin{align*}
+    \mathbf{b} &= \mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy} - \mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX} (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y} \\
+    &= \mathbf{C}_{ZZ}^{-1}(\mathbf{c}_{Zy} - \mathbf{C}_{ZX} (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y}) \\
+    &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}(\mathbf{Z^\top R}^{-1}\mathbf{y} - \mathbf{Z^\top R}^{-1}\mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y}) \\
+    &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} )\mathbf{y} \\
+    &= \mathbf{\Gamma}\mathbf{Z^\top}\mathbf{\Omega}^{-1}(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} )\mathbf{y} \\
+    &= \mathbf{\Gamma}\mathbf{Z^\top}\mathbf{\Omega}^{-1} \mathbf{Q}\mathbf{y}
+\end{align*}
+where $$\mathbf{Q} = \mathbf{\Omega}^{-1} - \mathbf{\Omega}^{-1}\mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1}$$
+
+
+
 ## Rmarkdown
 
 In this template, the rest of the chapter shows how to use Rmarkdown. The big advantage of using Rmarkdown is that it allows you to include your R code directly into your thesis, to ensure there are no errors in copying and pasting, and that everything is reproducible. It also helps you stay better organized.
