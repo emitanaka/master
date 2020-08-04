@@ -7,6 +7,7 @@
 + No longer than 15 minutes
 
 Research Paper Submission (Week 13): Friday, 20 November 2020, 7:00 PM
++ The research paper should consist of approximately 40 typed A4 pages including possible tables, graphs and references. 
 
 # R
 1. Linear model with residual plots
