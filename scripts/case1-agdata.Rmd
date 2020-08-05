@@ -9,6 +9,7 @@ output:
 library(agridat) # various ag data sets
 library(sommer) # for fitting mixed models
 library(tidyverse)
+library(ggplot2)
 data(bridges.cucumber)
 df <- bridges.cucumber %>% 
   mutate(rowf = factor(row),
@@ -24,10 +25,27 @@ skimr::skim(df)
 
 ```{r}
 fit <- mmer(yield ~ 1 + loc,
+            # random: random effects
+            # vs(ds(x), y): diagonal covariance structure for the "y" covariate for all 
+            # levels of the factor covariate "x"
             random =~ vs(ds(loc), gen, Gu = A),
+            # rcov: error term
             rcov =~ units,
             data = df)
 
-ranef(fit)
+randef(fit)
+
+# data frame of fixed effects (BLUEs)
+fit$Beta
+
+# list for each random effect (BLUPs)
+fit$U
+
+# residual values (Marginal residuals)
+fit$residuals
+```
+
+```{r}
+
 ```
 
