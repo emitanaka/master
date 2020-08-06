@@ -5,6 +5,7 @@
 <blockquote>
 ET:  Week 6 Fri is 11th Sep, Week 12 Fri is 6th Nov, Week 13 Fri is 13th Nov?
 </blockquote>
+I will double check with Denni and make them correct!
 
 + 10 Min Presentation 
 
