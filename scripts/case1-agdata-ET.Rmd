@@ -57,6 +57,12 @@ X <- model.matrix(~loc, data = df)
 beta_hat <- fit$Beta$Estimate
 Z <- model.matrix(~gen:loc - 1, data = df) 
 b_hat <- unlist(fit$U)
+
+# to simulate y 
+Sigma <- solve(fit$Vi)
+MASS::mvrnorm(n = 1, X %*% beta_hat, Sigma)
+
+
 Sigmai <- fit$Vi
 Sigmai_sqrt <- expm::sqrtm(Sigmai)
 
@@ -79,5 +85,10 @@ ggplot(df2, aes(fitted, sresm)) +
 ```{r singer-plot2}
 ggplot(df, aes(x = 1:nrow(df), sresm)) + geom_point() + 
   geom_hline(color = "red", yintercept = 0)
+
+
+library(lme4)
+lme4:::simulate.merMod
+fm1 <- lmer(Reaction ~ Days + (Days | Subject), sleepstudy)
 ```
 
