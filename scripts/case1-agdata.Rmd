@@ -10,6 +10,8 @@ library(agridat) # various ag data sets
 library(sommer) # for fitting mixed models
 library(tidyverse)
 library(ggplot2)
+library(lme4)
+library(expm)
 data(bridges.cucumber)
 df <- bridges.cucumber %>% 
   mutate(rowf = factor(row),
@@ -43,9 +45,57 @@ fit$U
 
 # residual values (Marginal residuals)
 fit$residuals
+
+plot(fit)
 ```
 
-```{r}
+```{r values}
+y <- df$yield
+X <- model.matrix(~loc, data = df)
+beta_hat <- fit$Beta$Estimate
+# get reid of the intercept
+Z <- model.matrix(~gen:loc -1, data = df)
+b_hat <- unlist(fit$U)
+
+Sigma <- solve(fit$Vi)
+# simulate y
+MASS::mvrnorm(n = 1, mu = X %*% beta_hat, Sigma = Sigma)
+
+Sigmai <- fit$Vi
+Sigmai_sqrt <- expm::sqrtm(fit$Vi)
+
+# residuals
+resm <- y - X %*% beta_hat; resm <- resm[,1]
+all(resm == fit$residuals) # TRUE
+resc <- y - X %*% beta_hat - Z %*% b_hat; resc <- resc[,1]
+resre <- Z %*% b_hat; resre <- resre[,1]
+
+vareps <- Sigmai_sqrt %*% resm; vareps <- vareps[,1]
+tvar <- Sigma - X %*% solve(t(X) %*% Sigmai %*% X) %*% t(X)
+smres <- resm/sqrt(diag(tvar))
+
+df2 <- tibble(y, resm, resc, resre, smres, fitted = fit$fitted[,1])
+```
+
+```{r plot 1}
+ggplot(data = df2, mapping = aes(x = fitted, y = smres)) +
+  geom_point() + geom_hline(color = "red", yintercept = 0)
+```
+
+```{r plot2}
+ggplot(data = df2, mapping = aes(x = 1:nrow(df), y = smres)) +
+  geom_point() + geom_hline(color = "red", yintercept = 0)
+```
+
+```{r adequacy measure of the within-unit covariance structure}
+I32 <- diag(32)
+Vi <- Matrix::norm(x = I32 - vareps %*% t(vareps), type = "2")
+stdVi <- sqrt(Vi)/32
+```
+
+```{r plot 3}
 
 ```
+
+
 
