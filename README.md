@@ -1,11 +1,10 @@
 # Due date
 
-1st Presentation Submission (Week 6): Friday, 2 October 2020, 6:00 PM
+1st Presentation Submission (Week 7): Friday, 18 September 2020, 6:00 PM
 
 <blockquote>
 ET:  Week 6 Fri is 11th Sep, Week 12 Fri is 6th Nov, Week 13 Fri is 13th Nov?
 </blockquote>
-I will double check with Denni and make them correct!
 
 + 10 Min Presentation 
 
