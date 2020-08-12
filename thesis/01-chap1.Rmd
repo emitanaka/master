@@ -32,11 +32,11 @@ The Gaussian LMM is coupled with
    \sim \mathcal{N}\left(\begin{bmatrix}\mathbf{0} \\ \mathbf{0} \end{bmatrix}, \begin{bmatrix} \mathbf{\Gamma} & \mathbf{0} \\ \mathbf{0} & \mathbf{R} \end{bmatrix}\right)
 \end{align*}
 
-Based on the model, the marginal distribution of $mathbf{y}$ is
+Based on the model, the marginal distribution of $\mathbf{y}$ is
 \begin{align*}
    \mathbf{y} \sim \mathcal{N}(\mathbf{X} \boldsymbol{\beta}, \mathbf{\Omega})
 \end{align*}
-where $\mathbf{\Omega} = \mathbf{Z\Gamma Z}^\top + \mathbf{R}$, and the conditional distribution of $mathbf{y}$ given $\mathbf{b}$ is given by
+where $\mathbf{\Omega} = \mathbf{Z\Gamma Z}^\top + \mathbf{R}$, and the conditional distribution of $\mathbf{y}$ given $\mathbf{b}$ is given by
 \begin{align*}
    \mathbf{y}|\mathbf{b} \sim \mathcal{N}(\mathbf{X} \boldsymbol{\beta} + \mathbf{Zb},\mathbf{R})
 \end{align*}
@@ -111,21 +111,6 @@ where $$\mathbf{Q} = \mathbf{\Omega}^{-1} - \mathbf{\Omega}^{-1}\mathbf{X}(\math
 
 
 
-## Rmarkdown
-
-In this template, the rest of the chapter shows how to use Rmarkdown. The big advantage of using Rmarkdown is that it allows you to include your R code directly into your thesis, to ensure there are no errors in copying and pasting, and that everything is reproducible. It also helps you stay better organized.
-
-For details on using _R Markdown_ see <http://rmarkdown.rstudio.com>.
-
-## Data
-
-Included in this template is a file called `sales.csv`.  This contains quarterly data on Sales and Advertising budget for a small company over the period 1981--2005. It also contains the GDP (gross domestic product) over the same period. All series have been adjusted for inflation.  We can load in this data set using the following command:
-
-```{r loaddata, echo=TRUE}
-sales <- ts(read.csv("data/sales.csv")[,-1], start=1981, frequency=4)
-```
-
-Any data you use in your thesis can go into the data directory. The data should be in exactly the format you obtained it. Do no editing or manipulation of the data outside of R. Any data munging should be scripted in R and form part of your thesis files (possibly hidden in the output).
 
 ## Figures
 
