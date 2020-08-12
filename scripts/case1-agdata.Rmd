@@ -93,9 +93,62 @@ Vi <- Matrix::norm(x = I32 - vareps %*% t(vareps), type = "2")
 stdVi <- sqrt(Vi)/32
 ```
 
+???? quit confused with how to figure out the within-unit covariance structure Vi, from above it is just a scalar.
 ```{r plot 3}
 
 ```
 
+```{r}
+Q <- Sigmai - Sigmai %*% X %*% solve(t(X) %*% Sigmai %*% X) %*% t(X) %*% Sigmai
+G <- matrix(unlist(fit$VarU), 8,8) # this may not be correct
 
+R <- Sigma - Z %*% G %*% t(Z)
+
+vare_hat <- R %*% Q %*% R
+
+resc <- y - X %*% beta_hat - Z %*% b_hat; resc <- resc[,1]
+scres <- resc/sqrt(diag(vare_hat))
+
+df3 <- tibble(y, resc, scres, fitted = fit$fitted[,1])
+```
+
+Presence of outlying observations ($\mathbf{y}_{ij}$)
+```{r plot 4}
+ggplot(df3, aes(1:nrow(df), scres)) + geom_point() +
+  geom_hline(yintercept = 0, color = "red")
+```
+
+There may be an outlying observation at the left right coner..
+
+Homoskedasticity of conditional errors ($\mathbf{e}_{ij}$)
+```{r plot 5}
+ggplot(df3, aes(fitted, scres)) + geom_point() +
+  geom_hline(color = "red", yintercept = 0)
+```
+How can we interpret??  NOT HOMOSKEDASTICITY?
+
+Normality of conditional errors
+```{r plot 6}
+
+```
+how to get the $\mathbf{L}$ and $\Lambda$??
+Is the $\mathbf{L}$ comes from unit-specific linear combinations of the form
+$$\mathbf{L}_i = \mathbf{K}_1^\top \boldsymbol{\beta} + \mathbf{K}_2^\top \mathbf{b}_i$$
+
+How to know $\mathbf{K}_1$ and $\mathbf{K}_$..
+
+```{r}
+varb <- G %*% t(Z) %*% Q %*% Z %*% G
+M <- mahalanobis(b_hat, FALSE, varb, inverted = FALSE)
+```
+
+Presence of outlying subjects
+```{r plot 7}
+
+```
+
+Normality of the random effects
+```{r plot 8}
+
+```
 
