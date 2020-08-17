@@ -100,7 +100,11 @@ stdVi <- sqrt(Vi)/32
 
 ```{r}
 Q <- Sigmai - Sigmai %*% X %*% solve(t(X) %*% Sigmai %*% X) %*% t(X) %*% Sigmai
-G <- matrix(unlist(fit$VarU), 8,8) # this may not be correct
+#G <- matrix(unlist(fit$VarU), 8,8) # this may not be correct
+
+mat1 <- matrix(c(as.vector(fit$VarU[[1]]$yield), rep(0, 16)), 4, 8)
+mat2 <- matrix(c(rep(0, 16), as.vector(fit$VarU[[2]]$yield)), 4, 8)
+G <- rbind(mat1, mat2)
 
 R <- Sigma - Z %*% G %*% t(Z)
 
@@ -125,7 +129,7 @@ Homoskedasticity of conditional errors ($\mathbf{e}_{ij}$)
 ggplot(df3, aes(fitted, scres)) + geom_point() +
   geom_hline(color = "red", yintercept = 0)
 ```
-How can we interpret??  NOT HOMOSKEDASTICITY?
+
 
 Normality of conditional errors
 ```{r plot 6}
@@ -138,8 +142,13 @@ $$\mathbf{L}_i = \mathbf{K}_1^\top \boldsymbol{\beta} + \mathbf{K}_2^\top \mathb
 How to know $\mathbf{K}_1$ and $\mathbf{K}_$..
 
 ```{r}
-varb <- G %*% t(Z) %*% Q %*% Z %*% G
-M <- mahalanobis(b_hat, FALSE, varb, inverted = FALSE)
+pev <- fit$PevU
+mat1 <- matrix(c(as.vector(fit$VarU[[1]]$yield), rep(0, 16)), 4, 8)
+mat2 <- matrix(c(rep(0, 16), as.vector(fit$VarU[[2]]$yield)), 4, 8)
+matrix(c(as.vector(fit$PevU[[1]]$yield)),4,4)
+matrix(c(as.vector(fit$PevU[[2]]$yield)),4,4)
+
+M <- matrix(c((fit$PevU[[1]]$yield)))
 ```
 
 Presence of outlying subjects
