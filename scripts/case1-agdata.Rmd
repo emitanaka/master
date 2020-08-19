@@ -12,6 +12,8 @@ library(tidyverse)
 library(ggplot2)
 library(lme4)
 library(expm)
+library(Matrix)
+library(MASS)
 data(bridges.cucumber)
 df <- bridges.cucumber %>% 
   mutate(rowf = factor(row),
@@ -25,7 +27,7 @@ skimr::skim(df)
 ```
 
 
-```{r}
+```{r fit}
 fit <- mmer(yield ~ 1 + loc,
             # random: random effects
             # vs(ds(x), y): diagonal covariance structure for the "y" covariate for all 
@@ -34,6 +36,8 @@ fit <- mmer(yield ~ 1 + loc,
             # rcov: error term
             rcov =~ units,
             data = df)
+
+summary(fit)
 
 randef(fit)
 
@@ -48,6 +52,11 @@ fit$residuals
 
 plot(fit)
 ```
+```{r}
+y <- df$yield
+N <- length(y) # number of observation
+n <- nlevels(df$gen) # number of units
+```
 
 ```{r values}
 y <- df$yield
@@ -57,6 +66,10 @@ beta_hat <- fit$Beta$Estimate
 Z <- model.matrix(~gen:loc -1, data = df)
 b_hat <- unlist(fit$U)
 
+N <- length(y) # number of observation
+n <- length(fit$U$`Clemson:gen`$yield) # number of units
+count(df, gen)# what is the within unit
+
 Sigma <- solve(fit$Vi)
 # simulate y
 MASS::mvrnorm(n = 1, mu = X %*% beta_hat, Sigma = Sigma)
@@ -65,9 +78,12 @@ Sigmai <- fit$Vi
 Sigmai_sqrt <- expm::sqrtm(fit$Vi)
 
 # residuals
+# marginal residuals
 resm <- y - X %*% beta_hat; resm <- resm[,1]
 all(resm == fit$residuals) # TRUE
+# conditional residuals
 resc <- y - X %*% beta_hat - Z %*% b_hat; resc <- resc[,1]
+# random effects residuals
 resre <- Z %*% b_hat; resre <- resre[,1]
 
 vareps <- Sigmai_sqrt %*% resm; vareps <- vareps[,1]
