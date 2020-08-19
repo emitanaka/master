@@ -34,11 +34,43 @@ ranef(lmm1) # random effect
 data("sleepstudy")
 str(sleepstudy)
 sleepstudy$Days <- as.integer(sleepstudy$Days)
+qplot(x = Days, y = Reaction, data = sleepstudy, geom = "smooth", group = Subject,
+      se = F, method = 'lm', color = I("black"))
+
 ggplot(sleepstudy, aes(x = Days, y = Reaction)) + 
   geom_point() + stat_smooth(method = "lm") + facet_wrap(~Subject)
 # slope and intercept are different
-fm1 <- lmer(Reaction ~ 1+Days + (1+Days|Subject), sleepstudy)
+fm1 <- lme(Reaction ~ Days, random = ~ 1+Days|Subject, data = sleepstudy)
 summary(fm1)
+n <- length(getGroups(fm1$groups))
+Zt <- model.matrix(fm1$modelStruct$reStruct, sleepstudy) # BLUPs?
+grp.dim <- fm1$dims$ncol
+Z <- matrix(0, n, 0)
+X <- list()
+X[[1]] <- matrix(1,n,1)
+X[[2]] <- as.matrix(Zt[, 1:(1+grp.dim[1]-1)])
+Z <- cbind(mgcv::tensor.prod.model.matrix(X),Z)
+
+id <- sort(as.numeric(getGroups(fm1, level = 1)), index.return = TRUE)$x
+mataux <- model.matrix(fm1$modelStruct$reStruct,sleepstudy)
+mataux <- as.data.frame(cbind(mataux,id))
+lZi <- list()
+lgi <- list()
+
+for (i in (as.numeric(unique(id)))) {
+  lZi[[i]] <- as.matrix((subset(split(mataux,id == i,
+                                      drop = T)$`TRUE`,select = -id)))
+  lgi[[i]] <- getVarCov(fm1,type = "random.effects")
+}
+Z <- as.matrix(bdiag(lZi))
+# for (i in 2:7) {
+#   Z <- as.matrix(bdiag(Z,lZi[[i]]))
+# }
+g <- getVarCov(fm1,type = "random.effects")
+q <- dim(g)[1]                                                           # Total number of random effects
+Gam <- as.matrix(kronecker(diag(length(as.numeric(unique(id)))),g))
+
+
 
 ##### NULLABOR PACKAGE #####
 d <- lineup(null_permute("mpg"), mtcars)
