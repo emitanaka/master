@@ -25,9 +25,7 @@ rownames(A) <- colnames(A) <- levels(df$gen)
 ```{r data-summary}
 skimr::skim(df)
 ```
-
-
-```{r fit}
+```{r}
 fit <- mmer(yield ~ 1 + loc,
             # random: random effects
             # vs(ds(x), y): diagonal covariance structure for the "y" covariate for all 
@@ -38,11 +36,16 @@ fit <- mmer(yield ~ 1 + loc,
             data = df)
 
 summary(fit)
+```
+
+
+```{r fit}
+
 
 randef(fit)
 
 # data frame of fixed effects (BLUEs)
-fit$Beta
+as.vector(fit$Beta)
 
 # list for each random effect (BLUPs)
 fit$U
@@ -54,35 +57,132 @@ plot(fit)
 ```
 ```{r}
 y <- df$yield
-N <- length(y) # number of observation
-n <- nlevels(df$gen) # number of units
-```
-
-```{r values}
-y <- df$yield
 X <- model.matrix(~loc, data = df)
 beta_hat <- fit$Beta$Estimate
-# get reid of the intercept
 Z <- model.matrix(~gen:loc -1, data = df)
 b_hat <- unlist(fit$U)
 
 N <- length(y) # number of observation
-n <- length(fit$U$`Clemson:gen`$yield) # number of units
+n <- nlevels(df$gen) # number of units
+p <- ncol(X)
+q <- ncol(Z)
+```
+
+```{r V}
+# Covariance matrix of Y (denote as V,\Omega)
+V <- solve(fit$Vi)
+iV <- fit$Vi
+```
+
+```{r Q}
+varbeta <- solve((t(X) %*% iV %*% X))
+Q <- iV - iV %*% X %*% varbeta %*% t(X) %*% iV
+```
+
+```{r residuals(marginal and conditional)}
+# marginal residuals
+resm <- y - X %*% beta_hat
+#all(resm == fit$residuals)
+
+# conditional residuals
+resc <- y - X %*% beta_hat - Z %*% b_hat
+```
+
+```{r variance of marginal residuals}
+var.resm <- V - X %*% solve((t(X) %*% iV %*% X)) %*% t(X)
+```
+
+```{r standardised marginal residuals}
+std.resm <- resm/sqrt(diag(var.resm))
+```
+
+```{r variance of conditional residuals}
+mat1 <- matrix(c(as.vector(fit$VarU[[1]]$yield), rep(0, 16)), 4, 8)
+mat2 <- matrix(c(rep(0, 16), as.vector(fit$VarU[[2]]$yield)), 4, 8)
+Gam <- rbind(mat1, mat2)
+
+R <- V - Z %*% Gam %*% t(Z)
+
+var.resc <- R %*% Q %*% R
+```
+
+```{r standardised conditional residuals}
+std.resc <- resc/sqrt(diag(var.resc))
+```
+
+```{r Fraction of confouding}
+ident <- diag(N)
+auxnum <- R %*% Q %*% Z %*% Gam %*% t(Z) %*% R
+auxden <- R %*% Q %*% R
+CF <- diag(auxnum)/diag(auxden)
+```
+
+```{r squart root of a matrix}
+sqrt.matrix <- function(mat) {
+                mat <- as.matrix(mat)
+                singular_dec <- svd(mat,LINPACK = F)
+                U <- singular_dec$u
+                V <- singular_dec$v
+                D <- diag(singular_dec$d)
+                sqrtmatrix <- U %*% sqrt(D) %*% t(V)
+        }
+```
+
+
+```{r least confounded residuals ???}
+R.half <- sqrt.matrix(R)
+
+# R_half <- expm::sqrtm(R)
+
+auxqn <- eigen((R.half %*% Q %*% R.half), symmetric = T, only.values = FALSE)
+
+lt <- sqrt(solve(diag((auxqn$values[1:(N-p)])))) %*% t(auxqn$vectors[1:N,1:(N-p)]) %*% solve(sqrt.matrix(R[1:N,1:N]))
+
+var.resmcp <- lt %*% var.resc[1:N,1:N] %*% t(lt)
+
+resmcp <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
+```
+
+Variance of predicted errors for the random effects:
+\begin{align*}
+Var(\hat{\mathbf{b}}_i - \mathbf{b}_i) &= Var(\hat{\mathbf{b}}_i) + Var(\mathbf{b}_i) - Cov(\mathbf{b}_i, \hat{\mathbf{b}}_i) - Cov(\hat{\mathbf{b}}_i, \mathbf{b}_i) \\
+&=Var(\mathbf{\Gamma Z^\top Q y}) + Var(\mathbf{b}_i) - Cov(\mathbf{\Gamma Z^\top Q y}, \mathbf{b}_i) - Cov(\mathbf{b}_i, \mathbf{\Gamma Z^\top Q y})
+&=\mathbf{\Gamma Z^\top Q Z \Gamma} + \mathbf{\Gamma} - 2 \mathbf{\Gamma Z^\top Q Z \Gamma} \\
+&= \mathbf{\Gamma} - \mathbf{\Gamma Z^\top Q Z \Gamma} + \mathbf{\Gamma}
+\end{align*}
+
+```{r}
+pred.er.var <- Gam - Gam %*% t(Z) %*% Q %*% Z %*% Gam
+Mi <- t(b_hat) %*% MASS::ginv(pred.er.var) %*% b_hat
+Gam
+pred.er.var
+```
+
+```{r}
+pred.er.var[1:8,1:8]
+```
+
+```{r}
+b_hat[1:2]
+```
+
+
+
+
+
+
+
+```{r values}
+
 count(df, gen)# what is the within unit
 
-Sigma <- solve(fit$Vi)
 # simulate y
 MASS::mvrnorm(n = 1, mu = X %*% beta_hat, Sigma = Sigma)
 
-Sigmai <- fit$Vi
 Sigmai_sqrt <- expm::sqrtm(fit$Vi)
 
 # residuals
-# marginal residuals
-resm <- y - X %*% beta_hat; resm <- resm[,1]
-all(resm == fit$residuals) # TRUE
-# conditional residuals
-resc <- y - X %*% beta_hat - Z %*% b_hat; resc <- resc[,1]
+
 # random effects residuals
 resre <- Z %*% b_hat; resre <- resre[,1]
 
