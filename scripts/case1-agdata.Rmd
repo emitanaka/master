@@ -25,7 +25,12 @@ rownames(A) <- colnames(A) <- levels(df$gen)
 ```{r data-summary}
 skimr::skim(df)
 ```
-```{r}
+
+```{r groups descp}
+group <- df %>% group_by(loc, gen) %>% tally()
+```
+
+```{r model}
 fit <- mmer(yield ~ 1 + loc,
             # random: random effects
             # vs(ds(x), y): diagonal covariance structure for the "y" covariate for all 
@@ -40,8 +45,6 @@ summary(fit)
 
 
 ```{r fit}
-
-
 randef(fit)
 
 # data frame of fixed effects (BLUEs)
@@ -55,7 +58,7 @@ fit$residuals
 
 plot(fit)
 ```
-```{r}
+```{r values}
 y <- df$yield
 X <- model.matrix(~loc, data = df)
 beta_hat <- fit$Beta$Estimate
@@ -63,20 +66,33 @@ Z <- model.matrix(~gen:loc -1, data = df)
 b_hat <- unlist(fit$U)
 
 N <- length(y) # number of observation
-n <- nlevels(df$gen) # number of units
-p <- ncol(X)
-q <- ncol(Z)
+n <- nrow(group) # number of groups indicates i = 1, 2, 3, ..., 8
+n.levels <- unique(group$n) # number of obervations within each group
+p <- ncol(X) # number of vector of fixed effects
+q <- ncol(Z) # number of vector of random effects
+
+fitted <-  fit$fitted[,1] # fitted/predicted value of y
+# predy <- X %*% beta_hat
+# all(fitted == predy) ## TRUE
 ```
 
 ```{r V}
+options(max.print=999999)
 # Covariance matrix of Y (denote as V,\Omega)
 V <- solve(fit$Vi)
 iV <- fit$Vi
+
+# variance for each group...
+Omgi <- vector("list", n)
+for (i in 1:n){
+  Omgi[[i]] <- V[(i*4-3):(i*4),(i*4-3):(i*4)]
+}
 ```
 
 ```{r Q}
-varbeta <- solve((t(X) %*% iV %*% X))
-Q <- iV - iV %*% X %*% varbeta %*% t(X) %*% iV
+var.beta <- solve((t(X) %*% iV %*% X)) # predicted variance of fixed effect
+# var.beta <- fit$VarBeta
+Q <- iV - iV %*% X %*% var.beta %*% t(X) %*% iV
 ```
 
 ```{r residuals(marginal and conditional)}
@@ -96,6 +112,28 @@ var.resm <- V - X %*% solve((t(X) %*% iV %*% X)) %*% t(X)
 std.resm <- resm/sqrt(diag(var.resm))
 ```
 
+```{r}
+expm::sqrtm(V) %*% resm
+```
+
+
+```{r plot1}
+plot(fitted, std.resm, xlab = "Marginal fitted values",
+     ylab = "Standardized marginal residuals",
+     pch = 20, cex = 1.2, cex.lab = 1.2, cex.axis = 1.3,
+     ylim = c(-1.3*max(abs(range(std.resm))),1.3*max(abs(range(std.resm)))))
+abline(h = 0, lty = 3)
+```
+
+```{r plot2}
+plot(1:nrow(df), std.resm, xlab = "Observation indices",
+     ylab = "Standardized marginal residuals",
+     pch = 20, cex = 1.2, cex.lab = 1.2, cex.axis = 1.3,
+     ylim = c(-1.3*max(abs(range(std.resm))),1.3*max(abs(range(std.resm)))))
+abline(h = 0, lty = 3)
+```
+
+
 ```{r variance of conditional residuals}
 mat1 <- matrix(c(as.vector(fit$VarU[[1]]$yield), rep(0, 16)), 4, 8)
 mat2 <- matrix(c(rep(0, 16), as.vector(fit$VarU[[2]]$yield)), 4, 8)
@@ -109,6 +147,7 @@ var.resc <- R %*% Q %*% R
 ```{r standardised conditional residuals}
 std.resc <- resc/sqrt(diag(var.resc))
 ```
+
 
 ```{r Fraction of confouding}
 ident <- diag(N)
@@ -142,6 +181,11 @@ var.resmcp <- lt %*% var.resc[1:N,1:N] %*% t(lt)
 
 resmcp <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
 ```
+
+```{r}
+plot(x=distribution = "Normal", y = resmcp)
+```
+
 
 Variance of predicted errors for the random effects:
 \begin{align*}
@@ -205,6 +249,7 @@ ggplot(data = df2, mapping = aes(x = 1:nrow(df), y = smres)) +
 
 ```{r adequacy measure of the within-unit covariance structure}
 I32 <- diag(32)
+
 Vi <- Matrix::norm(x = I32 - vareps %*% t(vareps), type = "2")
 stdVi <- sqrt(Vi)/32
 ```
