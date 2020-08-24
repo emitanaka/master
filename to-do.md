@@ -5,4 +5,5 @@
   * go through Adam Loy's script and `case1-agdata.Rmd`. Replicate result for Loy's script. Expand latter to have diagnostics like Loy's
   
 * By week 4 Thu:
+  * simulating data for the null plots from model fit
   * null plots - lineup
