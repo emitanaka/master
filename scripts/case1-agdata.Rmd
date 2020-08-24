@@ -74,6 +74,15 @@ q <- ncol(Z) # number of vector of random effects
 fitted <-  fit$fitted[,1] # fitted/predicted value of y
 # predy <- X %*% beta_hat
 # all(fitted == predy) ## TRUE
+yi <- vector("list", n)
+for (i in 1:n){
+  yi[[i]] <- y[(i*4-3):(i*4)]
+}
+
+Xi <- vector("list", n)
+for (i in 1:n){
+  Xi[[i]] <- X[(i*4-3):(i*4),]
+}
 ```
 
 ```{r V}
@@ -99,6 +108,10 @@ Q <- iV - iV %*% X %*% var.beta %*% t(X) %*% iV
 # marginal residuals
 resm <- y - X %*% beta_hat
 #all(resm == fit$residuals)
+resm.i <- vector("list", n) # same as resm
+for (i in 1:n){
+  resm.i[[i]] <- yi[[i]] - Xi[[i]]%*%beta_hat
+}
 
 # conditional residuals
 resc <- y - X %*% beta_hat - Z %*% b_hat
@@ -112,8 +125,18 @@ var.resm <- V - X %*% solve((t(X) %*% iV %*% X)) %*% t(X)
 std.resm <- resm/sqrt(diag(var.resm))
 ```
 
-```{r}
-expm::sqrtm(V) %*% resm
+```{r Verbeke..}
+vareps.i <- vector("list", n)
+for (i in 1:n){
+  vareps.i[[i]] <- expm::sqrtm(Omgi[[i]]) %*% resm.i[[i]]
+}
+
+Verbeke.i <- vector("list", n)
+for (i in 1:n){
+  Verbeke.i[[i]] <- norm(diag(1,4,4) - vareps.i[[i]] %*% t(vareps.i[[i]]), type = "2")
+}
+
+Ver.star <- sqrt(unlist(Verbeke.i))
 ```
 
 
@@ -133,6 +156,13 @@ plot(1:nrow(df), std.resm, xlab = "Observation indices",
 abline(h = 0, lty = 3)
 ```
 
+```{r plot3}
+plot(1:n, Ver.star, xlab = "Unit indicies",
+     ylab = "Standardused measure of adequacy",
+     pch = 20, cex = 1.2, cex.lab = 1.2, cex.axis = 1.3,
+     ylim = c(-1.3*max(abs(range(Ver.star))),1.3*max(abs(range(Ver.star)))))
+abline(h = 0, lty = 3)
+```
 
 ```{r variance of conditional residuals}
 mat1 <- matrix(c(as.vector(fit$VarU[[1]]$yield), rep(0, 16)), 4, 8)
