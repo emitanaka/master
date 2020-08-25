@@ -163,6 +163,7 @@ plot(1:n, Ver.star, xlab = "Unit indicies",
      ylim = c(-1.3*max(abs(range(Ver.star))),1.3*max(abs(range(Ver.star)))))
 abline(h = 0, lty = 3)
 ```
+**8.25 check $\Gamma$ **
 
 ```{r variance of conditional residuals}
 mat1 <- matrix(c(as.vector(fit$VarU[[1]]$yield), rep(0, 16)), 4, 8)
@@ -176,6 +177,22 @@ var.resc <- R %*% Q %*% R
 
 ```{r standardised conditional residuals}
 std.resc <- resc/sqrt(diag(var.resc))
+```
+
+```{r plot4}
+plot(x = 1:nrow(df), y = std.resc, xlab = "Observation indices",
+     ylab = "Standardised conditional residuals", 
+     pch = 20, cex = 1.2, cex.lab = 1.2, cex.axis = 1.3,
+     ylim = c(-1.3*max(abs(range(std.resc))),1.3*max(abs(range(std.resc)))))
+abline(h=0, lty=3)
+```
+
+```{r plot5}
+plot(x = fitted, y = std.resc, 
+     xlab = "Fitted values", ylab = "Standardised conditional residuals",
+     pch = 20, cex = 1.2, cex.lab = 1.2, cex.axis = 1.3,
+     ylim = c(-1.3*max(abs(range(std.resc))),1.3*max(abs(range(std.resc)))))
+abline(h=0, lty = 3)
 ```
 
 
@@ -212,8 +229,8 @@ var.resmcp <- lt %*% var.resc[1:N,1:N] %*% t(lt)
 resmcp <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
 ```
 
-```{r}
-plot(x=distribution = "Normal", y = resmcp)
+```{r plot6}
+qqnorm
 ```
 
 
@@ -225,19 +242,38 @@ Var(\hat{\mathbf{b}}_i - \mathbf{b}_i) &= Var(\hat{\mathbf{b}}_i) + Var(\mathbf{
 &= \mathbf{\Gamma} - \mathbf{\Gamma Z^\top Q Z \Gamma} + \mathbf{\Gamma}
 \end{align*}
 
-```{r}
+```{r THIS IS NOT CORRECT}
 pred.er.var <- Gam - Gam %*% t(Z) %*% Q %*% Z %*% Gam
 Mi <- t(b_hat) %*% MASS::ginv(pred.er.var) %*% b_hat
-Gam
-pred.er.var
+#Gam
+#pred.er.var
 ```
 
-```{r}
-pred.er.var[1:8,1:8]
+```{r prediction error varainace of BLUPs}
+pev.1 <- matrix(c(as.vector(fit$PevU$`Clemson:gen`$yield), rep(0,16)), 4,8)
+pev.2 <- matrix(c(rep(0,16),as.vector(fit$PevU$`Tifton:gen`$yield)), 4, 8)
+pev <- rbind(pev.1, pev.2)
 ```
 
-```{r}
-b_hat[1:2]
+```{r Mahalanobis's distance}
+Maha_dist <- vector("list", n)
+for (i in 1:n){
+  Maha_dist[[i]] <- t(b_hat[i]) %*% MASS::ginv(pev[i,i]) %*% b_hat[i]
+  dist <- unlist(Maha_dist)
+}
+```
+
+```{r plot7}
+plot(x = 1:n, y = dist, xlab = "Unit indices", ylab = "Mahalanobis's distance",
+     pch = 20, cex = 1.2, cex.lab = 1.2, cex.axis = 1.3,
+     ylim = c(-1.3*max(abs(range(dist))),1.3*max(abs(range(dist)))))
+abline(h=0, lty = 3)
+```
+
+```{r plot8}
+set.seed(26686953)
+z <- rchisq(n,q)
+plot(sort(z), sort(dist), xlab = "Chi-squared quantiles", ylab = "Mahalanobis's distance")
 ```
 
 
@@ -245,6 +281,8 @@ b_hat[1:2]
 
 
 
+
+###################################### old version #######################################
 
 ```{r values}
 
