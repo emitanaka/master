@@ -14,6 +14,7 @@ library(lme4)
 library(expm)
 library(Matrix)
 library(MASS)
+library(nullabor)
 data(bridges.cucumber)
 df <- bridges.cucumber %>% 
   mutate(rowf = factor(row),
@@ -58,6 +59,9 @@ fit$residuals
 
 plot(fit)
 ```
+
+### Uses of residuals for diagnostic purposes
+
 ```{r values}
 y <- df$yield
 X <- model.matrix(~loc, data = df)
@@ -163,7 +167,6 @@ plot(1:n, Ver.star, xlab = "Unit indicies",
      ylim = c(-1.3*max(abs(range(Ver.star))),1.3*max(abs(range(Ver.star)))))
 abline(h = 0, lty = 3)
 ```
-**8.25 check $\Gamma$ **
 
 ```{r variance of conditional residuals}
 mat1 <- matrix(c(as.vector(fit$VarU[[1]]$yield), rep(0, 16)), 4, 8)
@@ -276,6 +279,42 @@ z <- rchisq(n,q)
 plot(sort(z), sort(dist), xlab = "Chi-squared quantiles", ylab = "Mahalanobis's distance")
 ```
 
+### nullabor for lineup
+
+```{r simulate y for 19 times data}
+# simulate y for 19 times
+set.seed(12345)
+y.sim <- list()
+
+for (i in (1:19)){
+  y.sim[[i]] <- unlist(as.vector(MASS::mvrnorm(n = 1, mu = X %*% beta_hat, Sigma = V)))
+  twmp <- lapply(y.sim, function(y) 
+                 cbind(y, loc = df$loc, gen = df$gen))
+}
+
+# not include the true data set in the null
+# twmp_new <- append(twmp, list(cbind(y = df$yield, loc = df$loc, gen = df$gen)))
+```
+
+
+```{r}
+for (i in (1:19)){
+  sim.fit <- mmer(twmp[[i]][,1] ~ 1 + twmp[[i]][,2],
+                  random = ~vs(ds(twmp[[i]][,2]),twmp[[i]][,3], Gu = A),
+                  rcov = ~units,
+                  data = twmp[[i]])
+  sim.fit$fitted
+}
+
+mmer(yield ~ 1 + loc,
+            # random: random effects
+            # vs(ds(x), y): diagonal covariance structure for the "y" covariate for all 
+            # levels of the factor covariate "x"
+            random =~ vs(ds(loc), gen, Gu = A),
+            # rcov: error term
+            rcov =~ units,
+            data = df)
+```
 
 
 
