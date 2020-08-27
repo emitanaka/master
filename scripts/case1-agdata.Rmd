@@ -281,7 +281,7 @@ plot(sort(z), sort(dist), xlab = "Chi-squared quantiles", ylab = "Mahalanobis's 
 
 ### nullabor for lineup
 
-```{r simulate y for 19 times data}
+```{r Not the correct one}
 # simulate y for 19 times
 set.seed(12345)
 y.sim <- list()
@@ -296,25 +296,47 @@ for (i in (1:19)){
 # twmp_new <- append(twmp, list(cbind(y = df$yield, loc = df$loc, gen = df$gen)))
 ```
 
+```{r simulate.19 data}
+set.seed(12345)
+nsim <- 19
+lapply(1:nsim, function(i){
+  ysim <- data.frame(y = MASS::mvrnorm(n = 1, mu = X %*% beta_hat, Sigma = V))
+  simdat <- cbind(ysim, loc = as.factor(df$loc), gen = as.factor(df$gen)) 
+  
+  simfit <- mmer(y ~ 1 + loc,
+                 random =~vs(ds(loc), gen, Gu = A),
+                 rcov =~units,
+                 data = simdat)
+  
+  out_df <- data.frame(simdat, std.resm, fitted = fitted(simfit), sample = i)
+})
+
+# this is not i wanted FAIL!!!
+for (i in 1:nsim){
+  ysim <- data.frame(y = MASS::mvrnorm(n = 1, mu = X %*% beta_hat, Sigma = V))
+  simdat <- cbind(ysim, loc = as.factor(df$loc), gen = as.factor(df$gen)) 
+  
+  simfit <- mmer(y ~ 1 + loc,
+                 random =~vs(ds(loc), gen, Gu = A),
+                 rcov =~units,
+                 data = simdat)
+  
+  out_df <- data.frame(simdat, fitted = fitted(simfit), sample = i)
+}
+```
+
+
+```{r true data}
+true <- data.frame(y = df$yield, loc = df$loc, gen = df$gen)
+true.df <- data.frame(true, std.resm, fitted = fitted(fit))
+```
 
 ```{r}
-for (i in (1:19)){
-  sim.fit <- mmer(twmp[[i]][,1] ~ 1 + twmp[[i]][,2],
-                  random = ~vs(ds(twmp[[i]][,2]),twmp[[i]][,3], Gu = A),
-                  rcov = ~units,
-                  data = twmp[[i]])
-  sim.fit$fitted
-}
-
-mmer(yield ~ 1 + loc,
-            # random: random effects
-            # vs(ds(x), y): diagonal covariance structure for the "y" covariate for all 
-            # levels of the factor covariate "x"
-            random =~ vs(ds(loc), gen, Gu = A),
-            # rcov: error term
-            rcov =~ units,
-            data = df)
+qplot(x = fitted, y = std.resm, data = true.df, geom = "point") %+% 
+  lineup(true = true.df, samples = out_df)
 ```
+
+
 
 
 
