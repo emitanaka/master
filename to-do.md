@@ -7,3 +7,6 @@
 * By week 4 Thu:
   * simulating data for the null plots from model fit
   * null plots - lineup
+  
+* By week 5 Thu:
+  * `xaringan` package - slides
