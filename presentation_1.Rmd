@@ -1,9 +1,9 @@
 ---
-title: "Presentation Ninja"
-subtitle: "⚔<br/>with xaringan"
-author: "Yihui Xie"
+title: "Presentation"
+#subtitle: "⚔<br/>with xaringan"
+author: "Kaiwen Jin"
 institute: "RStudio, PBC"
-date: "2016/12/12 (updated: `r Sys.Date()`)"
+date: "2020-09-18"
 output:
   xaringan::moon_reader:
     lib_dir: libs
