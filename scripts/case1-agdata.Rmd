@@ -60,14 +60,16 @@ fit$residuals
 plot(fit)
 ```
 
-### Uses of residuals for diagnostic purposes
+# Uses of residuals for diagnostic purposes
+
+$$y = X\beta + Zb + e$$
 
 ```{r values}
-y <- df$yield
-X <- model.matrix(~loc, data = df)
-beta_hat <- fit$Beta$Estimate
-Z <- model.matrix(~gen:loc -1, data = df)
-b_hat <- unlist(fit$U)
+y <- df$yield # y
+X <- model.matrix(~loc, data = df) # X
+beta_hat <- fit$Beta$Estimate # \beta
+Z <- model.matrix(~gen:loc -1, data = df) # Z
+b_hat <- unlist(fit$U) # b
 
 N <- length(y) # number of observation
 n <- nrow(group) # number of groups indicates i = 1, 2, 3, ..., 8
@@ -77,7 +79,7 @@ q <- ncol(Z) # number of vector of random effects
 
 fitted <-  fit$fitted[,1] # fitted/predicted value of y
 # predy <- X %*% beta_hat
-# all(fitted == predy) ## TRUE
+# all(fitted == predy) ## TRUE - checked which is correct
 yi <- vector("list", n)
 for (i in 1:n){
   yi[[i]] <- y[(i*4-3):(i*4)]
@@ -104,7 +106,7 @@ for (i in 1:n){
 
 ```{r Q}
 var.beta <- solve((t(X) %*% iV %*% X)) # predicted variance of fixed effect
-# var.beta <- fit$VarBeta
+# Var.Beta <- fit$VarBeta # checked which are the same
 Q <- iV - iV %*% X %*% var.beta %*% t(X) %*% iV
 ```
 
@@ -121,6 +123,8 @@ for (i in 1:n){
 resc <- y - X %*% beta_hat - Z %*% b_hat
 ```
 
+## Marginal residuals
+
 ```{r variance of marginal residuals}
 var.resm <- V - X %*% solve((t(X) %*% iV %*% X)) %*% t(X)
 ```
@@ -128,6 +132,9 @@ var.resm <- V - X %*% solve((t(X) %*% iV %*% X)) %*% t(X)
 ```{r standardised marginal residuals}
 std.resm <- resm/sqrt(diag(var.resm))
 ```
+
+### Please correct me if I'm wrong
+This chunk is about the within-unit covariance structure is adequate, $V_i = ||I_{m_i} - \varepsilon_i \varepsilon_i^\top||^2$, where $\varepsilon_i = \hat{\Omega}_i^{1/2} \hat{\xi}_i$ with $\Omega_i = \Omega_i({\theta})$ should be close to zero.
 
 ```{r Verbeke..}
 vareps.i <- vector("list", n)
@@ -142,7 +149,6 @@ for (i in 1:n){
 
 Ver.star <- sqrt(unlist(Verbeke.i))
 ```
-
 
 ```{r plot1}
 plot(fitted, std.resm, xlab = "Marginal fitted values",
@@ -167,6 +173,8 @@ plot(1:n, Ver.star, xlab = "Unit indicies",
      ylim = c(-1.3*max(abs(range(Ver.star))),1.3*max(abs(range(Ver.star)))))
 abline(h = 0, lty = 3)
 ```
+
+## Conditional residuals
 
 ```{r variance of conditional residuals}
 mat1 <- matrix(c(as.vector(fit$VarU[[1]]$yield), rep(0, 16)), 4, 8)
@@ -217,7 +225,7 @@ sqrt.matrix <- function(mat) {
         }
 ```
 
-## fix 
+### fix it please!
 ```{r least confounded residuals ???}
 R.half <- sqrt.matrix(R)
 
@@ -236,6 +244,7 @@ resmcp <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
 qqnorm
 ```
 
+## Random effects residuals
 
 Variance of predicted errors for the random effects:
 \begin{align*}
@@ -245,7 +254,9 @@ Var(\hat{\mathbf{b}}_i - \mathbf{b}_i) &= Var(\hat{\mathbf{b}}_i) + Var(\mathbf{
 &= \mathbf{\Gamma} - \mathbf{\Gamma Z^\top Q Z \Gamma} + \mathbf{\Gamma}
 \end{align*}
 
-# This is drived from formula which should be same as the `fit$PevU`
+### This is drived from formula which should be same as the `fit$PevU`
+However, they are not the same. Could you help me to correct them?
+
 ```{r THIS IS NOT CORRECT}
 pred.er.var <- Gam - Gam %*% t(Z) %*% Q %*% Z %*% Gam
 Mi <- t(b_hat) %*% MASS::ginv(pred.er.var) %*% b_hat
@@ -259,7 +270,7 @@ pev.2 <- matrix(c(rep(0,16),as.vector(fit$PevU$`Tifton:gen`$yield)), 4, 8)
 pev <- rbind(pev.1, pev.2)
 ```
 
-# Manhalanobis's distance **Not sure**
+### Manhalanobis's distance **Not sure**
 
 ```{r Mahalanobis's distance}
 Maha_dist <- vector("list", n)
@@ -282,7 +293,9 @@ z <- rchisq(n,q)
 plot(sort(z), sort(dist), xlab = "Chi-squared quantiles", ylab = "Mahalanobis's distance")
 ```
 
-### nullabor for lineup
+# nullabor for lineup
+
+I found that I have to reproduce the $beta$, $b$, $\Omega$... for each model (19 times). However, I forgot the code to combine them in one list in tibble..
 
 ```{r simulate.19 data}
 set.seed(12345)
@@ -294,17 +307,18 @@ simdat <- purrr::map_dfr(1:nsim, function(i){
                  random =~vs(ds(loc), gen, Gu = A),
                  rcov =~units,
                  data = simdat)
-  tibble::tibble(.n = i, simdat, fitted = fitted(simfit), std.resm)
+  tibble::tibble(.n = i, simfit, structure(simfit, "list"), fitted = fitted(simfit) ,std.resm, std.resc)
 })
+simdat$index <- rep(seq_len(nrow(df)), nsim)
 ```
 
 
 ```{r true data}
 true <- data.frame(y = df$yield, loc = df$loc, gen = df$gen)
-true.df <- data.frame(true, std.resm, fitted = fitted(fit))
+true.df <- data.frame(true, std.resm, std.resc,fitted = fitted(fit), index = seq.int(nrow(true.df)))
 ```
 
-```{r}
+```{r lineup_plot1}
 qplot(x = fitted, y = std.resm, data = true.df, geom = "point") %+% 
   lineup(true = true.df, samples = simdat) + 
   facet_wrap( ~ .sample, ncol=5) + 
@@ -312,6 +326,26 @@ qplot(x = fitted, y = std.resm, data = true.df, geom = "point") %+%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
 ```
+
+```{r}
+qplot(x = index, y = std.resm, data = true.df, geom = "point") %+% 
+  lineup(true = true.df, samples = simdat) + 
+  facet_wrap( ~ .sample, ncol=5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+```
+
+
+```{r lineup_plot5}
+qplot(x = fitted, y = std.resc, data = true.df, geom = "point") %+% 
+  lineup(true = true.df, samples = simdat) + 
+  facet_wrap( ~ .sample, ncol=5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+```
+
 
 
 
