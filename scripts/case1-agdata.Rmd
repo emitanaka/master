@@ -307,19 +307,39 @@ simdat <- purrr::map_dfr(1:nsim, function(i){
                  random =~vs(ds(loc), gen, Gu = A),
                  rcov =~units,
                  data = simdat)
-  tibble::tibble(.n = i, simfit, structure(simfit, "list"), fitted = fitted(simfit) ,std.resm, std.resc)
+  # marginal residuals
+  simbeta <- simfit$Beta$Estimate
+  simb <- unlist(simfit$U)
+  simresm <- ysim - X %*% simbeta
+  simOmega <- solve(simfit$Vi)
+  simiOmega <- simfit$Vi
+  sim.var.resm <- simOmega - X %*% solve((t(X) %*% simiOmega %*% X)) %*% t(X)
+  sim.std.resm <- simresm/sqrt(diag(sim.var.resm))
+  # conditional residuals
+  simresc <- ysim - X %*% simbeta - Z %*% simb
+  sim.var.beta <- solve((t(X) %*% simiOmega %*% X)) # predicted variance of fixed effect
+  simQ <- simiOmega - simiOmega %*% X %*% sim.var.beta %*% t(X) %*% simiOmega
+  simmat1 <- matrix(c(as.vector(simfit$VarU[[1]]$ysim), rep(0, 16)), 4, 8)
+  simmat2 <- matrix(c(rep(0, 16), as.vector(fit$VarU[[2]]$ysim)), 4, 8)
+  simGam <- rbind(simmat1, simmat2)
+  simR <- simOmega - Z %*% simGam %*% t(Z)
+  sim.var.resc <- simR %*% simQ %*% simR
+  sim.std.resc <- simresc/sqrt(diag(sim.var.resc))
+  tibble::tibble(.n = i, list(simfit), fitted = fitted(simfit) ,sim.std.resm, sim.std.resc)
 })
+
+#simdat$`list(simfit)`[[1]]$fitted
 simdat$index <- rep(seq_len(nrow(df)), nsim)
 ```
 
 
 ```{r true data}
 true <- data.frame(y = df$yield, loc = df$loc, gen = df$gen)
-true.df <- data.frame(true, std.resm, std.resc,fitted = fitted(fit), index = seq.int(nrow(true.df)))
+true.df <- data.frame(true, sim.std.resm = std.resm, sim.std.resc = std.resc, fitted = fitted(fit), index = seq.int(nrow(true.df)))
 ```
 
 ```{r lineup_plot1}
-qplot(x = fitted, y = std.resm, data = true.df, geom = "point") %+% 
+qplot(x = fitted, y = sim.std.resm, data = true.df, geom = "point") %+% 
   lineup(true = true.df, samples = simdat) + 
   facet_wrap( ~ .sample, ncol=5) + 
   xlab(NULL) + ylab(NULL) +
@@ -327,8 +347,8 @@ qplot(x = fitted, y = std.resm, data = true.df, geom = "point") %+%
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
 ```
 
-```{r}
-qplot(x = index, y = std.resm, data = true.df, geom = "point") %+% 
+```{r lineup_plot2}
+qplot(x = index, y = sim.std.resm, data = true.df, geom = "point") %+% 
   lineup(true = true.df, samples = simdat) + 
   facet_wrap( ~ .sample, ncol=5) + 
   xlab(NULL) + ylab(NULL) +
@@ -336,9 +356,17 @@ qplot(x = index, y = std.resm, data = true.df, geom = "point") %+%
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
 ```
 
+```{r lineup_plot4}
+qplot(x = index, y = sim.std.resc, data = true.df, geom = "point") %+% 
+  lineup(true = true.df, samples = simdat) + 
+  facet_wrap( ~ .sample, ncol=5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+```
 
 ```{r lineup_plot5}
-qplot(x = fitted, y = std.resc, data = true.df, geom = "point") %+% 
+qplot(x = fitted, y = sim.std.resc, data = true.df, geom = "point") %+% 
   lineup(true = true.df, samples = simdat) + 
   facet_wrap( ~ .sample, ncol=5) + 
   xlab(NULL) + ylab(NULL) +
