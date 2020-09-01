@@ -13,6 +13,43 @@ output:
       countIncrementalSlides: false
 ---
 
+# Motivation: Justify the research topic
+
+* define topic
+* why 
+* benefits
+
+- what is relevent to topic
+- what is not relevent
+
+---
+
+# Objectives - research questions
+
+---
+
+# Literature review
+
+- your topic is significant
+- you understant the topic
+- main point: distinguish your research from similar current research
+
+describe significant contributions
+analyse the strengths and weaknesses of these contributions
+describe how these are relevant to your research
+identify how you will extend on the current research; that is your contribution
+
+---
+
+# Purpose of the project plan?
+
+* state the data and the data sources you will use
+* outline how you will collect and manage 
+* introduce the methodology
+
+
+---
+
 background-image: url(https://upload.wikimedia.org/wikipedia/commons/b/be/Sharingan_triple.svg)
 
 ```{r setup, include=FALSE}
