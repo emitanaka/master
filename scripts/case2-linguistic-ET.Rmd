@@ -1,0 +1,145 @@
+---
+title: "Example with linguistic data"
+output:
+  html_document:
+    code_folding: hide
+---
+
+Data is based on [this paper](https://arxiv.org/pdf/1308.5499.pdf). Also see [tutorial here](https://web.stanford.edu/class/psych252/section/Mixed_models_tutorial.html).
+
+```{r setup, include = FALSE}
+library(lme4)
+library(tidyverse)
+library(ggbeeswarm)
+library(colorspace)
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE#,
+  #cache.path = "cache/",
+  #cache = TRUE
+)
+
+df <- read_csv(here::here("data/politeness_data.csv")) %>% 
+  mutate(scenario = fct_reorder(factor(scenario), frequency, function(x) mean(x, na.rm = TRUE)),
+         subject = fct_reorder(subject, frequency, function(x) mean(x, na.rm = TRUE)))
+```
+
+The data contains `r nrow(df)` observations on the voice pitch (or frequency) from `r length(unique(df$subject))` subjects (3 females and 3 males) under `r length(unique(df$scenario))` scenarios with 2 attitudes (informal or polite). There is one missing value for subject `M4` for scenario 6 with polite attitude.
+
+
+```{r eda-plots}
+ggplot(df, aes(subject, frequency, fill = gender)) + 
+  geom_boxplot(width = 0.5) +
+  geom_beeswarm(color = "#383838") + 
+  scale_fill_discrete_qualitative() 
+
+ggplot(df, aes(attitude, frequency,  fill = gender)) + 
+  geom_boxplot(width = 0.5) +
+  geom_beeswarm(color = "#383838") + 
+  facet_grid(. ~ subject) + 
+  scale_fill_discrete_qualitative() 
+
+ggplot(df, aes(gender, frequency)) + 
+  geom_boxplot(width = 0.5) +
+  geom_beeswarm(color = "#383838") + 
+  facet_grid(. ~ attitude) + 
+  scale_fill_discrete_qualitative() 
+
+ggplot(df, aes(scenario, frequency)) + 
+  geom_boxplot() +
+  geom_beeswarm(aes(color = gender)) + 
+  scale_color_discrete_qualitative()
+```
+
+We fit the following model:
+
+$$\begin{array}\texttt{frequency}_{i} &=& \beta_0 + \beta_1\mathbb{I}(\texttt{attitude}_{i}=\texttt{pol}) + \beta_2 \mathbb{I}(\texttt{gender}_{i}=\texttt{M}) +\\ && u_1\mathbb{I}(\texttt{subject}_i=\texttt{F1})+ u_2\mathbb{I}(\texttt{subject}_i=\texttt{F2}) + u_3\mathbb{I}(\texttt{subject}_i=\texttt{F3}) + u_4\mathbb{I}(\texttt{subject}_i=\texttt{M1})+ u_5\mathbb{I}(\texttt{subject}_i=\texttt{M2})+ u_6\mathbb{I}(\texttt{subject}_i=\texttt{M3}) + \\ && u_7\mathbb{I}(\texttt{scenario}_i=\texttt{1}) + u_8\mathbb{I}(\texttt{scenario}_i=\texttt{2}) + u_9\mathbb{I}(\texttt{scenario}_i=\texttt{3}) + u_{10}\mathbb{I}(\texttt{scenario}_i=\texttt{4}) + u_{11}\mathbb{I}(\texttt{scenario}_i=\texttt{5}) + u_{12}\mathbb{I}(\texttt{scenario}_i=\texttt{6}) +\\&& u_{13}\mathbb{I}(\texttt{scenario}_i=\texttt{7}) + e_i\end{array}$$
+assuming that $\boldsymbol{u} = (u_1, ..., u_{13})^\top \sim N(\boldsymbol{0}, \mathbf{G})$ and $\boldsymbol{e} = (e_1, ..., e_{84})^\top = \sim N(\boldsymbol{0}, \sigma^2\mathbf{I}_{84})$, where $\mathbf{G}=\begin{bmatrix}\sigma^2_{\texttt{subject}}\mathbf{I}_6 & \mathbf{0}_{6\times 7}\\ \mathbf{0}_{7\times 6} & \sigma^2_{\texttt{scenario}}\mathbf{I}_7\end{bmatrix}.$
+
+
+```{r model}
+fit <- lmer(frequency ~ attitude + gender + 
+              (1|subject) + (1|scenario),
+            data = df)
+
+N <- nrow(df)
+subjects <- unique(df$subject)
+nsubject <- length(subjects)
+nscenario <- length(unique(df$scenario))
+y <- df$frequency
+X <- model.matrix(~attitude + gender, data = df)
+beta <- fixef(fit)
+Z1 <- model.matrix(~subject - 1, data = df)
+Z2 <- model.matrix(~scenario - 1, data = df)
+Z <- cbind(Z1, Z2)
+u <- c(ranef(fit)$subject[,1], ranef(fit)$scenario[,1])
+vc <- as.data.frame(VarCorr(fit))
+R <- vc$vcov[vc$grp=="Residual"] * diag(N)
+G1 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
+G2 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
+G <- Matrix::bdiag(G1, G2)
+Sigma <- Z %*% G %*% t(Z)  + R
+varMargRes <- Sigma - X %*% solve(t(X) %*% solve(Sigma) %*% X) %*% t(X)
+
+fit_df <- df %>% 
+  mutate(fitted = as.vector(X %*% beta),
+         resm = frequency - fitted, 
+         index = 1:n()) %>% 
+  rowwise() %>% 
+  mutate(resm_std = resm / sqrt(diag(varMargRes)[index])) %>% 
+  ungroup()
+
+unit_df <- tibble(subjects) %>% 
+  mutate(Vi = map_dbl(subjects, ~{
+                        ind <- df %>% 
+                          mutate(index = 1:n()) %>% 
+                          filter(subject==.x) %>% 
+                          pull(index)
+                        mi <- length(ind)
+                        # standardised marginal residual
+                        Ei <- solve(varMargRes[ind, ind]) %*% fit_df$resm[ind]
+                        sqrt(sum((diag(mi) - Ei %*% t(Ei))^2)) / mi
+                      })
+         )
+
+```
+
+## Diagnostic Plot 1: Linearity of fixed effects
+
+```{r plot1}
+ggplot(fit_df, aes(fitted, resm_std)) + 
+  geom_hline(yintercept = 0) +
+  geom_point()
+
+ggplot(fit_df, aes(interaction(attitude, gender), resm_std)) + 
+  geom_hline(yintercept = 0) +
+  geom_boxplot() 
+```
+
+# Diagnostic Plot 2: Prescence of outlying observations
+
+```{r plot2}
+ggplot(fit_df, aes(index, resm_std, 
+                   color = subject)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) + 
+  scale_color_discrete_qualitative()
+
+fit_df %>% 
+  arrange(scenario) %>% 
+  mutate(index = 1:n()) %>% 
+  ggplot(aes(index, resm_std, color = scenario)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) + 
+  scale_color_discrete_qualitative()
+```
+
+# Diagnostic Plot 3: Within-units covariance matrix
+
+```{r plot3}
+ggplot(unit_df, aes(subjects, Vi)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0)
+```
+
+
