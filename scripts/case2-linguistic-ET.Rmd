@@ -65,7 +65,8 @@ fit <- lmer(frequency ~ attitude + gender +
 N <- nrow(df)
 subjects <- unique(df$subject)
 nsubject <- length(subjects)
-nscenario <- length(unique(df$scenario))
+scenarios <- unique(df$scenario)
+nscenario <- length(scenarios)
 y <- df$frequency
 X <- model.matrix(~attitude + gender, data = df)
 beta <- fixef(fit)
@@ -73,33 +74,43 @@ Z1 <- model.matrix(~subject - 1, data = df)
 Z2 <- model.matrix(~scenario - 1, data = df)
 Z <- cbind(Z1, Z2)
 u <- c(ranef(fit)$subject[,1], ranef(fit)$scenario[,1])
+q <- length(u)
 vc <- as.data.frame(VarCorr(fit))
 R <- vc$vcov[vc$grp=="Residual"] * diag(N)
 G1 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
 G2 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
 G <- Matrix::bdiag(G1, G2)
 Sigma <- Z %*% G %*% t(Z)  + R
+Sigma_inv <- solve(Sigma)
 varMargRes <- Sigma - X %*% solve(t(X) %*% solve(Sigma) %*% X) %*% t(X)
+P <- Sigma_inv - Sigma_inv %*% X %*% solve(t(X) %*% Sigma_inv %*% X) %*% t(X) %*% Sigma_inv
+varCondRes <- R %*% P %*% R
+varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+
 
 fit_df <- df %>% 
   mutate(fitted = as.vector(X %*% beta),
          resm = frequency - fitted, 
+         resc = frequency - fitted - as.vector(Z %*% u),
          index = 1:n()) %>% 
   rowwise() %>% 
-  mutate(resm_std = resm / sqrt(diag(varMargRes)[index])) %>% 
+  mutate(resm_std = resm / sqrt(diag(varMargRes)[index]),
+         resc_std = resc / sqrt(diag(varCondRes)[index])) %>% 
   ungroup()
 
-unit_df <- tibble(subjects) %>% 
-  mutate(Vi = map_dbl(subjects, ~{
+unit_df <- expand_grid(subjects, scenarios) %>% 
+  mutate(Vi = map2_dbl(subjects, scenarios, ~{
                         ind <- df %>% 
                           mutate(index = 1:n()) %>% 
-                          filter(subject==.x) %>% 
+                          filter(subject==.x,
+                                 scenario==.y) %>% 
                           pull(index)
                         mi <- length(ind)
                         # standardised marginal residual
                         Ei <- solve(varMargRes[ind, ind]) %*% fit_df$resm[ind]
                         sqrt(sum((diag(mi) - Ei %*% t(Ei))^2)) / mi
-                      })
+                      }),
+         Mi = as.vector(t(u) %*% solve(varU) %*% u)
          )
 
 ```
@@ -136,10 +147,68 @@ fit_df %>%
 
 # Diagnostic Plot 3: Within-units covariance matrix
 
+I think this works better when there is a more complex covariance structure so perhaps omit from using this. 
+
 ```{r plot3}
-ggplot(unit_df, aes(subjects, Vi)) + 
+ggplot(unit_df, aes(interaction(subjects, scenarios), Vi)) + 
   geom_point() + 
   geom_hline(yintercept = 0)
 ```
 
+
+# Diagnostic Plot 4: Prescense of outlying observations using conditional residual
+
+```{r plot4}
+ggplot(fit_df, aes(index, resc_std, 
+                   color = subject)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) + 
+  scale_color_discrete_qualitative()
+
+fit_df %>% 
+  arrange(scenario) %>% 
+  mutate(index = 1:n()) %>% 
+  ggplot(aes(index, resc_std, color = scenario)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) + 
+  scale_color_discrete_qualitative()
+```
+
+
+# Diagnostic Plot 5: Homoskedasticity of conditional errors 
+
+```{r plot5}
+ggplot(fit_df, aes(fitted, resc_std)) + 
+  geom_hline(yintercept = 0) +
+  geom_point()
+
+ggplot(fit_df, aes(interaction(attitude, gender), resc_std)) + 
+  geom_hline(yintercept = 0) +
+  geom_boxplot() 
+```
+
+# Diagnostic Plot 6: Normality of conditional errors
+
+```{r plot6}
+ggplot(fit_df, aes(sample = resc_std)) + 
+  geom_qq() + geom_qq_line(color = "red")
+```
+
+# Diagnostic Plot 7: Presencse of outlying subjects 
+
+```{r plot7}
+ggplot(unit_df, aes(interaction(subjects, scenarios), Mi)) + 
+  geom_point()
+```
+
+# Diagnostic Plot 8: Normality of the random effects
+
+```{r plot8}
+ggplot(unit_df, aes(sample = Mi)) + 
+  geom_qq(distribution = stats::qchisq,
+          dparams = list(df = q)) +
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q))
+```
 
