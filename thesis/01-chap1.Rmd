@@ -110,7 +110,24 @@ Then, using the
 where $$\mathbf{Q} = \mathbf{\Omega}^{-1} - \mathbf{\Omega}^{-1}\mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1}$$
 
 
+## Literature review
 
+what is a linear mixed model?
+why the visual inference is important?
+what are we going to diagnostic?
+how can we diagnostic?
+why we should use this diagnostic?
+how does it works? where it will be used?
+why the lmm is useful?
+
+People always use the p-value or the test statistics to check the model. But why not using the graphical diagnostic. Graphical diagnostic can not only tell the problem but also can tell the cause of the problem.
+
+* residual diagnostic of plots
+  + marginal residuals, $\boldsymbol{\hat{\xi} = y - X \hat\beta}$
+  + conditional residuals, $\hat{e} = y - X \hat\beta - Z \hat b$
+  + random effects residuals, $Z \hat b$
+
+* lineups
 
 ## Figures
 
