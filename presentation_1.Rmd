@@ -1,5 +1,5 @@
 ---
-title: "Presentation"
+title: "Visual Inference for Graphcial Diagnostic of Linear Mixed Models"
 #subtitle: "⚔<br/>with xaringan"
 author: "Kaiwen Jin"
 institute: "RStudio, PBC"
@@ -16,7 +16,29 @@ output:
 # Motivation: Justify the research topic
 
 * define topic
+
+  * What is linear mixed model?
+
+$$\boldsymbol{y = X\beta + Zb + e}$$
+where 
+  - $\beta$ is fixed effect
+  - $b$ is random effect
+
+  * Why use the visual inference rather than the classical statistical inference?
+    - what are the classical statistical inference?
+      + t-test, F-test or likelihood ratio - fixed effect
+      + AIC, BIC - nested model
+      + likelihood ratio test - random effect
+    - parallel
+
 * why 
+
+Although we always using ggplot to do the graph, we never think about the plots can replace the statistical inference.
+
+LME is the new contents for me.
+
+Love coding
+
 * benefits
 
 - what is relevent to topic
@@ -26,6 +48,7 @@ output:
 
 # Objectives - research questions
 
+"Which plot is most different"
 ---
 
 # Literature review
