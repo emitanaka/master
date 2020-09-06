@@ -120,7 +120,20 @@ why we should use this diagnostic?
 how does it works? where it will be used?
 why the lmm is useful?
 
-People always use the p-value or the test statistics to check the model. But why not using the graphical diagnostic. Graphical diagnostic can not only tell the problem but also can tell the cause of the problem.
+People always use classical statistic inference such as p-value or the test statistics. But why not using the graphical diagnostic. Graphical diagnostic can not only tell the problem but also can tell the cause of the problem.
+
+Visual inference is parallel with the classical statistical inference. As we all knew, there are null hypothesis and alternative hypothesis in the classical statistical inference. However, they exist in the visual inference as well but with the plot rather than the statistical method.
+
+residuals form the diagnostic core of the LME model
+
+Model selection:
+- fixed effect
+- random effect
+
+Model checking:
+- Homogeneity of residual variance
+- linearity
+- Distributional assessment
 
 * residual diagnostic of plots
   + marginal residuals, $\boldsymbol{\hat{\xi} = y - X \hat\beta}$
@@ -128,6 +141,8 @@ People always use the p-value or the test statistics to check the model. But why
   + random effects residuals, $Z \hat b$
 
 * lineups
+
+  The lineup protocal often contains 19 null plots and 
 
 ## Figures
 
