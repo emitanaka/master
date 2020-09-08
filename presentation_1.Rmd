@@ -12,6 +12,13 @@ output:
       highlightLines: true
       countIncrementalSlides: false
 ---
+## Linear mixed model
+
+## Visual inference - compared with the classical statistical inference
+
+## How does it works - lineups
+
+
 
 # Motivation: Justify the research topic
 
@@ -31,7 +38,7 @@ where
       + likelihood ratio test - random effect
     - parallel
 
-* why 
+* why would we use the plots to do the diagnostic rather than the classical inference
 
 Although we always using ggplot to do the graph, we never think about the plots can replace the statistical inference.
 
