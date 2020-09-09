@@ -99,6 +99,7 @@ fit_df <- df %>%
   ungroup()
 
 unit_df <- expand_grid(subjects, scenarios) %>% 
+  # cannot follow Vi quit well
   mutate(Vi = map2_dbl(subjects, scenarios, ~{
                         ind <- df %>% 
                           mutate(index = 1:n()) %>% 
@@ -188,6 +189,8 @@ ggplot(fit_df, aes(interaction(attitude, gender), resc_std)) +
 ```
 
 # Diagnostic Plot 6: Normality of conditional errors
+
+$c^\top_k \hat e^*$
 
 ```{r plot6}
 ggplot(fit_df, aes(sample = resc_std)) + 
