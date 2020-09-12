@@ -6,18 +6,86 @@ institute: "Monash University"
 date: "2020-09-18"
 output:
   xaringan::moon_reader:
+    css: xaringan-themer.css
     lib_dir: libs
     nature:
       highlightStyle: github
       highlightLines: true
       countIncrementalSlides: false
 ---
+```{r include=FALSE}
+knitr::opts_chunk$set(echo = FALSE)
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+library(xaringanthemer)
+style_mono_accent(
+  base_color = "#1c5253",
+  header_font_google = google_font("Josefin Sans"),
+  text_font_google   = google_font("Montserrat", "300", "300i"),
+  code_font_google   = google_font("Fira Mono")
+)
+```
+
+```{r xaringan-panelset, echo=FALSE}
+library(xaringanExtra)
+xaringanExtra::use_panelset()
+```
+
+# Linguistic Case
+
+.panelset[
+.panel[.panel-name[Gender]
+
+```{r include=FALSE}
+library(lme4)
+library(tidyverse)
+library(ggbeeswarm)
+library(colorspace)
+library(ggplot2)
+library(nullabor)
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE#,
+  #cache.path = "cache/",
+  #cache = TRUE
+)
+df <- read_csv('~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/data/politeness_data.csv') %>% 
+  mutate(scenario = fct_reorder(factor(scenario), frequency, function(x) mean(x, na.rm = TRUE)),
+         subject = fct_reorder(subject, frequency, function(x) mean(x, na.rm = TRUE)))
+df <- na.omit(df)
+```
+
+```{r gender,fig.height=4, dev='svg'}
+ggplot(df, aes(gender, frequency)) + geom_point() 
+```
+]
+
+.panel[.panel-name[Subject]
+
+```{r subject, fig.height=4, dev='svg'}
+ggplot(df, aes(attitude, frequency, fill = gender)) + 
+  geom_boxplot() + 
+  facet_grid(~subject) +
+  geom_beeswarm(color = "#383838") +
+  scale_fill_discrete_qualitative() 
+```
+
+]
+
+.panel[.panel-name[Scenario]
+
+```{r scenario, fig.height=4, dev='svg'}
+ggplot(df, aes(scenario, frequency)) + geom_boxplot() + geom_beeswarm(aes(color = gender))
+```
+
+]
+]
+---
 
 # Linear Mixed Model
-
-- What is a linear mixed model?
-
-   $$\boldsymbol{y = X\beta + Zb + e}$$
+--
+.center[$$\boldsymbol{y = X\beta + Zb + e}$$]
 where 
   - $\mathbf{y}$ is a $\mathbf{N \times 1}$ vector of observations, outcome variable
   - $\mathbf{X}$ is a $\mathbf{N \times p}$ matrix
@@ -26,29 +94,10 @@ where
   - $\mathbf{b}$ is a $\mathbf{q \times 1}$ vector of the random effect
   - $E[\mathbf{y}] = \boldsymbol{X\beta}$ and $V(\mathbf{y}) = \mathbf\Omega = \boldsymbol{Z\Gamma Z^\top + R}$
 
-- Where and why should we use the linear mixed model?
-  - flexible
-    
-- How can we implement the linear mixed model?
-  - `lmer` function from `lme4` package
-  - `mmer` function from `sommer` package
-  
----
-
-# Visual inference for graphcial diagnostic
-
-- What are the classical statistical inference?
-  + t-test, F-test or likelihood ratio - fixed effect
-  + AIC, BIC - nested model
-  + likelihood ratio test - random effect
-
-- Why we want to use the graphical diagnostic?
-
-  Graphical diagnostic is useful to see when there is a problem with the model and where it occurs, besides, it gives some signs that what could be the reason of the issue.
-
-- How does it works?
-  - lineups
-
+How can we implement the LME?
+- `lmer` function from `lme4` package
+- `mmer` function from `sommer` package
+--
 ---
 
 # Graphical diagnostic on residual analysis
@@ -71,24 +120,15 @@ where
 
 ---
 
-# Linguistic data
+# Linguistic Case 
 
+--
+### Presence of outlying observations
+--
+
+.panelset[
+.panel[.panel-name[Subject]
 ```{r setup, include = FALSE}
-library(lme4)
-library(tidyverse)
-library(ggbeeswarm)
-library(colorspace)
-library(ggplot2)
-knitr::opts_chunk$set(
-  message = FALSE,
-  warning = FALSE#,
-  #cache.path = "cache/",
-  #cache = TRUE
-)
-df <- read_csv('~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/data/politeness_data.csv') %>% 
-  mutate(scenario = fct_reorder(factor(scenario), frequency, function(x) mean(x, na.rm = TRUE)),
-         subject = fct_reorder(subject, frequency, function(x) mean(x, na.rm = TRUE)))
-
 fit <- lmer(frequency ~ attitude + gender + 
               (1|subject) + (1|scenario),
             data = df)
@@ -144,12 +184,145 @@ unit_df <- expand_grid(subjects, scenarios) %>%
                       }),
          Mi = as.vector(t(u) %*% solve(varU) %*% u)
          )
-ggplot(fit_df, aes(index, resc_std, 
+```
+
+```{r plot2-1, fig.height=4, dev='svg'}
+ggplot(fit_df, aes(index, resm_std, 
                    color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) + 
   scale_color_discrete_qualitative()
 ```
+]
+
+.panel[.panel-name[Scenario]
+
+```{r plot2-2, fig.height=4, dev='svg'}
+fit_df %>% 
+  arrange(scenario) %>% 
+  mutate(index = 1:n()) %>% 
+  ggplot(aes(index, resm_std, color = scenario)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) + 
+  scale_color_discrete_qualitative()
+```
+]
+]
+---
+
+# Linguistic Case
+
+--
+## Normality of conditional errors
+--
+
+```{r plot6, fig.height=4, dev='svg'}
+ggplot(fit_df, aes(sample = resc_std)) + 
+  geom_qq() + geom_qq_line(color = "red")
+```
+
+---
+# Lineups
+
+```{r simulate, include=FALSE}
+# Simulate data for null plots from `fit` model
+fit.sim  <- simulate(fit, nsim = 19, seed = 1234)
+fit.refit <- lapply(fit.sim, refit, object = fit)
+fit.simy <- lapply(fit.refit, function(x) getME(x, "y"))
+```
+
+```{r data_nullabor, include=FALSE}
+fit.sim.y <- do.call("cbind", fit.simy)
+fit.sim.y <- reshape2::melt(fit.sim.y)[-1]
+names(fit.sim.y) <- c(".n", "y")
+fit.sim.y$.n <- as.numeric(str_extract(fit.sim.y$.n, "\\d+"))
+fit.sim.y$attitude <- rep(df$attitude, 19)
+fit.sim.y$gender <- rep(df$gender, 19)
+fit.sim.y$subject <- rep(df$subject, 19)
+fit.sim.y$scenario <- rep(df$scenario, 19)
+```
+
+```{r data_simulated, include=FALSE}
+simdat <- purrr::map_dfr(1:19, function(i){
+  df <- fit.sim.y %>% filter(.n == i) 
+  m <- lmer(y ~ attitude + gender + (1|subject) + (1|scenario), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$subject)
+  nsubject <- length(subjects)
+  scenarios <- unique(df$scenario)
+  nscenario <- length(scenarios)
+  y <- df$y
+  X <- model.matrix(~attitude + gender, data = df)
+  beta <- fixef(m)
+  Z1 <- model.matrix(~subject - 1, data = df)
+  Z2 <- model.matrix(~scenario - 1, data = df)
+  Z <- cbind(Z1, Z2)
+  u <- c(ranef(m)$subject[,1], ranef(m)$scenario[,1])
+  q <- length(u)
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp=="Residual"] * diag(N)
+  G1 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
+  G2 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
+  G <- Matrix::bdiag(G1, G2)
+  Sigma <- Z %*% G %*% t(Z)  + R
+  Sigma_inv <- solve(Sigma)
+  varMargRes <- Sigma - X %*% solve(t(X) %*% solve(Sigma) %*% X) %*% t(X)
+  P <- Sigma_inv - Sigma_inv %*% X %*% solve(t(X) %*% Sigma_inv %*% X) %*% t(X) %*% Sigma_inv
+  varCondRes <- R %*% P %*% R
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
+
+```{r turedf, include=FALSE}
+colnames(fit_df)[5] <- c("y")
+```
+
+```{r lineup_2_1, fig.height=6, fig.width=10, dev='svg'}
+qplot(x = index, y = resm_std, color = subject, data = fit_df, geom = "point") %+% 
+  geom_hline(yintercept = 0) %+% 
+  lineup(true = fit_df, samples = simdat)+ 
+  facet_wrap( ~ .sample, ncol=5) +
+  xlab(NULL) + ylab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+```
+
+
+
+---
+# Visual inference for graphcial diagnostic
+
+- What are the classical statistical inference?
+  + t-test, F-test or likelihood ratio - fixed effect
+  + AIC, BIC - nested model
+  + likelihood ratio test - random effect
+
+- Why we want to use the graphical diagnostic?
+
+  Graphical diagnostic is useful to see when there is a problem with the model and where it occurs, besides, it gives some signs that what could be the reason of the issue.
+
+- How does it works?
+  - lineups
+
+---
+
+# Case: Linguistic data 
+
+- attribute and gender as fixed effects
+- subject and scenario as random effects
+
+
 
 ```{r fig.height=4, dev='svg'}
 fit_df %>% 

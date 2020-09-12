@@ -5,8 +5,9 @@
     <meta charset="utf-8" />
     <meta name="author" content="Kaiwen Jin" />
     <meta name="date" content="2020-09-18" />
-    <link href="libs/remark-css-0.0.1/default.css" rel="stylesheet" />
-    <link href="libs/remark-css-0.0.1/default-fonts.css" rel="stylesheet" />
+    <link href="libs/panelset-0.2.3/panelset.css" rel="stylesheet" />
+    <script src="libs/panelset-0.2.3/panelset.js"></script>
+    <link rel="stylesheet" href="xaringan-themer.css" type="text/css" />
   </head>
   <body>
     <textarea id="source">
@@ -20,11 +21,38 @@ class: center, middle, inverse, title-slide
 ---
 
 
+
+
+
+
+
+# Linguistic Case
+
+.panelset[
+.panel[.panel-name[Gender]
+
+
+
+![](presentation_1_files/figure-html/gender-1.svg)&lt;!-- --&gt;
+]
+
+.panel[.panel-name[Subject]
+
+![](presentation_1_files/figure-html/subject-1.svg)&lt;!-- --&gt;
+
+]
+
+.panel[.panel-name[Scenario]
+
+![](presentation_1_files/figure-html/scenario-1.svg)&lt;!-- --&gt;
+
+]
+]
+---
+
 # Linear Mixed Model
-
-- What is a linear mixed model?
-
-   `$$\boldsymbol{y = X\beta + Zb + e}$$`
+--
+.center[$$\boldsymbol{y = X\beta + Zb + e}$$]
 where 
   - `\(\mathbf{y}\)` is a `\(\mathbf{N \times 1}\)` vector of observations, outcome variable
   - `\(\mathbf{X}\)` is a `\(\mathbf{N \times p}\)` matrix
@@ -33,29 +61,10 @@ where
   - `\(\mathbf{b}\)` is a `\(\mathbf{q \times 1}\)` vector of the random effect
   - `\(E[\mathbf{y}] = \boldsymbol{X\beta}\)` and `\(V(\mathbf{y}) = \mathbf\Omega = \boldsymbol{Z\Gamma Z^\top + R}\)`
 
-- Where and why should we use the linear mixed model?
-  - flexible
-    
-- How can we implement the linear mixed model?
-  - `lmer` function from `lme4` package
-  - `mmer` function from `sommer` package
-  
----
-
-# Visual inference for graphcial diagnostic
-
-- What are the classical statistical inference?
-  + t-test, F-test or likelihood ratio - fixed effect
-  + AIC, BIC - nested model
-  + likelihood ratio test - random effect
-
-- Why we want to use the graphical diagnostic?
-
-  Graphical diagnostic is useful to see when there is a problem with the model and where it occurs, besides, it gives some signs that what could be the reason of the issue.
-
-- How does it works?
-  - lineups
-
+How can we implement the LME?
+- `lmer` function from `lme4` package
+- `mmer` function from `sommer` package
+--
 ---
 
 # Graphical diagnostic on residual analysis
@@ -78,22 +87,75 @@ where
 
 ---
 
-# Linguistic data
+# Linguistic Case 
+
+--
+### Presence of outlying observations
+--
+
+.panelset[
+.panel[.panel-name[Subject]
+
+
+![](presentation_1_files/figure-html/plot2-1-1.svg)&lt;!-- --&gt;
+]
+
+.panel[.panel-name[Scenario]
+
+![](presentation_1_files/figure-html/plot2-2-1.svg)&lt;!-- --&gt;
+]
+]
+---
+
+# Linguistic Case
+
+--
+## Normality of conditional errors
+--
+
+![](presentation_1_files/figure-html/plot6-1.svg)&lt;!-- --&gt;
+
+---
+# Lineups
 
 
 
 
-```r
-fit_df %&gt;% 
-  arrange(scenario) %&gt;% 
-  mutate(index = 1:n()) %&gt;% 
-  ggplot(aes(index, resc_std, color = scenario)) + 
-  geom_point() + 
-  geom_hline(yintercept = 0) + 
-  scale_color_discrete_qualitative()
-```
 
-![](presentation_1_files/figure-html/unnamed-chunk-1-1.svg)&lt;!-- --&gt;
+
+
+
+
+
+![](presentation_1_files/figure-html/lineup_2_1-1.svg)&lt;!-- --&gt;
+
+
+
+---
+# Visual inference for graphcial diagnostic
+
+- What are the classical statistical inference?
+  + t-test, F-test or likelihood ratio - fixed effect
+  + AIC, BIC - nested model
+  + likelihood ratio test - random effect
+
+- Why we want to use the graphical diagnostic?
+
+  Graphical diagnostic is useful to see when there is a problem with the model and where it occurs, besides, it gives some signs that what could be the reason of the issue.
+
+- How does it works?
+  - lineups
+
+---
+
+# Case: Linguistic data 
+
+- attribute and gender as fixed effects
+- subject and scenario as random effects
+
+
+
+![](presentation_1_files/figure-html/unnamed-chunk-3-1.svg)&lt;!-- --&gt;
 
 ---
 # Motivation: Justify the research topic
