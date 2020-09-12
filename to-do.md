@@ -10,3 +10,9 @@
   
 * By week 5 Thu:
   * `xaringan` package - slides
+  
+* By week 7 Tue:
+  * Presentation
+
+* By week 7 Thu:
+  * Find 2-3 dataset
