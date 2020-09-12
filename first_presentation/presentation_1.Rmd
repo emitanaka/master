@@ -86,6 +86,8 @@ ggplot(df, aes(scenario, frequency)) + geom_boxplot() + geom_beeswarm(aes(color 
 # Linear Mixed Model
 --
 .center[$$\boldsymbol{y = X\beta + Zb + e}$$]
+--
+
 where 
   - $\mathbf{y}$ is a $\mathbf{N \times 1}$ vector of observations, outcome variable
   - $\mathbf{X}$ is a $\mathbf{N \times p}$ matrix
@@ -97,7 +99,7 @@ where
 How can we implement the LME?
 - `lmer` function from `lme4` package
 - `mmer` function from `sommer` package
---
+
 ---
 
 # Graphical diagnostic on residual analysis
