@@ -12,6 +12,7 @@ library(lme4)
 library(tidyverse)
 library(ggbeeswarm)
 library(colorspace)
+library(dplyr)
 knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE#,
