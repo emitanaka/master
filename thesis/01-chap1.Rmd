@@ -132,8 +132,15 @@ Model selection:
 
 Model checking:
 - Homogeneity of residual variance
+  + conditional residual v.s. the explanatory variable to see if there is any heteroscedasticity in the residual (trend..)
+  
+  + However, when we check the homoskedasticity of conditional errors. We use the standardised conditional residual versus fitted value according to [@Singer]
+  
 - linearity
+  + Conditional residual v.s the explanatory variable. It is to check whether **higher-order polynomial** is required.
+  
 - Distributional assessment
+  - random effect residuals
 
 * residual diagnostic of plots
   + marginal residuals, $\boldsymbol{\hat{\xi} = y - X \hat\beta}$
