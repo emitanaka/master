@@ -218,13 +218,18 @@ fit_df %>%
 ## Normality of conditional errors
 --
 
-```{r plot6, fig.height=4, dev='svg'}
+```{r plot6, fig.height=4.5, dev='svg'}
+library(qqplotr)
 ggplot(fit_df, aes(sample = resc_std)) + 
-  geom_qq() + geom_qq_line(color = "red")
+  stat_qq_band(bandType = "pointwise", fill = "#8DA0CB", qprobs = c(0.25, 0.75), alpha = 0.4) +
+  stat_qq_line(colour = "#8DA0CB") +
+  stat_qq_point() +
+  xlab("Normal quantiles") +
+  ylab("Standard conditional residuals")
 ```
 
 ---
-# Lineups
+# Lineup Protocol
 
 ```{r simulate, include=FALSE}
 # Simulate data for null plots from `fit` model
@@ -293,7 +298,7 @@ colnames(fit_df)[5] <- c("y")
 ```{r lineup_2_1, fig.height=6, fig.width=10, dev='svg'}
 qplot(x = index, y = resm_std, color = subject, data = fit_df, geom = "point") %+% 
   geom_hline(yintercept = 0) %+% 
-  lineup(true = fit_df, samples = simdat)+ 
+  lineup(true = fit_df, samples = simdat, pos = 9)+ 
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) + 
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
@@ -302,24 +307,13 @@ qplot(x = index, y = resm_std, color = subject, data = fit_df, geom = "point") %
 
 ---
 
-# Lineups
-```{r lineup_2_2, fig.height=6, fig.width=10, dev='svg'}
-qplot(x = index, y = resm_std, color = scenario, data = fit_df, geom = "point") %+% 
-  geom_hline(yintercept = 0) %+% 
-  lineup(true = fit_df, samples = simdat)+ 
-  facet_wrap( ~ .sample, ncol=5) +
-  xlab(NULL) + ylab(NULL) + 
-  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
-```
-
----
-
-# Lineups
+# Lineup Protocol
 
 ```{r lineup_6, fig.height=6, fig.width=10, dev='svg'}
 ggplot(fit_df, aes(sample = resc_std)) %+% 
-  geom_qq() %+% geom_qq_line(color = "red") %+%
+  stat_qq_band(bandType = "pointwise", fill = "#8DA0CB", qprobs = c(0.25, 0.75), alpha = 0.4) %+%
+  stat_qq_line(colour = "#8DA0CB") %+%
+  stat_qq_point() %+% 
   lineup(true = fit_df, samples = simdat, pos = 9) +
   facet_wrap( ~ .sample, ncol=5)+
   xlab(NULL) + ylab(NULL) + 
