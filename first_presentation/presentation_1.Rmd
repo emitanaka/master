@@ -300,95 +300,30 @@ qplot(x = index, y = resm_std, color = subject, data = fit_df, geom = "point") %
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
 ```
 
-
-
----
-# Visual inference for graphcial diagnostic
-
-- What are the classical statistical inference?
-  + t-test, F-test or likelihood ratio - fixed effect
-  + AIC, BIC - nested model
-  + likelihood ratio test - random effect
-
-- Why we want to use the graphical diagnostic?
-
-  Graphical diagnostic is useful to see when there is a problem with the model and where it occurs, besides, it gives some signs that what could be the reason of the issue.
-
-- How does it works?
-  - lineups
-
 ---
 
-# Case: Linguistic data 
-
-- attribute and gender as fixed effects
-- subject and scenario as random effects
-
-
-
-```{r fig.height=4, dev='svg'}
-fit_df %>% 
-  arrange(scenario) %>% 
-  mutate(index = 1:n()) %>% 
-  ggplot(aes(index, resc_std, color = scenario)) + 
-  geom_point() + 
-  geom_hline(yintercept = 0) + 
-  scale_color_discrete_qualitative()
+# Lineups
+```{r lineup_2_2, fig.height=6, fig.width=10, dev='svg'}
+qplot(x = index, y = resm_std, color = scenario, data = fit_df, geom = "point") %+% 
+  geom_hline(yintercept = 0) %+% 
+  lineup(true = fit_df, samples = simdat)+ 
+  facet_wrap( ~ .sample, ncol=5) +
+  xlab(NULL) + ylab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
 ```
 
 ---
-# Motivation: Justify the research topic
 
-* define topic
+# Lineups
 
-  * What is linear mixed model?
+```{r lineup_6, fig.height=6, fig.width=10, dev='svg'}
+ggplot(fit_df, aes(sample = resc_std)) %+% 
+  geom_qq() %+% geom_qq_line(color = "red") %+%
+  lineup(true = fit_df, samples = simdat, pos = 9) +
+  facet_wrap( ~ .sample, ncol=5)+
+  xlab(NULL) + ylab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+```
 
-
-
-  * Why use the visual inference rather than the classical statistical inference?
-    - what are the classical statistical inference?
-      + t-test, F-test or likelihood ratio - fixed effect
-      + AIC, BIC - nested model
-      + likelihood ratio test - random effect
-    - parallel
-
-* why would we use the plots to do the diagnostic rather than the classical inference
-
-Although we always using ggplot to do the graph, we never think about the plots can replace the statistical inference.
-
-LME is the new contents for me.
-
-Love coding
-
-* benefits
-
-- what is relevent to topic
-- what is not relevent
-
----
-
-# Objectives - research questions
-
-"Which plot is most different"
----
-
-# Literature review
-
-- your topic is significant
-- you understant the topic
-- main point: distinguish your research from similar current research
-
-describe significant contributions
-analyse the strengths and weaknesses of these contributions
-describe how these are relevant to your research
-identify how you will extend on the current research; that is your contribution
-
----
-
-# Purpose of the project plan?
-
-* state the data and the data sources you will use
-* outline how you will collect and manage 
-* introduce the methodology
-
----
