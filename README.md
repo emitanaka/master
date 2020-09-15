@@ -2,7 +2,8 @@
 
 1st Presentation Submission (Week 7): Friday, 18 September 2020, 6:00 PM (10%)
 + 10 Min Presentation 
-+ No longer than 10 slides
++ No longer than 10 slides, not including the front page and the pages mainly showing figures.
++ Submit Presentation Vedio and Slides (PDF)
 + Structure is in the Week 2_overview.pdf
 
 2nd Presentation Submission (Week 12): Friday, 6 November 2020, 6:00 PM (20%)
