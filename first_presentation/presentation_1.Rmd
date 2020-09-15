@@ -15,29 +15,7 @@ output:
 ---
 ```{r include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
-```
-
-```{r xaringan-themer, include=FALSE, warning=FALSE}
 library(xaringanthemer)
-style_mono_accent(
-  base_color = "#1c5253",
-  header_font_google = google_font("Josefin Sans"),
-  text_font_google   = google_font("Montserrat", "300", "300i"),
-  code_font_google   = google_font("Fira Mono")
-)
-```
-
-```{r xaringan-panelset, echo=FALSE}
-library(xaringanExtra)
-xaringanExtra::use_panelset()
-```
-
-# Linguistic Case
-
-.panelset[
-.panel[.panel-name[Gender]
-
-```{r include=FALSE}
 library(lme4)
 library(tidyverse)
 library(ggbeeswarm)
@@ -50,20 +28,52 @@ knitr::opts_chunk$set(
   #cache.path = "cache/",
   #cache = TRUE
 )
+```
+
+```{r xaringan-themer, include=FALSE, warning=FALSE}
+style_mono_accent(
+  base_color = "#1c5253",
+  header_font_google = google_font("Josefin Sans"),
+  text_font_google   = google_font("Montserrat", "300", "300i"),
+  code_font_google   = google_font("Fira Mono")
+)
+```
+
+## Linguistic Case
+
+```{r include=FALSE}
 df <- read_csv('~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/data/politeness_data.csv') %>% 
   mutate(scenario = fct_reorder(factor(scenario), frequency, function(x) mean(x, na.rm = TRUE)),
          subject = fct_reorder(subject, frequency, function(x) mean(x, na.rm = TRUE)))
 df <- na.omit(df)
 ```
 
-```{r gender,fig.height=4, dev='svg'}
-ggplot(df, aes(gender, frequency)) + geom_point() 
+.pull-left[
+- Gender (female or male)
+
+- Attidute (informal or polite)
+
+- 6 subjects (3 male and 3 female)
+
+- 7 scenarios
+]
+
+--
+.pull-right[
+
+#### frequency ~ gender + $\varepsilon$
+
+```{r gender,fig.dim=c(4.8, 4.5), out.width="100%", dev='svg'}
+ggplot(df, aes(gender, frequency)) + geom_point() + stat_smooth(aes(group = 1), method = "lm", se = FALSE)
 ```
 ]
 
-.panel[.panel-name[Subject]
 
-```{r subject, fig.height=4, dev='svg'}
+---
+
+### With different subjects
+
+```{r subject, fig.height=5, dev='svg'}
 ggplot(df, aes(attitude, frequency, fill = gender)) + 
   geom_boxplot() + 
   facet_grid(~subject) +
@@ -71,22 +81,19 @@ ggplot(df, aes(attitude, frequency, fill = gender)) +
   scale_fill_discrete_qualitative() 
 ```
 
-]
+---
 
-.panel[.panel-name[Scenario]
+### With different scenarios
 
-```{r scenario, fig.height=4, dev='svg'}
+```{r scenario, fig.height=5, dev='svg'}
 ggplot(df, aes(scenario, frequency)) + geom_boxplot() + geom_beeswarm(aes(color = gender))
 ```
 
-]
-]
 ---
 
-# Linear Mixed Model
+## Linear Mixed Model
 --
 .center[$$\boldsymbol{y = X\beta + Zb + e}$$]
---
 
 where 
   - $\mathbf{y}$ is a $\mathbf{N \times 1}$ vector of observations, outcome variable
@@ -95,6 +102,8 @@ where
   - $\mathbf{b}$ is a $\mathbf{N \times q}$ matrix
   - $\mathbf{b}$ is a $\mathbf{q \times 1}$ vector of the random effect
   - $E[\mathbf{y}] = \boldsymbol{X\beta}$ and $V(\mathbf{y}) = \mathbf\Omega = \boldsymbol{Z\Gamma Z^\top + R}$
+--
+
 
 How can we implement the LME?
 - `lmer` function from `lme4` package
@@ -102,7 +111,7 @@ How can we implement the LME?
 
 ---
 
-# Graphical diagnostic on residual analysis
+## Graphical diagnostic on residual analysis
 
 * Types of residuals and corresponding residual diagnostic purpose:
 
@@ -122,14 +131,12 @@ How can we implement the LME?
 
 ---
 
-# Linguistic Case 
-
---
 ### Presence of outlying observations
---
 
-.panelset[
-.panel[.panel-name[Subject]
+
+.pull-left[
+- Subject
+
 ```{r setup, include = FALSE}
 fit <- lmer(frequency ~ attitude + gender + 
               (1|subject) + (1|scenario),
@@ -188,7 +195,7 @@ unit_df <- expand_grid(subjects, scenarios) %>%
          )
 ```
 
-```{r plot2-1, fig.height=4, dev='svg'}
+```{r plot2-1, fig.dim=c(4.8, 4.5), out.width="100%", dev='svg'}
 ggplot(fit_df, aes(index, resm_std, 
                    color = subject)) + 
   geom_point() + 
@@ -197,9 +204,12 @@ ggplot(fit_df, aes(index, resm_std,
 ```
 ]
 
-.panel[.panel-name[Scenario]
+--
+.pull-right[
 
-```{r plot2-2, fig.height=4, dev='svg'}
+- Scenario
+
+```{r plot2-2, fig.dim=c(4.8, 4.5), out.width="100%", dev='svg'}
 fit_df %>% 
   arrange(scenario) %>% 
   mutate(index = 1:n()) %>% 
@@ -208,15 +218,13 @@ fit_df %>%
   geom_hline(yintercept = 0) + 
   scale_color_discrete_qualitative()
 ```
+
 ]
-]
+
 ---
 
-# Linguistic Case
+### Normality of conditional errors
 
---
-## Normality of conditional errors
---
 
 ```{r plot6, fig.height=4.5, dev='svg'}
 library(qqplotr)
@@ -231,6 +239,7 @@ ggplot(fit_df, aes(sample = resc_std)) +
 ---
 # Lineup Protocol
 
+--
 ```{r simulate, include=FALSE}
 # Simulate data for null plots from `fit` model
 fit.sim  <- simulate(fit, nsim = 19, seed = 1234)
