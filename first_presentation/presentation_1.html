@@ -12,6 +12,7 @@
 class: center, middle, inverse, title-slide
 
 # Visual Inference for Graphcial Diagnostic of Linear Mixed Models
+## Supervisor: Dr Emi Tanaka &amp; Prof Di Cook
 ### Kaiwen Jin
 ### Monash University
 ### 2020-09-18
@@ -22,18 +23,25 @@ class: center, middle, inverse, title-slide
 
 
 
+&lt;style type="text/css"&gt;
+.footnote { position: absolute; bottom:0; }
+&lt;/style&gt;
+
 ## Linguistic Case
 
+### Data
 
 
 .pull-left[
 - Gender (female or male)
 
-- Attidute (informal or polite)
+- Attitude (informal or polite)
 
 - 6 subjects (3 male and 3 female)
 
-- 7 scenarios
+- 7 scenarios (such as excusing for coming too late)
+
+- Frequency (also called voice pitch)
 ]
 
 --
@@ -41,17 +49,26 @@ class: center, middle, inverse, title-slide
 
 #### frequency ~ gender + `\(\varepsilon\)`
 
-&lt;img src="presentation_1_files/figure-html/gender-1.svg" width="100%" /&gt;
+![](presentation_1_files/figure-html/gender-1.svg)&lt;!-- --&gt;
 ]
 
+???
+
+Here i'd like to introduce you a linguistic case. There are 84 observations in the dataset with one missing value. The top 4 categorical variables are the independent variables and the last one is the dependent variable `frequency which is also called voice pitch`.
+
+If we fit the linear model such as frequency is a function of gender. From this plot we can see that the overall female voice pitch is higher than the male.
+
+But how does the frequency differ with different subjects?
 
 ---
+class: inverse, middle, center
 
 ### With different subjects
 
 ![](presentation_1_files/figure-html/subject-1.svg)&lt;!-- --&gt;
 
 ---
+class: inverse, middle, center
 
 ### With different scenarios
 
@@ -63,44 +80,75 @@ class: center, middle, inverse, title-slide
 --
 .center[$$\boldsymbol{y = X\beta + Zb + e}$$]
 
-where 
-  - `\(\mathbf{y}\)` is a `\(\mathbf{N \times 1}\)` vector of observations, outcome variable
-  - `\(\mathbf{X}\)` is a `\(\mathbf{N \times p}\)` matrix
-  - `\(\boldsymbol\beta\)` is a `\(\mathbf{p \times 1}\)` vector of the fixed effect
-  - `\(\mathbf{b}\)` is a `\(\mathbf{N \times q}\)` matrix
-  - `\(\mathbf{b}\)` is a `\(\mathbf{q \times 1}\)` vector of the random effect
-  - `\(E[\mathbf{y}] = \boldsymbol{X\beta}\)` and `\(V(\mathbf{y}) = \mathbf\Omega = \boldsymbol{Z\Gamma Z^\top + R}\)`
---
+where
 
+.pull-left[
+- `\(\mathbf{y}\)` is a `\(\mathbf{N \times 1}\)` vector of observations, outcome variable
+- `\(\mathbf{X}\)` is a `\(\mathbf{N \times p}\)` matrix
+- `\(\boldsymbol\beta\)` is a `\(\mathbf{p \times 1}\)` vector of the fixed effect
+- `\(\mathbf{Z}\)` is a `\(\mathbf{N \times q}\)` matrix
+- `\(\mathbf{b}\)` is a `\(\mathbf{q \times 1}\)` vector of the random effect
+]
+
+.pull-right[
+`\begin{align*}
+   \begin{bmatrix}
+      \mathbf{b} \\ \mathbf{e}
+   \end{bmatrix}
+   \sim \mathcal{N}\left(\begin{bmatrix}\mathbf{0} \\ \mathbf{0} \end{bmatrix}, \begin{bmatrix} \mathbf{\Gamma} &amp; \mathbf{0} \\ \mathbf{0} &amp; \mathbf{R} \end{bmatrix}\right)
+\end{align*}`
+
+`\begin{align*}
+  \mathbf{y} \sim \mathcal{N} (\boldsymbol{X\beta}, \mathbf\Omega = \boldsymbol{Z\Gamma Z^\top + R})
+\end{align*}`
+  ]
+  
+--
 
 How can we implement the LME?
 - `lmer` function from `lme4` package
 - `mmer` function from `sommer` package
 
+.footnote[
+&lt;br&gt;&lt;span style=“font-size:3pt”&gt;Douglas Bates, Martin Maechler, Ben Bolker, Steve Walker (2015). Fitting Linear Mixed-Effects Models Using lme4. Journal of Statistical Software, 67(1), 1-48. doi:10.18637/jss.v067.i01. &lt;/span&gt;
+]
+
+???
+
+The formula for the linear mixed model is shown like this. Y is the response variable, X and Z are designed matrices for the fixed and random effects respectively. Beta is the fixed effects. B refers to the random effect. Epsilon denotes the error term which follows an identical independent normal distribution. The marginal distribution of y is normally distributed with mean X times beta and variance Omega. We often use these two functions to build the linear mixed model from the lme4 and sommer packages.
+
 ---
 
 ## Graphical diagnostic on residual analysis
 
-* Types of residuals and corresponding residual diagnostic purpose:
-
-  - Marginal residuals, `\(\boldsymbol{\hat\xi = y - X\hat \beta}\)`
-      + Linear of the effects fixed 
-      + Presence of outlying observations
-      + Within-units covariance matrix 
-    
-  - Conditional residuals, `\(\boldsymbol{\hat e = y - X\hat \beta - Z\hat b}\)`
-      + Presence of outlying observations 
-      + Homoskedasticity of conditional errors 
-      + Normality of conditional errors 
+Types of residuals and corresponding residual diagnostic purpose:
+.pull-left[
+- Marginal residuals, `\(\boldsymbol{\hat\xi = y - X\hat \beta}\)`
+    + Linear of the effects fixed 
+    + Presence of outlying observations
+    + Within-units covariance matrix 
       
-  - Random effect residuals, `\(\mathbf{Z\hat b}\)`
+- Random effect residuals, `\(\mathbf{Z\hat b}\)`
       + Presence of outlying subjects 
       + Normality of the random effects 
+]
+.pull-right[
+- Conditional residuals, `\(\boldsymbol{\hat e = y - X\hat \beta - Z\hat b}\)`
+    + Presence of outlying observations 
+    + Homoskedasticity of conditional errors 
+    + Normality of conditional errors 
+]
+    
+.footnote[
+&lt;span style=“font-size:3pt”&gt;[1.]Haslett, J., &amp; Haslett, S. J. (2007). The three basic types of residuals for a linear model. International Statistical Review, 75(1), 1-24. Chicago &lt;br&gt;[2.]Singer, J. M., Rocha, F. M., &amp; Nobre, J. S. (2017). Graphical tools for detecting departures from linear mixed model assumptions and some remedial measures. International Statistical Review, 85(2), 290-324. &lt;br&gt;[3.]Loy, A., Hofmann, H., &amp; Cook, D. (2017). Model choice and diagnostics for linear mixed-effects models using statistics on street corners. Journal of Computational and Graphical Statistics, 26(3), 478-492.&lt;/span&gt;
+]
 
+???
+
+According to Haslett’s literature, there are 3 residuals in the linear mixed model. There are marginal residuals, conditional residuals and random effect residuals. And the following are the main purposes of graphical diagnostics for different residuals indicated by Singer. These diagnostic plots are similar to the test statistics in the classical statistical inference which will talk later. In Adam Loy’s paper, they mainly focus on the conditional residual and random effect residuals. They have already talked about the homogeneity of residual variance and linearity on the conditional residuals as well as the distribution assessment for the random effects residual. Here I mainly focus on the presence of outlying observations for the marginal residuals and the normality of the conditional errors in the linguistic case.
 ---
 
 ### Presence of outlying observations
-
 
 .pull-left[
 - Subject
@@ -119,6 +167,11 @@ How can we implement the LME?
 
 ]
 
+???
+
+The presence of outlying observations plot shows the standard marginal residual vs the observation indices. With specifying the subjects, you can see that M7 has all the negative standard marginal residuals. Other than this, there is another subject called M3 whose standard marginal residuals are all positive.
+ And it should be the outlier here for the M4 which is close to 3. And there seems to be an outlier for scenario 2 by specifying the scenario condition.
+
 ---
 
 ### Normality of conditional errors
@@ -126,10 +179,35 @@ How can we implement the LME?
 
 ![](presentation_1_files/figure-html/plot6-1.svg)&lt;!-- --&gt;
 
+???
+
+Next we can use the plot to see if the simple standardised conditional residuals follows a normal distribution. Have a glance, it seems that it follows the normal distribution but maybo with some **heavy tail**.
+
+Hilden-Minton said the ability to check for normality of the conditional errors increases as minimising the fraction of confounding for the conditional residuals. However, Piepho disaggreed with that. For this point of view, we will check it in the future if the least confounded conditional residual works. 
+
 ---
-# Lineup Protocol
+
+## Lineup Protocol
+
+1. Simulate the new responses
+2. Refit the model to these simulated responses
+3. Extract the residuals from the proposed model
+4. Construct the lineup
+5. **Which plot is most different?**
 
 --
+#### Visual Inference
+- Hypothesis
+- Test Statistic: Observed plot
+- Sampling Distribution: Lineup
+- Desicion Rule: If the observed plot is identifiable, then we can reject the null hypothesis. 
+
+.footnote[
+&lt;span style=“font-size:3pt”&gt;[1.]Buja, A., Cook, D., Hofmann, H., Lawrence, M., Lee, E.-K., Swayne, D. F, Wickham, H. (2009) Statistical Inference for Exploratory Data Analysis and Model Diagnostics Royal Society Philosophical Transactions A, 367(1906):4361-4383. http://rsta.royalsocietypublishing.org/content/367/1906/4361.article-info[1.] &lt;br&gt;[2.]Mahbubul Majumder , Heike Hofmann &amp; Dianne Cook (2013) Validation of Visual Statistical Inference, Applied to Linear Models, Journal of the American Statistical Association, 108:503, 942-956, DOI: 10.1080/01621459.2013.808157&lt;/span&gt;
+]
+
+---
+class: inverse, middle, center
 
 
 
@@ -139,20 +217,42 @@ How can we implement the LME?
 
 
 
-![](presentation_1_files/figure-html/lineup_2_1-1.svg)&lt;!-- --&gt;
+
+![](presentation_1_files/figure-html/lineup_6-1.svg)&lt;!-- --&gt;
+
+???
+
+For the next plot, we can see that also panel 9 is the most different of the lineup. As there is a heavy tail on the distribution. 
+
+Because of the time constrain, I just show you one dataset. However, I will use diverse dataset to explain maybe some variable are numeric and some are categorical in the future. Although the example is not that sufficient, the graphical diagnostic is suitable for all linear mixed model. And I will keep exploring the easy and interesting way to do the visual inference.
+
+All right. That’s all my presentation. Thank you~
 
 ---
 
-# Lineup Protocol
+## Research Objective
+1. Least confounded conditional residuals `\(\mathbf{c}_k^\top \hat{\mathbf{e}}\)` v.s Standardised conditional residuals
 
-![](presentation_1_files/figure-html/lineup_6-1.svg)&lt;!-- --&gt;
+2. Presence of outlying observation:
+  - Marginal residual v.s Conditional residuals
+
+## Research Plan
+
+Do a **user study**
+
+.footnote[
+&lt;span style=“font-size:7pt”&gt;[1.]Loy, A., Hofmann, H., &amp; Cook, D. (2017). Model choice and diagnostics for linear mixed-effects models using statistics on street corners. Journal of Computational and Graphical Statistics, 26(3), 478-492. &lt;br&gt;[2.]Hilden-Minton, J.A. (1995). Multilevel diagnostics for mixed and hierarchical linear models, Unpublished PhD Thesis, University of California, Los Angeles. &lt;br&gt;[3.]Schützenmeister, A. &amp; Piepho, H.P. (2012). Residual analysis of linear mixed models using a simulation approach. Comput. Stat. Data Anal., 56, 1405–1416.&lt;/span&gt;
+]
     </textarea>
 <style data-target="print-only">@media screen {.remark-slide-container{display:block;}.remark-slide-scaler{box-shadow:none;}}</style>
 <script src="https://remarkjs.com/downloads/remark-latest.min.js"></script>
 <script>var slideshow = remark.create({
+"ratio": "16:9",
 "highlightStyle": "github",
 "highlightLines": true,
-"countIncrementalSlides": false
+"countIncrementalSlides": false,
+"bibliography": "ref.bib",
+"link-citations": true
 });
 if (window.HTMLWidgets) slideshow.on('afterShowSlide', function (slide) {
   window.dispatchEvent(new Event('resize'));
