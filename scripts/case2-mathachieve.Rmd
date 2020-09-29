@@ -1,0 +1,145 @@
+---
+title: "Case for MathAchieve and MathAchSchool"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(lme4)
+library(nlme)
+library(dplyr)
+library(ggplot2)
+library(ggbeeswarm)
+```
+
+Each row in `MathAchieve` represents each of the 7185 students within 160 schools. Each row in `MathAchSchool` represents each of 160 schools.
+
+The variables that we are going to use:
+- School
+- SES
+- MathAch
+- Sector
+- MEANSES
+
+```{r}
+data("MathAchieve")
+summary(MathAchieve)
+```
+```{r}
+attach(MathAchieve)
+mses <- tapply(SES, School, mean)
+detach(MathAchieve)
+```
+
+```{r}
+data("MathAchSchool")
+head(MathAchSchool)
+```
+
+Since the `MEANSES` is different in `MathAchieve` and `MathAchSchool`, the new mean of SES for students in each school is generated.
+
+```{r}
+Bryk <- as.data.frame(MathAchieve[,c("School", "SES", "MathAch")])
+Bryk$meanses <- mses[as.character(Bryk$School)]
+sector <- MathAchSchool$Sector
+names(sector) <- row.names(MathAchSchool)
+Bryk$Sector <- sector[as.character(Bryk$School)]
+contrasts(Bryk$Sector)
+```
+
+```{r}
+fit <- lmer(MathAch ~ SES + Sector + (1|School), data = Bryk)
+
+N <- nrow(Bryk) 
+school <- unique(as.character(Bryk$School))
+nschool <- length(school)
+
+y <-  Bryk$MathAch
+X <- model.matrix(~ SES + Sector, data = Bryk)
+beta <- fixef(fit)
+Z <- model.matrix(~ School - 1, data = Bryk)
+u <- ranef(fit)$School[,1]
+q <- length(u)
+vc <- as.data.frame(VarCorr(fit))
+R <- vc$vcov[vc$grp == "Residual"] * diag(N)
+G <- vc$vcov[vc$grp == "School"] * diag(q)
+Sigma <- Z %*% G %*% t(Z) + R
+Sigma_inv <- solve(Sigma)
+varMargRes <- Sigma - X %*% solve(t(X) %*% solve(Sigma) %*% X) %*% t(X)
+P <- Sigma_inv - Sigma_inv %*% X %*% solve(t(X) %*% Sigma_inv %*% X) %*% t(X) %*% Sigma_inv
+varCondRes <- R %*% P %*% R
+varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+```
+
+```{r}
+fit_bryk <- Bryk %>% 
+  mutate(fitted = as.vector(X %*% beta),
+         resm = MathAch - fitted, 
+         resc = MathAch - fitted - as.vector(Z %*% u),
+         index = 1:n()) %>% 
+  rowwise() %>% 
+  mutate(resm_std = resm / sqrt(diag(varMargRes)[index]),
+         resc_std = resc / sqrt(diag(varCondRes)[index])) %>% 
+  ungroup()
+
+
+```
+
+## Diagnostic Plot 1: Linearity of fixed effects
+
+```{r}
+ggplot(fit_bryk, aes(fitted, resm_std)) +
+  geom_hline(yintercept = 0) +
+  geom_point()
+```
+
+## Diagnostic Plot 2: Prescence of outlying observations
+
+```{r}
+ggplot(fit_bryk, aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+## Diagnostic Plot 4: Prescense of outlying observations using conditional residual
+
+```{r}
+ggplot(fit_bryk, aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+## Diagnostic Plot 5: Homoskedasticity of conditional errors 
+
+```{r}
+ggplot(fit_bryk, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+## Diagnostic Plot 6: Normality of conditional errors
+
+```{r}
+ggplot(fit_bryk, aes(sample = resc_std)) + 
+  geom_qq() + geom_qq_line(color = "red")
+```
+
+## Diagnostic Plot 7: Presencse of outlying subjects 
+
+
+```{r}
+ggplot(MathAchieve, aes(Sex, MathAch)) +
+  geom_beeswarm(alpha = .2) +
+  facet_grid(. ~Minority)
+```
+
+```{r}
+length(unique(MathAchieve$School))
+```
+160 schools with the `MEANSES` is the nummeric vector of the mean SES for the school.
+
+```{r}
+df <- MathAchieve %>% mutate(Sex = ifelse(Sex == "Male", 0, 1), Minority = ifelse(Minority == "No", 0, 1))
+str(df)
+```
+
+```{r}
+model <- lmer(MathAch ~ Sex + SES + (1|School) + (1|MEANSES), data = df)
+summary(model)
+```
+
+[http://www.stat.rutgers.edu/home/yhung/Stat586/Mixed%20model/appendix-mixed-models.pdf]
