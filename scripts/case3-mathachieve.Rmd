@@ -9,10 +9,14 @@ library(lme4)
 library(nlme)
 library(dplyr)
 library(ggplot2)
+library(tidyr)
+library(purrr)
 library(ggbeeswarm)
 ```
 
 Each row in `MathAchieve` represents each of the 7185 students within 160 schools. Each row in `MathAchSchool` represents each of 160 schools.
+
+[http://www.stat.rutgers.edu/home/yhung/Stat586/Mixed%20model/appendix-mixed-models.pdf]
 
 The variables that we are going to use:
 - School
@@ -81,8 +85,25 @@ fit_bryk <- Bryk %>%
   mutate(resm_std = resm / sqrt(diag(varMargRes)[index]),
          resc_std = resc / sqrt(diag(varCondRes)[index])) %>% 
   ungroup()
+```
 
+Lesaffre and Verbeke comment that when the within-unit covariance structure is adequate, $V_i = ||I_{m_i} - \varepsilon_i \varepsilon^\top||^2$, where $\varepsilon_i = \hat \Omega ^{-1/2} \hat \xi$ should be close to zero. However, Singer consider replacing $\varepsilon_i$ in $V_i$ with the standardised marginal residuals $\hat \xi_i^* = [\hat V(\hat \xi_i)]^{-1/2} \hat \xi_i$, where $V(\hat \xi_i)$ refers to the diagonal block of $\Omega - X(X^\top \Omega^{-1} X)^{-1} X^\top$ associated to the $i$ unit.
 
+```{r}
+unit_df <- expand_grid(school) %>% 
+  # cannot follow Vi quit well
+  mutate(Vi = map_dbl(school, ~{
+                        ind <- Bryk %>% 
+                          mutate(index = 1:n()) %>% 
+                          filter(School == .x) %>% 
+                          pull(index)
+                        mi <- length(ind)
+                        # standardised marginal residual
+                        Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% fit_bryk$resm[ind]
+                        sqrt(sum((diag(mi) - Ei %*% t(Ei))^2)) / mi
+                      }),
+         Mi = as.vector(t(u) %*% solve(varU) %*% u)
+         )
 ```
 
 ## Diagnostic Plot 1: Linearity of fixed effects
@@ -97,6 +118,12 @@ ggplot(fit_bryk, aes(fitted, resm_std)) +
 
 ```{r}
 ggplot(fit_bryk, aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+## Diagnostic Plot 3: Within-units covariance matrix
+
+```{r}
+ggplot(unit_df, aes(1:nrow(unit_df), Vi)) + geom_point()+ xlab("Unit indicies") + ylab("Modified Lesaffre-Verbeke index")
 ```
 
 ## Diagnostic Plot 4: Prescense of outlying observations using conditional residual
@@ -120,6 +147,21 @@ ggplot(fit_bryk, aes(sample = resc_std)) +
 
 ## Diagnostic Plot 7: Presencse of outlying subjects 
 
+```{r}
+ggplot(unit_df, aes(1:nrow(unit_df), Mi)) + geom_point() + xlab("Unit index") + ylab("Manhalanobis distance")
+```
+
+## Diagnostic Plot 8: Normality of the random effects
+
+```{r}
+ggplot(unit_df, aes(sample = Mi)) + 
+  geom_qq(distribution = stats::qchisq,
+          dparams = list(df = q)) +
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q))
+```
+
 
 ```{r}
 ggplot(MathAchieve, aes(Sex, MathAch)) +
@@ -142,4 +184,3 @@ model <- lmer(MathAch ~ Sex + SES + (1|School) + (1|MEANSES), data = df)
 summary(model)
 ```
 
-[http://www.stat.rutgers.edu/home/yhung/Stat586/Mixed%20model/appendix-mixed-models.pdf]
