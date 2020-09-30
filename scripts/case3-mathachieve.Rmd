@@ -12,6 +12,7 @@ library(ggplot2)
 library(tidyr)
 library(purrr)
 library(ggbeeswarm)
+library(stringr)
 ```
 
 Each row in `MathAchieve` represents each of the 7185 students within 160 schools. Each row in `MathAchSchool` represents each of 160 schools.
@@ -51,7 +52,7 @@ Bryk$Sector <- sector[as.character(Bryk$School)]
 contrasts(Bryk$Sector)
 ```
 
-```{r}
+```{r fit}
 fit <- lmer(MathAch ~ SES + Sector + (1|School), data = Bryk)
 
 N <- nrow(Bryk) 
@@ -161,6 +162,59 @@ ggplot(unit_df, aes(sample = Mi)) +
                distribution = stats::qchisq,
                dparams = list(df = q))
 ```
+
+```{r}
+fit.sim  <- simulate(fit, nsim = 19, seed = 1234)
+fit.refit <- lapply(fit.sim, refit, object = fit)
+fit.simy <- lapply(fit.refit, function(x) getME(x, "y"))
+```
+
+```{r}
+fit.sim.y <- do.call("cbind", fit.simy)
+fit.sim.y <- reshape2::melt(fit.sim.y)[-1]
+names(fit.sim.y) <- c(".n", "y")
+fit.sim.y$.n <- as.numeric(str_extract(fit.sim.y$.n, "\\d+"))
+fit.sim.y$School <- rep(Bryk$School, 19)
+fit.sim.y$SES <- rep(Bryk$SES, 19)
+fit.sim.y$Sector <- rep(Bryk$Sector, 19)
+```
+
+```{r}
+simdat <- purrr::map_dfr(1:19, function(i){
+  df <- fit.sim.y %>% filter(.n == i)
+  m <- lmer(y ~ SES + Sector + (1|School), data = df)
+  
+  N <- nrow(df) 
+  school <- unique(as.character(df$School))
+  nschool <- length(school)
+
+  y <-  df$y
+  X <- model.matrix(~ SES + Sector, data = df)
+  beta <- fixef(m)
+  Z <- model.matrix(~ School - 1, data = df)
+  u <- ranef(m)$School[,1]
+  q <- length(u)
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == "Residual"] * diag(N)
+  G <- vc$vcov[vc$grp == "School"] * diag(q)
+  Sigma <- Z %*% G %*% t(Z) + R
+  Sigma_inv <- solve(Sigma)
+  varMargRes <- Sigma - X %*% solve(t(X) %*% solve(Sigma) %*% X) %*% t(X)
+  P <- Sigma_inv - Sigma_inv %*% X %*% solve(t(X) %*% Sigma_inv %*% X) %*% t(X) %*% Sigma_inv
+  varCondRes <- R %*% P %*% R
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
 
 
 ```{r}
