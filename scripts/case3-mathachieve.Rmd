@@ -52,6 +52,10 @@ Bryk$Sector <- sector[as.character(Bryk$School)]
 contrasts(Bryk$Sector)
 ```
 
+```{r fig.height=20, fig.width=10}
+ggplot(MathAchieve, aes(SES, MathAch)) + geom_point() + facet_wrap(~School)
+```
+
 ```{r fit}
 fit <- lmer(MathAch ~ SES + Sector + (1|School), data = Bryk)
 
@@ -179,41 +183,7 @@ fit.sim.y$SES <- rep(Bryk$SES, 19)
 fit.sim.y$Sector <- rep(Bryk$Sector, 19)
 ```
 
-```{r}
-simdat <- purrr::map_dfr(1:19, function(i){
-  df <- fit.sim.y %>% filter(.n == i)
-  m <- lmer(y ~ SES + Sector + (1|School), data = df)
-  
-  N <- nrow(df) 
-  school <- unique(as.character(df$School))
-  nschool <- length(school)
 
-  y <-  df$y
-  X <- model.matrix(~ SES + Sector, data = df)
-  beta <- fixef(m)
-  Z <- model.matrix(~ School - 1, data = df)
-  u <- ranef(m)$School[,1]
-  q <- length(u)
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == "Residual"] * diag(N)
-  G <- vc$vcov[vc$grp == "School"] * diag(q)
-  Sigma <- Z %*% G %*% t(Z) + R
-  Sigma_inv <- solve(Sigma)
-  varMargRes <- Sigma - X %*% solve(t(X) %*% solve(Sigma) %*% X) %*% t(X)
-  P <- Sigma_inv - Sigma_inv %*% X %*% solve(t(X) %*% Sigma_inv %*% X) %*% t(X) %*% Sigma_inv
-  varCondRes <- R %*% P %*% R
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - as.vector(Z %*% u)
-  index = 1:nrow(df)
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  tibble::tibble(df, fitted, resm_std, resc_std, index)
-})
-```
 
 
 
