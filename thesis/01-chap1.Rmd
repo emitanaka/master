@@ -149,5 +149,7 @@ Model checking:
 
 * lineups
 
-  The lineup protocal often contains 19 null plots and data plot
+  The lineup protocol often contains 19 null plots and data plot
 
+[@majumder2013validation] new research on formalizing statistical graphics with language characteristics makes it easier to abstractly define, compare, and contrast data plots. In section 2, it contains 6 definitions which including the visual statistic, lineup, $p$-value.
+When we doing the experiment, we have to estimate the observer's visual skills by calculating the probability that an observer sees the actual data plot as different, when it really is different. We are going to separate the situations such that if the observations have the same ability, and if the individual skills influencing the probility.
