@@ -16,3 +16,8 @@
 
 * By week 7 Thu:
   * Find 2-3 dataset
+  
+* By week 8 Thu:
+  * Continue on `MathAchieve` data set
+  * Write the content
+  * Do shiny app
