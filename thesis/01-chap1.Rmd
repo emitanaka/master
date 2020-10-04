@@ -152,4 +152,12 @@ Model checking:
   The lineup protocol often contains 19 null plots and data plot
 
 [@majumder2013validation] new research on formalizing statistical graphics with language characteristics makes it easier to abstractly define, compare, and contrast data plots. In section 2, it contains 6 definitions which including the visual statistic, lineup, $p$-value.
-When we doing the experiment, we have to estimate the observer's visual skills by calculating the probability that an observer sees the actual data plot as different, when it really is different. We are going to separate the situations such that if the observations have the same ability, and if the individual skills influencing the probility.
+
+They have test on the linear regression model 
+$$Y_i = \beta_0 + \beta_1 X_{i1} + \beta_2 X_{i2} + \beta_3 X_{i1}X_{i2} + \ldots + \epsilon_i$$
+where $\epsilon_i \sim iid N(0, \sigma^2)$, $i = 1, 2, 3, \ldots, n$. The covariates ($X_j, j = 1, 2, \ldots, p$) can be continuous or discrete. They introduce different types of visual test statistics for testing hypotheses such as to examine the effect of variable $X_j$ on $Y$, linearity, distributions and so on.
+
+They publish the expriement on the Amazon's online web servie, Machanical Turk. The participants are asked to select the plot refering to the question, provide the reason why they choose, and tell the confidence level that they believe in their choice. At the meanwhile, each participant's age, gender, education level and geographic location are collected.
+When they do the experiment, they have to estimate the observer's visual skills. For example, they gives the observers an easy lineup plot which is distinguishable and let them to choose the most different one. If the actual plot is correctly chosen by the participants, they keep the answers from their. 
+
+They using the lineup protocol mainly focus on three data set, discrete, continuous and comtanimated. The comparison of the expected power of a visual test with the power of the conventional test is applied.
