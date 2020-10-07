@@ -1,0 +1,302 @@
+---
+title: "case4: Exercise Histories of Eating-Disordered and Control Subjects"
+output:
+  html_document:
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+library(car) # load the Blackmoor data
+library(ggplot2)
+library(skimr)
+library(lme4)
+library(dplyr)
+library(tidyr)
+library(purrr)
+library(nullabor)
+knitr::opts_chunk$set(
+  message = FALSE,
+  warning = FALSE#,
+  #cache.path = "cache/",
+  #cache = TRUE
+)
+```
+
+There are 231 subjects with patients' age and the amount of exercise expressed as estimated hours per week with 2 groups (control and patient).
+```{r data}
+data("Blackmore")
+skimr::skim(Blackmore)
+```
+
+```{r}
+control <- Blackmore[Blackmore$group == "control",]
+skimr::skim(control)
+length(unique(control$subject))
+```
+```{r fig.height=10}
+Blackmore$log.exercise <- log(Blackmore$exercise + 5/60, 2)
+attach(Blackmore)
+con <- sample(unique(subject[group == "control"]), 20)
+con.20 <- Blackmore[is.element(subject, con),]
+ggplot(con.20, aes(I(age-8), log.exercise)) + geom_point() + facet_wrap(.~subject)
+
+pat <- sample(unique(subject[group == "control"]), 20)
+pat.20 <- Blackmore[is.element(subject, pat),]
+ggplot(pat.20, aes(I(age-8), log.exercise)) + 
+  geom_point() + facet_wrap(.~subject) +
+  geom_smooth(method = "lm", se = FALSE)
+detach(Blackmore)
+```
+
+```{r check-value}
+summary(I(Blackmore$age - 8))
+```
+
+# Model
+
+```{r fit}
+fit <- lmer(log.exercise ~ I(age-8)*group + (1 |subject), data = Blackmore)
+
+summary(fit)
+```
+
+`vcov` is the covariance matrix of the fixed-effect estimates which is consistent with the mathmatical expression $V(\hat \beta) = (X^\top \Omega^{-1} X)^{-1}$ (`solve(t(X) %*% Sigma_inv %*% X)`).
+
+```{r model}
+N <- nrow(Blackmore)
+subjects <- unique(Blackmore$subject)
+
+y <- Blackmore$log.exercise
+X <- model.matrix(~ I(age-8)*group, data = Blackmore)
+beta <- fixef(fit)
+Z <- model.matrix(~ subject-1, data = Blackmore)
+u <- ranef(fit)$subject[,1]
+q <- length(u)
+
+vc <- as.data.frame(VarCorr(fit))
+R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+G <- vc$vcov[vc$grp == 'subject'] * diag(q)
+
+Sigma <- Z %*% G %*% t(Z) + R 
+Sigma_inv <- solve(Sigma)
+
+P <- Sigma_inv - Sigma_inv %*% X %*% vcov(fit) %*% t(X) %*% Sigma_inv
+
+varMargRes <- Sigma - X %*% vcov(fit) %*% t(X) 
+varCondRes <- R %*% P %*% R  
+varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+
+fit_bl <- Blackmore %>% 
+  mutate(fitted = as.vector(X %*% beta),
+         resm = y - fitted,
+         resc = y - fitted - Z %*% u,
+         index = 1:n()) %>% 
+  rowwise() %>% 
+  mutate(resm_std = resm/sqrt(diag(varMargRes)[index]),
+         resc_std = resc/sqrt(diag(varCondRes)[index])) %>% 
+  ungroup()
+
+unit_bl <- expand_grid(subjects) %>% 
+  mutate(Vi = map_dbl(subjects, ~{
+    ind <- Blackmore %>% 
+      mutate(index = 1:n()) %>% 
+      filter(subject == .x) %>% 
+      pull(index)
+    mi <- length(ind)
+    Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% fit_bl$resm[ind]
+    sqrt(sum((diag(mi) - Ei %*% t(Ei))^2)) / mi
+  }),
+  Mi = as.vector(t(u) %*% solve(varU) %*% u),
+  index = 1:n())
+```
+
+## Diagnostic Plot 1: Linearity of fixed effects
+
+```{r}
+ggplot(fit_bl, aes(fitted, resm_std)) +
+  geom_hline(yintercept = 0) +
+  geom_point()
+```
+
+## Diagnostic Plot 2: Prescence of outlying observations
+
+```{r}
+ggplot(fit_bl, aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+## Diagnostic Plot 3: Within-units covariance matrix
+
+```{r}
+ggplot(unit_bl, aes(index, Vi)) + geom_point()+ xlab("Unit indicies") + ylab("Modified Lesaffre-Verbeke index")
+```
+
+## Diagnostic Plot 4: Prescense of outlying observations using conditional residual
+
+```{r}
+ggplot(fit_bl, aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+## Diagnostic Plot 5: Homoskedasticity of conditional errors 
+
+```{r}
+ggplot(fit_bl, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+## Diagnostic Plot 6: Normality of conditional errors
+
+```{r}
+ggplot(fit_bl, aes(sample = resc_std)) + 
+  geom_qq() + geom_qq_line(color = "red")
+```
+
+## Diagnostic Plot 7: Presencse of outlying subjects 
+
+```{r}
+ggplot(unit_bl, aes(index, Mi)) + geom_point() + xlab("Unit index") + ylab("Manhalanobis distance")
+```
+
+## Diagnostic Plot 8: Normality of the random effects
+
+```{r}
+ggplot(unit_bl, aes(sample = Mi)) + 
+  geom_qq(distribution = stats::qchisq,
+          dparams = list(df = q)) +
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q))
+```
+
+## Lineup Protocol
+```{r lineup-1, fig.height=6}
+lineup(null_permute("resm_std"), fit_bl) %>% 
+  ggplot(aes(fitted, resm_std)) + 
+  geom_point() +
+  facet_wrap(~.sample) + 
+  xlab(NULL) + 
+  ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+```
+
+```{r lineup-2, fig.height=6}
+lineup(null_permute("resm_std"), fit_bl) %>% 
+  ggplot(aes(index, resm_std)) + 
+  geom_point() +
+  facet_wrap(~.sample) + 
+  xlab(NULL) + 
+  ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+```
+
+```{r lineup-3, fig.height=6}
+lineup(null_permute("Vi"), unit_bl) %>% 
+ggplot(aes(index, Vi)) + 
+  geom_point() +
+  facet_wrap(~.sample) + 
+  xlab(NULL) + 
+  ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+```
+
+```{r lineup-4, fig.height=6}
+lineup(null_permute("resc_std"), fit_bl) %>% 
+  ggplot(aes(index, resc_std)) +
+  geom_point() + 
+  facet_wrap(~.sample) + 
+  xlab(NULL) + 
+  ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+```
+
+```{r lineup-5, fig.height=6}
+lineup(null_permute("resc_std"), fit_bl) %>% 
+  ggplot(aes(fitted, resc_std)) +
+  geom_point() + 
+  facet_wrap(~.sample) + 
+  xlab(NULL) + 
+  ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+```
+
+# Fail in Normality of conditional errors
+```{r lineup-6, fig.height=6}
+lineup(null_permute("resc_std"), fit_bl) %>% 
+  ggplot(aes(sample = resc_std)) + 
+  geom_qq() +
+  geom_qq_line(color = "red") + 
+  facet_wrap(~.sample) + 
+  xlab(NULL) + 
+  ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+```
+
+Since the $M_i$ are the same, there is no need to do that
+```{r lineup-7, fig.height=6}
+lineup(null_permute("Mi"), unit_bl) %>% 
+  ggplot(aes(index, Mi))+
+  geom_point()+
+  facet_wrap(~.sample)
+```
+
+```{r lineup-8, fig.height=6}
+lineup(null_permute("Mi"), unit_bl) %>% 
+  ggplot(aes(sample = Mi)) + 
+  geom_qq(distribution = stats::qchisq,
+          dparams = list(df = q)) +
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q)) +
+  facet_wrap(~.sample)
+```
+
+
+```{r lineup-nulldata}
+d <- lineup(null_permute("log.exercise"), Blackmore)
+```
+
+```{r simdat}
+simdat <- map_dfr(1:20, function(i){
+  df <- d %>% filter(.sample == i)
+  m <- fit <- lmer(log.exercise ~ I(age-8)*group + (1 |subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$subject)
+
+  y <- df$log.exercise
+  X <- model.matrix(~ I(age-8)*group, data = df)
+  beta <- fixef(m)
+  Z <- model.matrix(~ subject-1, data = df)
+  u <- ranef(m)$subject[,1]
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G <- vc$vcov[vc$grp == 'subject'] * diag(q)
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - Z %*% u
+  index = 1:nrow(df)
+  
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
+
