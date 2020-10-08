@@ -28,48 +28,34 @@ There are 231 subjects with patients' age and the amount of exercise expressed a
 data("Blackmore")
 skimr::skim(Blackmore)
 Blackmore$log.exercise <- log(Blackmore$exercise + 5/60, 2)
-summary(Blackmore$log.exercise)
 ```
 
 There are 93 unqiue subjects in the control group. And there are 359 observations in the control group.
-```{r}
+
+```{r control-data}
 control <- Blackmore[Blackmore$group == "control",]
 nrow(control)
 skimr::skim(control)
 length(unique(control$subject))
 control.id<- unique(control$subject)
-
-ggplot(control, aes(age, log.exercise)) +
-  geom_point() +
-  facet_grid(~ subject)
 ```
-```{r}
+
+```{r age-log.exercise}
 ggplot(Blackmore, aes(age, log.exercise, color = group)) + 
   geom_point() + 
-  facet_wrap_paginate(~ subject, nrow = 4, ncol = 4, page = 1)
-
-
-attach(Blackmore)
-con <- sample(unique(subject[group == "control"]), 20)
-con.20 <- Blackmore[is.element(subject, con),]
-ggplot(con.20, aes(I(age-8), log.exercise)) + geom_point() + facet_wrap(.~subject)
-
-pat <- sample(unique(subject[group == "control"]), 20)
-pat.20 <- Blackmore[is.element(subject, pat),]
-ggplot(pat.20, aes(I(age-8), log.exercise)) + 
-  geom_point() + facet_wrap(.~subject) +
-  geom_smooth(method = "lm", se = FALSE)
-detach(Blackmore)
+  facet_wrap_paginate(~ subject, nrow = 4, ncol = 4, page = 12)
 ```
 
-```{r check-value}
-summary(I(Blackmore$age - 8))
+```{r}
+ggplot(Blackmore, aes(group, log.exercise)) + geom_boxplot()
 ```
 
-# Model
+From the plot we can see that the intercept and slope for different subjects are different.
+
+## Model
 
 ```{r fit}
-fit <- lmer(log.exercise ~ age*group + (age|subject), data = Blackmore)
+fit <- lmer(log.exercise ~ age*group  + (age + I(age^2)|subject), data = Blackmore)
 
 summary(fit)
 ```
@@ -85,6 +71,7 @@ $g_{21}^2$ & $g__2^2$
 
 Using `lower.tri` and `upper.tri` to apply the lower and upper triangular part of the matrix.
 $G_1$ represents the variability of the intercept across subjects and $G_2$ refers the variablity of the slope of subjects. 
+
 ```{r model}
 N <- nrow(Blackmore)
 subjects <- unique(Blackmore$subject)
@@ -92,17 +79,25 @@ subjects <- unique(Blackmore$subject)
 y <- Blackmore$log.exercise
 X <- model.matrix(~ age*group, data = Blackmore)
 beta <- fixef(fit)
-Z <- model.matrix(~ subject + subject:age-1, data = Blackmore)
-u <- c(ranef(fit)$subject[,1], ranef(fit)$subject[,2])
+Z <- model.matrix(~ -1 + subject + subject:age + subject:I(age^2), data = Blackmore)
+u <- c(ranef(fit)$subject[,1], ranef(fit)$subject[,2], ranef(fit)$subject[,3])
 q <- length(u)
 
 vc <- as.data.frame(VarCorr(fit))
 R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-G1 <- vc$vcov[vc$grp == 'subject'][1] * diag(q/2)
-G2 <- vc$vcov[vc$grp == 'subject'][2] * diag(q/2)
-G <- Matrix::bdiag(G1, G2)
-G[lower.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
-G[upper.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+G1 <- vc$vcov[vc$grp == 'subject'][1] * diag(q/3)
+G2 <- vc$vcov[vc$grp == 'subject'][2] * diag(q/3)
+G3 <- vc$vcov[vc$grp == 'subject'][3] * diag(q/3)
+G <- Matrix::bdiag(G1, G2, G3)
+#G[lower.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+#G[upper.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+
+G[232:462, 1:231] <- vc$vcov[vc$grp == 'subject'][4]
+G[1:231, 232:462] <- vc$vcov[vc$grp == 'subject'][4]
+G[463:693, 1:231] <- vc$vcov[vc$grp == 'subject'][5]
+G[1:231, 463:693] <- vc$vcov[vc$grp == 'subject'][5]
+G[463:693, 232:462] <- vc$vcov[vc$grp == 'subject'][6]
+G[232:462, 463:693] <- vc$vcov[vc$grp == 'subject'][6]
 
 Sigma <- Z %*% G %*% t(Z) + R 
 Sigma_inv <- solve(Sigma)
@@ -116,7 +111,7 @@ varU <- G - G %*% t(Z) %*% P %*% Z %*% G
 fit_bl <- Blackmore %>% 
   mutate(fitted = as.vector(X %*% beta),
          resm = y - fitted,
-         resc = y - fitted - Z %*% u,
+         resc = as.vector(y - fitted - Z %*% u),
          index = 1:n()) %>% 
   rowwise() %>% 
   mutate(resm_std = resm/sqrt(diag(varMargRes)[index]),
@@ -137,7 +132,46 @@ unit_bl <- expand_grid(subjects) %>%
   index = 1:n())
 ```
 
-## Diagnostic Plot 1: Linearity of fixed effects
+### Least confounded conditional residual
+```{r squart root of a matrix}
+sqrt.matrix <- function(mat) {
+                mat <- as.matrix(mat)
+                singular_dec <- svd(mat,LINPACK = F)
+                U <- singular_dec$u
+                V <- singular_dec$v
+                D <- diag(singular_dec$d)
+                sqrtmatrix <- U %*% sqrt(D) %*% t(V)
+        }
+```
+
+```{r}
+R.half <- sqrt.matrix(R)
+
+# R_half <- expm::sqrtm(R)
+
+auxqn <- eigen((R.half %*% P %*% R.half), symmetric = T, only.values = FALSE)
+
+p <- length(beta)
+
+lt <- sqrt(solve(diag((auxqn$values[1:(N-p)])))) %*% t(auxqn$vectors[1:N,1:(N-p)]) %*% solve(sqrt.matrix(R[1:N,1:N]))
+
+var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
+
+resmcp <- (lt %*% fit_bl$resc[1:N] )/sqrt(diag(var.resmcp))
+
+resmcp.1 <- as.data.frame(resmcp)
+```
+
+#### QQ plot of the Standardised Least Confounded Conditional Residual
+
+```{r}
+ggplot(resmcp.1, aes(sample = V1)) + 
+  geom_qq() + geom_qq_line(color = "red")
+```
+
+
+
+### Diagnostic Plot 1: Linearity of fixed effects
 
 ```{r}
 ggplot(fit_bl, aes(fitted, resm_std)) +
@@ -145,44 +179,44 @@ ggplot(fit_bl, aes(fitted, resm_std)) +
   geom_point()
 ```
 
-## Diagnostic Plot 2: Prescence of outlying observations
+### Diagnostic Plot 2: Prescence of outlying observations
 
 ```{r}
 ggplot(fit_bl, aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0)
 ```
 
-## Diagnostic Plot 3: Within-units covariance matrix
+### Diagnostic Plot 3: Within-units covariance matrix
 
 ```{r}
 ggplot(unit_bl, aes(index, Vi)) + geom_point()+ xlab("Unit indicies") + ylab("Modified Lesaffre-Verbeke index")
 ```
 
-## Diagnostic Plot 4: Prescense of outlying observations using conditional residual
+### Diagnostic Plot 4: Prescense of outlying observations using conditional residual
 
 ```{r}
 ggplot(fit_bl, aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0)
 ```
 
-## Diagnostic Plot 5: Homoskedasticity of conditional errors 
+### Diagnostic Plot 5: Homoskedasticity of conditional errors 
 
 ```{r}
 ggplot(fit_bl, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
 ```
 
-## Diagnostic Plot 6: Normality of conditional errors
+### Diagnostic Plot 6: Normality of conditional errors
 
 ```{r}
 ggplot(fit_bl, aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red")
 ```
 
-## Diagnostic Plot 7: Presencse of outlying subjects 
+### Diagnostic Plot 7: Presencse of outlying subjects 
 
 ```{r}
 ggplot(unit_bl, aes(index, Mi)) + geom_point() + xlab("Unit index") + ylab("Manhalanobis distance")
 ```
 
-## Diagnostic Plot 8: Normality of the random effects
+### Diagnostic Plot 8: Normality of the random effects
 
 ```{r}
 ggplot(unit_bl, aes(sample = Mi)) + 
@@ -193,7 +227,7 @@ ggplot(unit_bl, aes(sample = Mi)) +
                dparams = list(df = q))
 ```
 
-## Lineup Protocol
+### Lineup Protocol
 ```{r lineup-1, fig.height=6}
 lineup(null_permute("resm_std"), fit_bl) %>% 
   ggplot(aes(fitted, resm_std)) + 
