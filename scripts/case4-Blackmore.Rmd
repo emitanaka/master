@@ -14,6 +14,7 @@ library(dplyr)
 library(tidyr)
 library(purrr)
 library(nullabor)
+library(ggforce)
 knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE#,
@@ -26,15 +27,28 @@ There are 231 subjects with patients' age and the amount of exercise expressed a
 ```{r data}
 data("Blackmore")
 skimr::skim(Blackmore)
+Blackmore$log.exercise <- log(Blackmore$exercise + 5/60, 2)
+summary(Blackmore$log.exercise)
 ```
 
+There are 93 unqiue subjects in the control group. And there are 359 observations in the control group.
 ```{r}
 control <- Blackmore[Blackmore$group == "control",]
+nrow(control)
 skimr::skim(control)
 length(unique(control$subject))
+control.id<- unique(control$subject)
+
+ggplot(control, aes(age, log.exercise)) +
+  geom_point() +
+  facet_grid(~ subject)
 ```
-```{r fig.height=10}
-Blackmore$log.exercise <- log(Blackmore$exercise + 5/60, 2)
+```{r}
+ggplot(Blackmore, aes(age, log.exercise, color = group)) + 
+  geom_point() + 
+  facet_wrap_paginate(~ subject, nrow = 4, ncol = 4, page = 1)
+
+
 attach(Blackmore)
 con <- sample(unique(subject[group == "control"]), 20)
 con.20 <- Blackmore[is.element(subject, con),]
@@ -55,27 +69,40 @@ summary(I(Blackmore$age - 8))
 # Model
 
 ```{r fit}
-fit <- lmer(log.exercise ~ I(age-8)*group + (1 |subject), data = Blackmore)
+fit <- lmer(log.exercise ~ age*group + (age|subject), data = Blackmore)
 
 summary(fit)
 ```
 
 `vcov` is the covariance matrix of the fixed-effect estimates which is consistent with the mathmatical expression $V(\hat \beta) = (X^\top \Omega^{-1} X)^{-1}$ (`solve(t(X) %*% Sigma_inv %*% X)`).
 
+Variance-covariance matrix of random effects $\mathbf G$, for example $2\times 2$ symmetric matrix:
+
+\begin{bmatrix}
+$g_1^2$ & $g_{12}^2$ \\
+$g_{21}^2$ & $g__2^2$
+\end{bmatrix}
+
+Using `lower.tri` and `upper.tri` to apply the lower and upper triangular part of the matrix.
+$G_1$ represents the variability of the intercept across subjects and $G_2$ refers the variablity of the slope of subjects. 
 ```{r model}
 N <- nrow(Blackmore)
 subjects <- unique(Blackmore$subject)
 
 y <- Blackmore$log.exercise
-X <- model.matrix(~ I(age-8)*group, data = Blackmore)
+X <- model.matrix(~ age*group, data = Blackmore)
 beta <- fixef(fit)
-Z <- model.matrix(~ subject-1, data = Blackmore)
-u <- ranef(fit)$subject[,1]
+Z <- model.matrix(~ subject + subject:age-1, data = Blackmore)
+u <- c(ranef(fit)$subject[,1], ranef(fit)$subject[,2])
 q <- length(u)
 
 vc <- as.data.frame(VarCorr(fit))
 R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-G <- vc$vcov[vc$grp == 'subject'] * diag(q)
+G1 <- vc$vcov[vc$grp == 'subject'][1] * diag(q/2)
+G2 <- vc$vcov[vc$grp == 'subject'][2] * diag(q/2)
+G <- Matrix::bdiag(G1, G2)
+G[lower.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+G[upper.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
 
 Sigma <- Z %*% G %*% t(Z) + R 
 Sigma_inv <- solve(Sigma)
