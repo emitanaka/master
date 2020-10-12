@@ -26,8 +26,10 @@ knitr::opts_chunk$set(
 There are 231 subjects with patients' age and the amount of exercise expressed as estimated hours per week with 2 groups (control and patient).
 ```{r data}
 data("Blackmore")
+head(Blackmore)
 skimr::skim(Blackmore)
 Blackmore$log.exercise <- log(Blackmore$exercise + 5/60, 2)
+Blackmore$age <- as.integer(Blackmore$age)
 ```
 
 There are 93 unqiue subjects in the control group. And there are 359 observations in the control group.
@@ -43,8 +45,9 @@ control.id<- unique(control$subject)
 ```{r age-log.exercise}
 ggplot(Blackmore, aes(age, log.exercise, color = group)) + 
   geom_point() + 
-  facet_wrap_paginate(~ subject, nrow = 4, ncol = 4, page = 12)
+  facet_wrap_paginate(~ subject, nrow = 4, ncol = 4, page = 13)
 ```
+
 
 ```{r}
 ggplot(Blackmore, aes(group, log.exercise)) + geom_boxplot()
@@ -145,15 +148,15 @@ sqrt.matrix <- function(mat) {
 ```
 
 ```{r}
-R.half <- sqrt.matrix(R)
+#R.half <- sqrt.matrix(R)
 
-# R_half <- expm::sqrtm(R)
+R_half <- expm::sqrtm(R)
 
-auxqn <- eigen((R.half %*% P %*% R.half), symmetric = T, only.values = FALSE)
+auxqn <- eigen((R_half %*% P %*% R_half), symmetric = T, only.values = FALSE)
 
 p <- length(beta)
 
-lt <- sqrt(solve(diag((auxqn$values[1:(N-p)])))) %*% t(auxqn$vectors[1:N,1:(N-p)]) %*% solve(sqrt.matrix(R[1:N,1:N]))
+lt <- sqrt(solve(diag((auxqn$values[1:(N-p)])))) %*% t(auxqn$vectors[1:N,1:(N-p)]) %*% solve(expm::sqrtm(R[1:N,1:N]))
 
 var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
 
@@ -192,6 +195,8 @@ ggplot(unit_bl, aes(index, Vi)) + geom_point()+ xlab("Unit indicies") + ylab("Mo
 ```
 
 ### Diagnostic Plot 4: Prescense of outlying observations using conditional residual
+
+- most different from the plot with the model `lmer(log.exercise ~ age*group  + (age|subject), data = Blackmore)` which refer to `fit2`.
 
 ```{r}
 ggplot(fit_bl, aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0)
@@ -360,4 +365,95 @@ simdat <- map_dfr(1:20, function(i){
 })
 ```
 
+## Model 2 without $age^2$ in random effect
 
+```{r fit2-without age^2}
+fit2 <- lmer(log.exercise ~ age*group  + (age|subject), data = Blackmore)
+
+summary(fit2)
+```
+
+```{r}
+X <- model.matrix(~ age*group, data = Blackmore)
+beta <- fixef(fit2)
+Z <- model.matrix(~ -1 + subject + subject:age, data = Blackmore)
+u <- c(ranef(fit2)$subject[,1], ranef(fit2)$subject[,2])
+q <- length(u)
+
+vc <- as.data.frame(VarCorr(fit2))
+R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+G1 <- vc$vcov[vc$grp == 'subject'][1] * diag(q/2)
+G2 <- vc$vcov[vc$grp == 'subject'][2] * diag(q/2)
+#G3 <- vc$vcov[vc$grp == 'subject'][3] * diag(q/3)
+G <- Matrix::bdiag(G1, G2)
+G[lower.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+G[upper.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+
+#G[232:462, 1:231] <- vc$vcov[vc$grp == 'subject'][4]
+#G[1:231, 232:462] <- vc$vcov[vc$grp == 'subject'][4]
+#G[463:693, 1:231] <- vc$vcov[vc$grp == 'subject'][5]
+#G[1:231, 463:693] <- vc$vcov[vc$grp == 'subject'][5]
+#G[463:693, 232:462] <- vc$vcov[vc$grp == 'subject'][6]
+#G[232:462, 463:693] <- vc$vcov[vc$grp == 'subject'][6]
+
+Sigma <- Z %*% G %*% t(Z) + R 
+Sigma_inv <- solve(Sigma)
+
+P <- Sigma_inv - Sigma_inv %*% X %*% vcov(fit) %*% t(X) %*% Sigma_inv
+
+varMargRes <- Sigma - X %*% vcov(fit) %*% t(X) 
+varCondRes <- R %*% P %*% R  
+varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+
+fit_bl2 <- Blackmore %>% 
+  mutate(fitted = as.vector(X %*% beta),
+         resm = y - fitted,
+         resc = as.vector(y - fitted - Z %*% u),
+         index = 1:n()) %>% 
+  rowwise() %>% 
+  mutate(resm_std = resm/sqrt(diag(varMargRes)[index]),
+         resc_std = resc/sqrt(diag(varCondRes)[index])) %>% 
+  ungroup()
+
+unit_bl2 <- expand_grid(subjects) %>% 
+  mutate(Vi = map_dbl(subjects, ~{
+    ind <- Blackmore %>% 
+      mutate(index = 1:n()) %>% 
+      filter(subject == .x) %>% 
+      pull(index)
+    mi <- length(ind)
+    Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% fit_bl$resm[ind]
+    sqrt(sum((diag(mi) - Ei %*% t(Ei))^2)) / mi
+  }),
+  Mi = as.vector(t(u) %*% solve(varU) %*% u),
+  index = 1:n())
+```
+
+```{r plot1}
+ggplot(fit_bl2, aes(fitted, resm_std)) +
+  geom_hline(yintercept = 0) +
+  geom_point()
+```
+
+```{r plot2}
+ggplot(fit_bl2, aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+```{r plot3}
+ggplot(unit_bl2, aes(index, Vi)) + geom_point()+ xlab("Unit indicies") + ylab("Modified Lesaffre-Verbeke index")
+```
+
+```{r plot4}
+ggplot(fit_bl2, aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+```{r plot5}
+ggplot(fit_bl2, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+```{r plot6}
+ggplot(fit_bl2, aes(sample = resc_std)) + 
+  geom_qq() + geom_qq_line(color = "red")
+```
+
+## 
