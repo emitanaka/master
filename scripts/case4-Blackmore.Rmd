@@ -232,139 +232,6 @@ ggplot(unit_bl, aes(sample = Mi)) +
                dparams = list(df = q))
 ```
 
-### Lineup Protocol
-```{r lineup-1, fig.height=6}
-lineup(null_permute("resm_std"), fit_bl) %>% 
-  ggplot(aes(fitted, resm_std)) + 
-  geom_point() +
-  facet_wrap(~.sample) + 
-  xlab(NULL) + 
-  ylab(NULL) +
-  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
-```
-
-```{r lineup-2, fig.height=6}
-lineup(null_permute("resm_std"), fit_bl) %>% 
-  ggplot(aes(index, resm_std)) + 
-  geom_point() +
-  facet_wrap(~.sample) + 
-  xlab(NULL) + 
-  ylab(NULL) +
-  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
-```
-
-```{r lineup-3, fig.height=6}
-lineup(null_permute("Vi"), unit_bl) %>% 
-ggplot(aes(index, Vi)) + 
-  geom_point() +
-  facet_wrap(~.sample) + 
-  xlab(NULL) + 
-  ylab(NULL) +
-  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
-```
-
-```{r lineup-4, fig.height=6}
-lineup(null_permute("resc_std"), fit_bl) %>% 
-  ggplot(aes(index, resc_std)) +
-  geom_point() + 
-  facet_wrap(~.sample) + 
-  xlab(NULL) + 
-  ylab(NULL) +
-  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
-```
-
-```{r lineup-5, fig.height=6}
-lineup(null_permute("resc_std"), fit_bl) %>% 
-  ggplot(aes(fitted, resc_std)) +
-  geom_point() + 
-  facet_wrap(~.sample) + 
-  xlab(NULL) + 
-  ylab(NULL) +
-  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
-```
-
-# Fail in Normality of conditional errors
-```{r lineup-6, fig.height=6}
-lineup(null_permute("resc_std"), fit_bl) %>% 
-  ggplot(aes(sample = resc_std)) + 
-  geom_qq() +
-  geom_qq_line(color = "red") + 
-  facet_wrap(~.sample) + 
-  xlab(NULL) + 
-  ylab(NULL) +
-  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
-        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
-```
-
-Since the $M_i$ are the same, there is no need to do that
-```{r lineup-7, fig.height=6}
-lineup(null_permute("Mi"), unit_bl) %>% 
-  ggplot(aes(index, Mi))+
-  geom_point()+
-  facet_wrap(~.sample)
-```
-
-```{r lineup-8, fig.height=6}
-lineup(null_permute("Mi"), unit_bl) %>% 
-  ggplot(aes(sample = Mi)) + 
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) +
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q)) +
-  facet_wrap(~.sample)
-```
-
-
-```{r lineup-nulldata}
-d <- lineup(null_permute("log.exercise"), Blackmore)
-```
-
-```{r simdat}
-simdat <- map_dfr(1:20, function(i){
-  df <- d %>% filter(.sample == i)
-  m <- fit <- lmer(log.exercise ~ I(age-8)*group + (1 |subject), data = df)
-  
-  N <- nrow(df)
-  subjects <- unique(df$subject)
-
-  y <- df$log.exercise
-  X <- model.matrix(~ I(age-8)*group, data = df)
-  beta <- fixef(m)
-  Z <- model.matrix(~ subject-1, data = df)
-  u <- ranef(m)$subject[,1]
-  q <- length(u)
-
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-  G <- vc$vcov[vc$grp == 'subject'] * diag(q)
-
-  Sigma <- Z %*% G %*% t(Z) + R 
-  Sigma_inv <- solve(Sigma)
-
-  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
-
-  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
-  varCondRes <- R %*% P %*% R  
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - Z %*% u
-  index = 1:nrow(df)
-  
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  tibble::tibble(df, fitted, resm_std, resc_std, index)
-})
-```
-
 ## Model 2 without $age^2$ in random effect
 
 ```{r fit2-without age^2}
@@ -456,4 +323,194 @@ ggplot(fit_bl2, aes(sample = resc_std)) +
   geom_qq() + geom_qq_line(color = "red")
 ```
 
-## 
+## Simulate data for null plots based on `fit` model
+```{r simulate}
+fit.sim <- simulate(fit, nsim = 19, seed = 1234)
+fit.refit <- lapply(fit.sim, refit, object = fit)
+fit.simy <- lapply(fit.refit, function(x) getME(x, 'y'))
+```
+
+```{r simulate-data}
+fit.sim.y <- do.call("cbind", fit.simy)
+fit.sim.y <- reshape2::melt(fit.sim.y)[-1]
+names(fit.sim.y) <- c(".n", "y")
+fit.sim.y$.n <- as.numeric(str_extract(fit.sim.y$.n, "\\d+"))
+fit.sim.y$subject <- rep(Blackmore$subject, 19)
+fit.sim.y$age <- rep(Blackmore$age, 19)
+fit.sim.y$group <- rep(Blackmore$group, 19)
+```
+
+```{r nulldata}
+simdat <- purrr::map_dfr(1:19, function(i){
+  df <- fit.sim.y %>% filter(.n == i)
+  m <- lmer(y ~ age*group  + (age + I(age^2)|subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$subject)
+
+  y <- df$y
+  X <- model.matrix(~ age*group, data = df)
+  beta <- fixef(m)
+  Z <- model.matrix(~ -1 + subject + subject:age + subject:I(age^2), data = df)
+  u <- c(ranef(m)$subject[,1], ranef(m)$subject[,2], ranef(m)$subject[,3])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'subject'][1] * diag(q/3)
+  G2 <- vc$vcov[vc$grp == 'subject'][2] * diag(q/3)
+  G3 <- vc$vcov[vc$grp == 'subject'][3] * diag(q/3)
+  G <- Matrix::bdiag(G1, G2, G3)
+#G[lower.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+#G[upper.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+
+  G[232:462, 1:231] <- vc$vcov[vc$grp == 'subject'][4]
+  G[1:231, 232:462] <- vc$vcov[vc$grp == 'subject'][4]
+  G[463:693, 1:231] <- vc$vcov[vc$grp == 'subject'][5]
+  G[1:231, 463:693] <- vc$vcov[vc$grp == 'subject'][5]
+  G[463:693, 232:462] <- vc$vcov[vc$grp == 'subject'][6]
+  G[232:462, 463:693] <- vc$vcov[vc$grp == 'subject'][6]
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
+```{r}
+colnames(fit_bl)[5] <- c('y')
+```
+
+```{r lineup1, fig.height=6}
+d <- lineup(true = fit_bl, samples = simdat)
+ggplot(d, aes(fitted, resm_std)) + geom_point() +
+  geom_hline(yintercept = 0) +
+  facet_wrap( ~ .sample, ncol=5)
+attr(d, "pos")
+```
+
+```{r lineup2, fig.height=6}
+ggplot(d, aes(index, resm_std)) + geom_point() +
+  geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, ncol = 5)
+attr(d, "pos")
+```
+
+```{r lineup4, fig.height=6}
+ggplot(d, aes(index, resc_std)) + geom_point() +
+  geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, ncol = 5)
+attr(d, "pos")
+```
+
+```{r lineup5, fig.height=6}
+ggplot(d, aes(fitted, resc_std)) + geom_point() +
+  geom_hline(yintercept = 0) + 
+  facet_wrap(~.sample, ncol = 5)
+```
+
+```{r lineup6, fig.height=6}
+ggplot(d, aes(sample = resc_std)) + 
+  geom_qq() + geom_qq_line(color = "red") +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+```{r}
+simdat_unit <- purrr::map_dfr(1:19, function(i){
+  df <- fit.sim.y %>% filter(.n == i)
+  m <- lmer(y ~ age*group  + (age + I(age^2)|subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$subject)
+
+  y <- df$y
+  X <- model.matrix(~ age*group, data = df)
+  beta <- fixef(m)
+  Z <- model.matrix(~ -1 + subject + subject:age + subject:I(age^2), data = df)
+  u <- c(ranef(m)$subject[,1], ranef(m)$subject[,2], ranef(m)$subject[,3])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'subject'][1] * diag(q/3)
+  G2 <- vc$vcov[vc$grp == 'subject'][2] * diag(q/3)
+  G3 <- vc$vcov[vc$grp == 'subject'][3] * diag(q/3)
+  G <- Matrix::bdiag(G1, G2, G3)
+#G[lower.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+#G[upper.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+
+  G[232:462, 1:231] <- vc$vcov[vc$grp == 'subject'][4]
+  G[1:231, 232:462] <- vc$vcov[vc$grp == 'subject'][4]
+  G[463:693, 1:231] <- vc$vcov[vc$grp == 'subject'][5]
+  G[1:231, 463:693] <- vc$vcov[vc$grp == 'subject'][5]
+  G[463:693, 232:462] <- vc$vcov[vc$grp == 'subject'][6]
+  G[232:462, 463:693] <- vc$vcov[vc$grp == 'subject'][6]
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  expand_grid(subjects) %>% 
+    mutate(Vi = map_dbl(subjects, ~{
+      ind <- df %>% 
+        mutate(index = 1:n()) %>% 
+        filter(subject == .x) %>% 
+        pull(index)
+      mi <- length(ind)
+      Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
+      sqrt(sum((diag(mi) - Ei %*% t(Ei))^2)) / mi
+      }),
+      Mi = as.vector(t(u) %*% solve(varU) %*% u),
+      index = 1:n(),
+      .n = i)
+})
+```
+
+```{r lineup3, fig.height = 6}
+d2 <- lineup(true = unit_bl, samples = simdat_unit)
+ggplot(d2, aes(index, Vi)) + geom_point()+
+  facet_wrap(~.sample, ncol = 5)
+attr(d2, "pos")
+```
+
+```{r lineup7, fig.height=6}
+ggplot(d2, aes(index, Mi)) + geom_point() + facet_wrap(~.sample, ncol = 5)
+```
+
+```{r lineup8, fig.height=6}
+ggplot(d2, aes(sample = Mi)) + 
+  geom_qq(distribution = stats::qchisq,
+          dparams = list(df = q)) +
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q)) +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+
