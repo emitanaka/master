@@ -19,6 +19,7 @@ summary(sleepstudy)
 ggplot(sleepstudy, aes(Days, Reaction)) + geom_point() + facet_wrap(~Subject) + geom_smooth(method = "lm", se = FALSE)
 ```
 
+## Model 1
 ```{r}
 sl_fit <- lmer(Reaction ~ Days + (Days|Subject), data = sleepstudy)
 
@@ -54,7 +55,7 @@ varMargRes <- Sigma - X %*% vcov(sl_fit) %*% t(X)
 varCondRes <- R %*% P %*% R  
 varU <- G - G %*% t(Z) %*% P %*% Z %*% G
 
-sl_fit <- sleepstudy %>% 
+fit_sl <- sleepstudy %>% 
   mutate(fitted = as.vector(X %*% beta),
          resm = y - fitted,
          resc = as.vector(y - fitted - Z %*% u),
@@ -71,7 +72,7 @@ sl_unit <- expand_grid(subjects) %>%
       filter(Subject == .x) %>% 
       pull(index)
     mi <- length(ind)
-    Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% sl_fit$resm[ind]
+    Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% fit_sl$resm[ind]
     sqrt(sum((diag(mi) - Ei %*% t(Ei))^2)) / mi
   }),
   Mi = as.vector(t(u) %*% solve(varU) %*% u),
@@ -80,42 +81,152 @@ sl_unit <- expand_grid(subjects) %>%
 
 ### Plot 1
 ```{r}
-ggplot(sl_fit, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(fit_sl, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
 ```
 
-## Plot 2
+### Plot 2
 ```{r}
-ggplot(sl_fit, aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(fit_sl, aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0)
 ```
 
-## plot 3
+### plot 3
 ```{r}
 ggplot(sl_unit, aes(index, Vi)) + geom_point()
 ```
 
-## plot 4
+### plot 4
 ```{r}
-ggplot(sl_fit, aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(fit_sl, aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0)
 ```
 
-## Plot 5
+### Plot 5
 ```{r}
-ggplot(sl_fit, aes(fitted, resc_std)) + geom_point()
+ggplot(fit_sl, aes(fitted, resc_std)) + geom_point()
 ```
 
-## Plot 6
+### Plot 6
 ```{r}
-ggplot(sl_fit, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+ggplot(fit_sl, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
 ```
 
-## Plot 7
+### Plot 7
 ```{r}
 ggplot(sl_unit, aes(index, Mi)) + geom_point()
 ```
 
-## Plot 8
+### Plot 8
 ```{r}
 ggplot(sl_unit, aes(sample = Mi)) + 
+  geom_qq(distribution = stats::qchisq, dparams = list(df = q)) +
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q))
+```
+
+## Model 2
+```{r}
+fity <- as.vector(mvtnorm::rmvnorm(1, mean = X %*% beta, sigma = Z %*% G %*% t(Z) + R + rnorm(N, mean = 0, sd = 2), checkSymmetry = FALSE))
+
+sl_df <- tibble(sleepstudy, fity)
+sl_df <- sl_df[-1]
+head(sl_df)
+
+sl_fit2 <- lmer(fity ~ Days + (Days|Subject), data = sl_df)
+summary(sl_fit2)
+```
+
+```{r}
+N <- nrow(sl_df)
+subjects <- unique(sl_df$Subject)
+nsubjects <- length(subjects)
+
+y <- sl_df$fity
+X <- model.matrix(~ Days, data = sl_df)
+beta <- fixef(sl_fit2)
+Z <- model.matrix(~ -1 + Subject + Subject:Days, data = sl_df)
+u <- c(ranef(sl_fit2)$Subject[,1], ranef(sl_fit2)$Subject[,2])
+q <- length(u)
+
+vc <- as.data.frame(VarCorr(sl_fit2))
+R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+G1 <- vc$vcov[vc$grp == 'Subject'][1] * diag(q/2)
+G2 <- vc$vcov[vc$grp == 'Subject'][2] * diag(q/2)
+G <- Matrix::bdiag(G1, G2)
+G[lower.tri(G)] <- vc$vcov[vc$grp == 'Subject'][3]
+G[upper.tri(G)] <- vc$vcov[vc$grp == 'Subject'][3]
+
+Sigma <- Z %*% G %*% t(Z) + R 
+Sigma_inv <- solve(Sigma)
+
+P <- Sigma_inv - Sigma_inv %*% X %*% vcov(sl_fit2) %*% t(X) %*% Sigma_inv
+
+varMargRes <- Sigma - X %*% vcov(sl_fit2) %*% t(X) 
+varCondRes <- R %*% P %*% R  
+varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+
+fit_sl2 <- sl_df %>% 
+  mutate(fitted = as.vector(X %*% beta),
+         resm = y - fitted,
+         resc = as.vector(y - fitted - Z %*% u),
+         index = 1:n()) %>% 
+  rowwise() %>% 
+  mutate(resm_std = resm/sqrt(diag(varMargRes)[index]),
+         resc_std = resc/sqrt(diag(varCondRes)[index])) %>% 
+  ungroup()
+
+unit_sl2 <- expand_grid(subjects) %>% 
+  mutate(Vi = map_dbl(subjects, ~{
+    ind <- sl_df %>% 
+      mutate(index = 1:n()) %>% 
+      filter(Subject == .x) %>% 
+      pull(index)
+    mi <- length(ind)
+    Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% fit_sl2$resm[ind]
+    sqrt(sum((diag(mi) - Ei %*% t(Ei))^2)) / mi
+  }),
+  Mi = as.vector(t(u) %*% solve(varU) %*% u),
+  index = 1:n())
+```
+
+### Plot 1
+```{r}
+ggplot(fit_sl2, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+### Plot 2
+```{r}
+ggplot(fit_sl2, aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+### Plot 3
+```{r}
+ggplot(unit_sl2, aes(index, Vi)) + geom_point()
+```
+
+### Plot 4
+```{r}
+ggplot(fit_sl2, aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+### Plot 5
+```{r}
+ggplot(fit_sl2, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+### Plot 6
+```{r}
+ggplot(fit_sl2, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+```
+
+### Plot 7
+```{r}
+ggplot(unit_sl2, aes(index, Mi)) + geom_point()
+```
+
+### Plot 8
+
+```{r}
+ggplot(unit_sl2, aes(sample = Mi)) + 
   geom_qq(distribution = stats::qchisq, dparams = list(df = q)) +
   geom_qq_line(color = "red",
                distribution = stats::qchisq,
