@@ -123,6 +123,136 @@ ggplot(sl_unit, aes(sample = Mi)) +
                dparams = list(df = q))
 ```
 
+### Simulation
+```{r simulate}
+fit.sim <- simulate(sl_fit, nsim = 19, seed = 1234)
+fit.refit <- lapply(fit.sim, refit, object = sl_fit)
+fit.simy <- lapply(fit.refit, function(x) getME(x, 'y'))
+```
+
+```{r simulate-data}
+fit.sim.y <- do.call("cbind", fit.simy)
+fit.sim.y <- reshape2::melt(fit.sim.y)[-1]
+names(fit.sim.y) <- c(".n", "y")
+fit.sim.y$.n <- as.numeric(str_extract(fit.sim.y$.n, "\\d+"))
+fit.sim.y$Subject <- rep(sleepstudy$Subject, 19)
+fit.sim.y$Days <- rep(sleepstudy$Days, 19)
+```
+
+```{r nulldata}
+simdat_sl <- purrr::map_dfr(1:19, function(i){
+  df <- fit.sim.y %>% filter(.n == i)
+  m <- lmer(y ~ Days + (Days|Subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$Subject)
+  nsubjects <- length(subjects)
+
+  y <- df$y
+  X <- model.matrix(~ Days, data = df)
+  beta <- fixef(m)
+  Z <- model.matrix(~ -1 + Subject + Subject:Days, data = df)
+  u <- c(ranef(m)$Subject[,1], ranef(m)$Subject[,2])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'Subject'][1] * diag(q/2)
+  G2 <- vc$vcov[vc$grp == 'Subject'][2] * diag(q/2)
+  G <- Matrix::bdiag(G1, G2)
+  G[lower.tri(G)] <- vc$vcov[vc$grp == 'Subject'][3]
+  G[upper.tri(G)] <- vc$vcov[vc$grp == 'Subject'][3]
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
+```{r}
+colnames(sleepstudy)[1] <- c('y')
+```
+
+#### Plot 1
+```{r fig.height=6}
+lineup(true = fit_sl, samples = simdat_sl, pos = 9) %>% 
+  ggplot(aes(fitted, resm_std)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) +
+  facet_wrap( ~ .sample, ncol=5)
+```
+
+#### Plot 2
+
+```{r fig.height=6}
+lineup(true = fit_sl, samples = simdat_sl, pos = 9) %>% 
+  ggplot(aes(index, resm_std)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) +
+  facet_wrap( ~ .sample, ncol=5)
+```
+
+#### Plot 4
+```{r fig.height=6}
+lineup(true = fit_sl, samples = simdat_sl, pos = 9) %>% 
+  ggplot(aes(index, resc_std)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) +
+  facet_wrap( ~ .sample, ncol=5)
+```
+
+#### Plot 5
+```{r fig.height=6}
+lineup(true = fit_sl, samples = simdat_sl, pos = 9) %>% 
+  ggplot(aes(fitted, resc_std)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) +
+  facet_wrap( ~ .sample, ncol=5)
+```
+
+#### Plot 6
+```{r fig.height=6}
+lineup(true = fit_sl, samples = simdat_sl, pos = 9) %>% 
+  ggplot(aes(sample = resc_std)) + 
+  geom_qq() + geom_qq_line(color = "red") +
+  facet_wrap( ~ .sample, ncol=5)
+```
+
+```{r}
+R_half <- expm::sqrtm(R)
+
+auxqn <- eigen((R_half %*% P %*% R_half), symmetric = T, only.values = FALSE)
+
+p <- length(beta)
+
+lt <- sqrt(solve(diag((auxqn$values[1:(N-p)])))) %*% t(auxqn$vectors[1:N,1:(N-p)]) %*% solve(expm::sqrtm(R[1:N,1:N]))
+
+var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
+
+resmcp <- (lt %*% fit_sl$resc[1:N] )/sqrt(diag(var.resmcp))
+
+resmcp_sl <- as.data.frame(resmcp)
+```
+```{r}
+ggplot(resmcp_sl, aes(sample = V1)) + geom_qq() + geom_qq_line(color = "red")
+```
+
+
+
 ## Model 2
 ```{r}
 fity <- as.vector(mvtnorm::rmvnorm(1, mean = X %*% beta, sigma = Z %*% G %*% t(Z) + R + rnorm(N, mean = 0, sd = 2), checkSymmetry = FALSE))
