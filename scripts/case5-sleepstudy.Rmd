@@ -300,7 +300,8 @@ ggplot(v11_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept
 
 
 ```{r v11-plot2}
-ggplot(v11_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) 
+ggplot(v11_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  theme(legend.position = "none")
 ```
 
 
@@ -310,7 +311,8 @@ ggplot(v11_unit, aes(1:nrow(v11_unit), Vi)) + geom_point()
 
 
 ```{r v11-plot4}
-ggplot(v11_fitted, aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(v11_fitted, aes(index, resc_std, color = Subject)) + 
+  geom_point() + geom_hline(yintercept = 0) + theme(legend.position = "none")
 ```
 
 
@@ -577,6 +579,885 @@ lineup(true = v11_unit, samples = v11.sim.unit, pos = 9) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
+### 2nd replication
+```{r}
+v12.mod <- lmer(y ~ Days + (Days-1|Subject) + (1|Subject), data = v1_df2)
+
+v12_fitted <- extract.fitted.mod.v1(v12.mod, v1_df2)
+
+v12_unit <- extract.unit.mod.v1(v12.mod, v1_df2)
+```
+
+#### Plots
+```{r v12-plot1}
+ggplot(v12_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+```{r v12-plot2}
+ggplot(v12_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) 
+#+theme(legend.position = "none")
+```
+
+```{r v12-plot3}
+ggplot(v12_unit, aes(1:nrow(v12_unit), Vi)) + geom_point()
+```
+
+```{r v12-plot4}
+ggplot(v12_fitted, aes(index, resc_std, color = Subject)) + 
+  geom_point() + geom_hline(yintercept = 0) + theme(legend.position = "none")
+```
+
+There are some outlying observations.
+
+```{r v12-plot5}
+ggplot(v12_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+It seems to have the heteroscedasticity.
+
+```{r v12-plot6}
+ggplot(v12_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+```
+
+```{r}
+v12_lcr <- extract.lcr.mod.v1(v12.mod, v1_df)
+```
+
+```{r v12-plot6-lcr}
+ggplot(v12_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
+```
+
+The least confounded conditional residual is relative normal than the conditional residual.
+
+```{r v12-plot7}
+ggplot(v12_unit, aes(index, Mi)) + geom_point()
+```
+
+
+```{r v12-plot8}
+ggplot(v12_unit, aes(sample = Mi)) +
+  geom_qq(distribution = stats::qchisq,
+          dparams = list(df = q)) + 
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q))
+```
+
+### Simulation
+
+```{r}
+v12.sim <- sim(v12.mod, v1_df2)
+```
+
+```{r nullfitted}
+v12.sim.fitted <- purrr::map_dfr(1:19, function(i){
+  df <- v12.sim %>% filter(.n == i)
+  m <- lmer(y ~ Days + (Days -1 |Subject) + (1|Subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$Subject)
+  nsubjects <- length(subjects)
+
+  y <- df$y
+  X <- model.matrix(~ Days, data = df)
+  beta <- fixef(m)
+  Z <- getME(m, "Z")
+  u <- c(ranef(m)$Subject[,1], ranef(m)$Subject[,2])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
+  G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
+  G <- Matrix::bdiag(G1, G2)
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
+```{r lcrsimnull}
+v12_simlcr <- purrr::map_dfr(1:19, function(i){
+  df <- v12.sim %>% filter(.n == i)
+  m <- lmer(y ~ Days + (Days -1 |Subject) + (1|Subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$Subject)
+  nsubjects <- length(subjects)
+
+  y <- df$y
+  X <- model.matrix(~ Days, data = df)
+  beta <- fixef(m)
+  Z <- getME(m, "Z")
+  u <- c(ranef(m)$Subject[,1], ranef(m)$Subject[,2])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
+  G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
+  G <- Matrix::bdiag(G1, G2)
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  R_half <- expm::sqrtm(R)
+
+  auxqn <- eigen((R_half %*% P %*% R_half), symmetric = T, only.values = FALSE)
+
+  p <- length(beta)
+
+  lt <- sqrt(solve(diag((auxqn$values[1:(N-p)])))) %*% t(auxqn$vectors[1:N,1:(N-p)]) %*% solve(expm::sqrtm(R[1:N,1:N]))
+
+  var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
+
+  resmcp <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
+  .n = i
+
+  tibble::tibble(.n, resmcp)
+})
+```
+
+```{r nullunit}
+v12.sim.unit <- purrr::map_dfr(1:19, function(i){
+  df <- v12.sim %>% filter(.n == i)
+  m <- lmer(y ~ Days + (Days -1 |Subject) + (1|Subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$Subject)
+  nsubjects <- length(subjects)
+
+  y <- df$y
+  X <- model.matrix(~ Days, data = df)
+  beta <- fixef(m)
+  Z <- getME(m, "Z")
+  u <- c(ranef(m)$Subject[,1], ranef(m)$Subject[,2])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
+  G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
+  G <- Matrix::bdiag(G1, G2)
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  expand_grid(subjects) %>% 
+    dplyr::mutate(Vi = map_dbl(subjects, ~{
+      ind <- df %>% 
+        mutate(index = 1:n()) %>% 
+        filter(Subject == .x) %>% 
+        pull(index)
+      mi <- length(ind)
+      Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
+      sqrt(sum((diag(mi) - Ei %*% t(Ei))^2)) / mi
+      }),
+      Mi = as.vector(t(u) %*% solve(varU) %*% u),
+      index = 1:n(),
+      .n = i)
+})
+```
+
+#### Lineup plots
+
+```{r v12n-plo1, fig.height=6}
+lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+```{r v12n-plo2, fig.height=6}
+lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 7) %>% 
+  ggplot(aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+```{r v12n-plo3, fig.height=6}
+lineup(true = v12_unit, samples = v12.sim.unit, pos = 9) %>% 
+  ggplot(aes(index, Vi)) + geom_point() +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+```{r v12n-plo4, fig.height=6}
+lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 9) %>% 
+  ggplot(aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+The true plot can be identified.
+
+```{r v12n-plo5, fig.height=6}
+lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+Heteroscedasticity of the conditional error is detected.
+
+```{r v12n-plo6, fig.height=6}
+lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 10) %>% 
+  ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+The true plot is identifiable, it seems that the conditional error does not follow a normal distribution.
+
+```{r v12n-plo6-lcr, fig.height=6}
+lineup(true = v12_lcr, samples = v12_simlcr, pos = 13) %>% 
+  ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+For the least confounded residual, it is hard to distinguish the true plot among the null plots.
+
+```{r v12n-plo7, fig.height=6}
+lineup(true = v12_unit, samples = v12.sim.unit, pos = 6) %>% 
+  ggplot(aes(index, Mi)) + geom_point() +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+```{r v12n-plo8, fig.height=6}
+lineup(true = v12_unit, samples = v12.sim.unit, pos = 6) %>% 
+  ggplot(aes(sample = Mi)) + 
+  geom_qq(distribution = stats::qchisq,
+          dparams = list(df = q)) +
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q)) +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+### 3rd replication
+```{r}
+v13.mod <- lmer(y ~ Days + (Days-1|Subject) + (1|Subject), data = v1_df3)
+
+v13_fitted <- extract.fitted.mod.v1(v13.mod, v1_df3)
+
+v13_unit <- extract.unit.mod.v1(v13.mod, v1_df3)
+```
+
+#### Plots
+```{r v13-plot1}
+ggplot(v13_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+```{r v13-plot2}
+ggplot(v13_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  theme(legend.position = "none")
+```
+
+```{r v13-plot3}
+# Dashed line: third quartile + 1.5 interquartile range
+LSlesverb <- as.numeric(quantile(v13_unit$Vi,prob = 0.75) + 1.5*(quantile(v13_unit$Vi, prob = 0.75) - quantile(v13_unit$Vi,prob = 0.25)))
+
+ggplot(v13_unit, aes(1:nrow(v13_unit), Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3)
+
+index = which(v13_unit$Vi>LSlesverb)
+```
+
+```{r v13-plot4}
+ggplot(v13_fitted, aes(index, resc_std, color = Subject)) + 
+  geom_point() + geom_hline(yintercept = 0) + theme(legend.position = "none")
+
+which(abs(v13_fitted$resc_std) > 4)
+```
+
+```{r v13-plot5}
+ggplot(v13_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+```{r v13-plot6}
+ggplot(v13_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+```
+
+```{r}
+v13_lcr <- extract.lcr.mod.v1(v13.mod, v1_df3)
+```
+
+```{r v13-plot6-lcr}
+ggplot(v13_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
+```
+
+```{r v13-plot7}
+ggplot(v13_unit, aes(index, Mi)) + geom_point()
+```
+
+
+```{r v13-plot8}
+ggplot(v13_unit, aes(sample = Mi)) +
+  geom_qq(distribution = stats::qchisq,
+          dparams = list(df = q)) + 
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q))
+```
+
+### Simulation
+
+```{r}
+v13.sim <- sim(v13.mod, v1_df3)
+```
+
+```{r nullfitted}
+v13.sim.fitted <- purrr::map_dfr(1:19, function(i){
+  df <- v13.sim %>% filter(.n == i)
+  m <- lmer(y ~ Days + (Days -1 |Subject) + (1|Subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$Subject)
+  nsubjects <- length(subjects)
+
+  y <- df$y
+  X <- model.matrix(~ Days, data = df)
+  beta <- fixef(m)
+  Z <- getME(m, "Z")
+  u <- c(ranef(m)$Subject[,1], ranef(m)$Subject[,2])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
+  G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
+  G <- Matrix::bdiag(G1, G2)
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
+```{r lcrsimnull}
+v13_simlcr <- purrr::map_dfr(1:19, function(i){
+  df <- v13.sim %>% filter(.n == i)
+  m <- lmer(y ~ Days + (Days -1 |Subject) + (1|Subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$Subject)
+  nsubjects <- length(subjects)
+
+  y <- df$y
+  X <- model.matrix(~ Days, data = df)
+  beta <- fixef(m)
+  Z <- getME(m, "Z")
+  u <- c(ranef(m)$Subject[,1], ranef(m)$Subject[,2])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
+  G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
+  G <- Matrix::bdiag(G1, G2)
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  R_half <- expm::sqrtm(R)
+
+  auxqn <- eigen((R_half %*% P %*% R_half), symmetric = T, only.values = FALSE)
+
+  p <- length(beta)
+
+  lt <- sqrt(solve(diag((auxqn$values[1:(N-p)])))) %*% t(auxqn$vectors[1:N,1:(N-p)]) %*% solve(expm::sqrtm(R[1:N,1:N]))
+
+  var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
+
+  resmcp <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
+  .n = i
+
+  tibble::tibble(.n, resmcp)
+})
+```
+
+```{r nullunit}
+v13.sim.unit <- purrr::map_dfr(1:19, function(i){
+  df <- v13.sim %>% filter(.n == i)
+  m <- lmer(y ~ Days + (Days -1 |Subject) + (1|Subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$Subject)
+  nsubjects <- length(subjects)
+
+  y <- df$y
+  X <- model.matrix(~ Days, data = df)
+  beta <- fixef(m)
+  Z <- getME(m, "Z")
+  u <- c(ranef(m)$Subject[,1], ranef(m)$Subject[,2])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
+  G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
+  G <- Matrix::bdiag(G1, G2)
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  expand_grid(subjects) %>% 
+    dplyr::mutate(Vi = map_dbl(subjects, ~{
+      ind <- df %>% 
+        mutate(index = 1:n()) %>% 
+        filter(Subject == .x) %>% 
+        pull(index)
+      mi <- length(ind)
+      Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
+      sqrt(sum((diag(mi) - Ei %*% t(Ei))^2)) / mi
+      }),
+      Mi = as.vector(t(u) %*% solve(varU) %*% u),
+      index = 1:n(),
+      .n = i)
+})
+```
+
+#### Lineup plots
+
+```{r v13n-plo1, fig.height=6}
+lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+```{r v13n-plo2, fig.height=6}
+lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 7) %>% 
+  ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+```
+
+```{r v13n-plo3, fig.height=6}
+lineup(true = v13_unit, samples = v13.sim.unit, pos = 8) %>% 
+  ggplot(aes(index, Vi)) + geom_point() +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+```{r v13n-plo4, fig.height=6}
+lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 9) %>% 
+  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+```
+
+The true plot should be identified, therefore, there is a strong evidence showing heteroscedasticity.
+
+```{r v13n-plo5, fig.height=6}
+lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+True plot is identified, there is evidence showing the outlying observation.
+
+```{r v13n-plo6, fig.height=6}
+lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 10) %>% 
+  ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+```{r v13n-plo6-lcr, fig.height=6}
+lineup(true = v13_lcr, samples = v13_simlcr, pos = 13) %>% 
+  ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+Same here, the conditional residual QQ-plot is easy to identify. However, the least confounded residual is hard to be distinguished.
+
+```{r v13n-plo7, fig.height=6}
+lineup(true = v13_unit, samples = v13.sim.unit, pos = 6) %>% 
+  ggplot(aes(index, Mi)) + geom_point() +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+```{r v13n-plo8, fig.height=6}
+lineup(true = v13_unit, samples = v13.sim.unit, pos = 6) %>% 
+  ggplot(aes(sample = Mi)) + 
+  geom_qq(distribution = stats::qchisq,
+          dparams = list(df = q)) +
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q)) +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+### 4th replication
+```{r}
+v14.mod <- lmer(y ~ Days + (Days-1|Subject) + (1|Subject), data = v1_df4)
+
+v14_fitted <- extract.fitted.mod.v1(v14.mod, v1_df4)
+
+v14_unit <- extract.unit.mod.v1(v14.mod, v1_df4)
+```
+
+#### Plots
+```{r v14-plot1}
+ggplot(v14_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+```{r v14-plot2}
+ggplot(v14_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  theme(legend.position = "none")
+```
+
+No obvious outlier in the marginal residuals
+
+```{r v14-plot3}
+# Dashed line: third quartile + 1.5 interquartile range
+LSlesverb <- as.numeric(quantile(v14_unit$Vi,prob = 0.75) + 1.5*(quantile(v14_unit$Vi, prob = 0.75) - quantile(v14_unit$Vi,prob = 0.25)))
+
+ggplot(v14_unit, aes(1:nrow(v14_unit), Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3)
+```
+
+```{r v14-plot4}
+ggplot(v14_fitted, aes(index, resc_std, color = Subject)) + 
+  geom_point() + geom_hline(yintercept = 0) #+ theme(legend.position = "none")
+```
+
+Most outliers are in the 7th, 12th, 15th, 18th subject for the conditional residuals
+
+```{r v14-plot5}
+ggplot(v14_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+```
+
+Heteroscedasticity!
+
+```{r v14-plot6}
+ggplot(v14_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+```
+
+It does not follow a normal distribution.
+
+```{r}
+v14_lcr <- extract.lcr.mod.v1(v14.mod, v1_df4)
+```
+
+```{r v14-plot6-lcr}
+ggplot(v14_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
+```
+
+It seems that not follow a normal distribution as well.
+
+```{r v14-plot7}
+ggplot(v14_unit, aes(index, Mi)) + geom_point()
+```
+
+
+```{r v14-plot8}
+ggplot(v14_unit, aes(sample = Mi)) +
+  geom_qq(distribution = stats::qchisq,
+          dparams = list(df = q)) + 
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q))
+```
+
+### Simulation
+
+```{r}
+v14.sim <- sim(v14.mod, v1_df4)
+```
+
+```{r nullfitted}
+v14.sim.fitted <- purrr::map_dfr(1:19, function(i){
+  df <- v14.sim %>% filter(.n == i)
+  m <- lmer(y ~ Days + (Days -1 |Subject) + (1|Subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$Subject)
+  nsubjects <- length(subjects)
+
+  y <- df$y
+  X <- model.matrix(~ Days, data = df)
+  beta <- fixef(m)
+  Z <- getME(m, "Z")
+  u <- c(ranef(m)$Subject[,1], ranef(m)$Subject[,2])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
+  G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
+  G <- Matrix::bdiag(G1, G2)
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
+```{r lcrsimnull}
+v14_simlcr <- purrr::map_dfr(1:19, function(i){
+  df <- v14.sim %>% filter(.n == i)
+  m <- lmer(y ~ Days + (Days -1 |Subject) + (1|Subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$Subject)
+  nsubjects <- length(subjects)
+
+  y <- df$y
+  X <- model.matrix(~ Days, data = df)
+  beta <- fixef(m)
+  Z <- getME(m, "Z")
+  u <- c(ranef(m)$Subject[,1], ranef(m)$Subject[,2])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
+  G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
+  G <- Matrix::bdiag(G1, G2)
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  R_half <- expm::sqrtm(R)
+
+  auxqn <- eigen((R_half %*% P %*% R_half), symmetric = T, only.values = FALSE)
+
+  p <- length(beta)
+
+  lt <- sqrt(solve(diag((auxqn$values[1:(N-p)])))) %*% t(auxqn$vectors[1:N,1:(N-p)]) %*% solve(expm::sqrtm(R[1:N,1:N]))
+
+  var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
+
+  resmcp <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
+  .n = i
+
+  tibble::tibble(.n, resmcp)
+})
+```
+
+```{r nullunit}
+v14.sim.unit <- purrr::map_dfr(1:19, function(i){
+  df <- v14.sim %>% filter(.n == i)
+  m <- lmer(y ~ Days + (Days -1 |Subject) + (1|Subject), data = df)
+  
+  N <- nrow(df)
+  subjects <- unique(df$Subject)
+  nsubjects <- length(subjects)
+
+  y <- df$y
+  X <- model.matrix(~ Days, data = df)
+  beta <- fixef(m)
+  Z <- getME(m, "Z")
+  u <- c(ranef(m)$Subject[,1], ranef(m)$Subject[,2])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
+  G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
+  G <- Matrix::bdiag(G1, G2)
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  expand_grid(subjects) %>% 
+    dplyr::mutate(Vi = map_dbl(subjects, ~{
+      ind <- df %>% 
+        mutate(index = 1:n()) %>% 
+        filter(Subject == .x) %>% 
+        pull(index)
+      mi <- length(ind)
+      Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
+      sqrt(sum((diag(mi) - Ei %*% t(Ei))^2)) / mi
+      }),
+      Mi = as.vector(t(u) %*% solve(varU) %*% u),
+      index = 1:n(),
+      .n = i)
+})
+```
+
+#### Lineup plots
+
+```{r v14n-plo1, fig.height=6}
+lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+It is hard to distinguish the true plot, therefore, the linearity of the effects fixed.
+
+```{r v14n-plo2, fig.height=6}
+lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 7) %>% 
+  ggplot(aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+The lineup maybe hard to find the true plot
+
+```{r v14n-plo3, fig.height=6}
+lineup(true = v14_unit, samples = v14.sim.unit, pos = 9) %>% 
+  ggplot(aes(index, Vi)) + geom_point() +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+```{r v14n-plo4, fig.height=6}
+lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 9) %>% 
+  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+```
+
+The true plot is easily identified. It shows that the outlying observation of $y$.
+
+```{r v14n-plo5, fig.height=6}
+lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+The true plot is easily identified. It shows that the conditional residuals have the evidence of heteroscedasticity.
+
+```{r v14n-plo6, fig.height=6}
+lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 10) %>% 
+  ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+The true plot is identifiable, therefore, the conditional residual does not follow a Normal distribution.
+
+```{r v14n-plo6-lcr, fig.height=6}
+lineup(true = v14_lcr, samples = v14_simlcr, pos = 13) %>% 
+  ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+It is hard to distinguish..
+
+```{r v14n-plo7, fig.height=6}
+lineup(true = v14_unit, samples = v14.sim.unit, pos = 6) %>% 
+  ggplot(aes(index, Mi)) + geom_point() +
+  facet_wrap(~.sample, nrow = 5)
+```
+
+```{r v14n-plo8, fig.height=6}
+lineup(true = v14_unit, samples = v14.sim.unit, pos = 6) %>% 
+  ggplot(aes(sample = Mi)) + 
+  geom_qq(distribution = stats::qchisq,
+          dparams = list(df = q)) +
+  geom_qq_line(color = "red",
+               distribution = stats::qchisq,
+               dparams = list(df = q)) +
+  facet_wrap(~.sample, nrow = 5)
+```
 
 ## Version 2
 
@@ -593,18 +1474,20 @@ repc[samp,]$Reaction <-  repc[samp,]$Reaction+ 1
 
 
 ```{r}
+slmod3 <- lmer(Reaction ~ Days + (Days - 1|Subject) + (1|Subject), data = repc)
+
 N <- nrow(repc)
 subjects <- unique(repc$Subject)
 nsubjects <- length(subjects)
 
 y <- repc$Reaction
 X <- model.matrix(~ Days, data = repc)
-beta <- fixef(slmod2)
-Z <- getME(slmod2, "Z")
-u <- c(ranef(slmod2)$Subject[,1], ranef(slmod2)$Subject[,2])
+beta <- fixef(slmod3)
+Z <- getME(slmod3, "Z")
+u <- c(ranef(slmod3)$Subject[,1], ranef(slmod3)$Subject[,2])
 q <- length(u)
 
-vc <- as.data.frame(VarCorr(slmod2))
+vc <- as.data.frame(VarCorr(slmod3))
 R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
 G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
 G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
@@ -638,7 +1521,12 @@ ggplot(v21_fitted, aes(index, resm_std)) + geom_point()
 ```
 
 ```{r v21-plot3}
-ggplot(v21_unit, aes(1:nrow(v21_unit), Vi)) + geom_point()
+# Dashed line: third quartile + 1.5 interquartile range
+LSlesverb <- as.numeric(quantile(v21_unit$Vi,prob = 0.75) + 1.5*(quantile(v21_unit$Vi, prob = 0.75) - quantile(v21_unit$Vi,prob = 0.25)))
+# 2 * mean(Vi)
+LS2lesverb <- 2*mean(v21_unit$Vi)
+
+ggplot(v21_unit, aes(1:nrow(v21_unit), Vi)) + geom_point() + geom_hline(yintercept =  LSlesverb, lty = 2)
 ```
 
 ```{r v21-plot4}
@@ -839,7 +1727,7 @@ lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v21n-plo2, fig.height=6}
-lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 9) %>% 
+lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5)
 ```
@@ -879,6 +1767,8 @@ lineup(true = v21_lcr, samples = v21_simlcr, pos = 13) %>%
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5)
 ```
+
+By comparing with the QQ-plot of standardised conditional residual, the QQ-plot of least confounded conditional residual is not easy to pick the true plot.
 
 ```{r v21n-plo7, fig.height=6}
 lineup(true = v21_unit, samples = v21.sim.unit, pos = 6) %>% 
