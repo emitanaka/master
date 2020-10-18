@@ -310,26 +310,41 @@ ggplot(v11_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_
 
 
 ```{r v11-plot3}
-ggplot(v11_unit, aes(1:nrow(v11_unit), Vi)) + geom_point()
+# Dashed line: third quartile + 1.5 interquartile range
+LSlesverb <- as.numeric(quantile(v11_unit$Vi,prob = 0.75) + 1.5*(quantile(v11_unit$Vi, prob = 0.75) - quantile(v11_unit$Vi,prob = 0.25)))
+
+ggplot(v11_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3) + geom_text(
+  data = v11_unit %>% filter(Vi > LSlesverb), 
+  aes(label = index), 
+  nudge_x = 0.05, nudge_y = 0.05, 
+  check_overlap = T,
+  size = 2
+)
 ```
+
+It shows that the covariance structure of last group should be modified.
 
 
 ```{r v11-plot4}
 ggplot(v11_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + geom_hline(yintercept = 0) + theme(legend.position = "none")
+  geom_point() + geom_hline(yintercept = 0)
+  theme(legend.position = "none")
 ```
 
+For both marginal residual and conditional residual, they seem that there is no presence of outlying observations.
 
 ```{r v11-plot5}
 ggplot(v11_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
 ```
 
+It seems to be homoscedasticity of conditional residuals.
 
 ```{r v11-plot6}
 ggplot(v11_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
 ```
 
-##### Least confounded conditional residual
+Not that such follow a Normal distribution.
+
 ```{r}
 v11_lcr <- extract.lcr.mod.v1(v11.mod, v1_df)
 ```
@@ -337,6 +352,8 @@ v11_lcr <- extract.lcr.mod.v1(v11.mod, v1_df)
 ```{r v11-plot6-lcr}
 ggplot(v11_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
 ```
+
+Small tails exsit on the right.
 
 ```{r v11-plot7}
 ggplot(v11_unit, aes(index, Mi)) + geom_point()
@@ -413,19 +430,25 @@ lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 9) %>%
 
 ```{r v11n-plot2, fig.height=6}
 lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 9) %>% 
-  ggplot(aes(index, resm_std)) + 
+  ggplot(aes(index, resm_std, color = Subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
-  facet_wrap( ~ .sample, ncol=5)
+  facet_wrap( ~ .sample, ncol=5) + 
+  theme(legend.position = "none")
 ```
+
+The true plot might be hard to be distinguished.
 
 ```{r v11n-plot4, fig.height=6}
 lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 9) %>% 
-  ggplot(aes(index, resc_std)) + 
+  ggplot(aes(index, resc_std, color = Subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
-  facet_wrap( ~ .sample, ncol=5)
+  facet_wrap( ~ .sample, ncol=5) + 
+  theme(legend.position = "none")
 ```
+
+By comparing with the marginal residual, the conditional residual seems to be better on detecting the plots.
 
 ```{r v11n-plot5, fig.height=6}
 lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 9) %>% 
@@ -441,6 +464,8 @@ lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 9) %>%
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5)
 ```
+
+The plot might hard to identify the true plot.
 
 ```{r lcrsimnull-v11}
 v11_simlcr <- purrr::map_dfr(1:19, function(i){
@@ -503,6 +528,8 @@ lineup(true = v11_lcr, samples = v11_simlcr, pos = 9) %>%
   facet_wrap( ~ .sample, ncol=5)
 ```
 
+Same for the least confounded residual, which is hard to identified.
+
 ```{r nullunit-v11}
 v11.sim.unit <- purrr::map_dfr(1:19, function(i){
   df <- v11.sim %>% filter(.n == i)
@@ -563,6 +590,8 @@ lineup(true = v11_unit, samples = v11.sim.unit, pos = 9) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
+Won't get the true plot.
+
 
 ```{r v11n-plot7, fig.height=6}
 lineup(true = v11_unit, samples = v11.sim.unit, pos = 9) %>% 
@@ -596,17 +625,37 @@ ggplot(v12_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept
 ```
 
 ```{r v12-plot2}
-ggplot(v12_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) 
-#+theme(legend.position = "none")
+ggplot(v12_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +theme(legend.position = "none")
 ```
 
 ```{r v12-plot3}
-ggplot(v12_unit, aes(1:nrow(v12_unit), Vi)) + geom_point()
+# Dashed line: third quartile + 1.5 interquartile range
+LSlesverb <- as.numeric(quantile(v12_unit$Vi,prob = 0.75) + 1.5*(quantile(v12_unit$Vi, prob = 0.75) - quantile(v12_unit$Vi,prob = 0.25)))
+
+ggplot(v12_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3) + geom_text(
+  data = v12_unit %>% filter(Vi > LSlesverb), 
+  aes(label = index), 
+  nudge_x = 0.05, nudge_y = 0.05, 
+  check_overlap = T,
+  size = 2
+)
 ```
+
+No unit's covariance structure needs to be modified.
 
 ```{r v12-plot4}
 ggplot(v12_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + geom_hline(yintercept = 0) + theme(legend.position = "none")
+  geom_point(alpha = 0.8) + 
+  geom_hline(yintercept = 0) + geom_hline(yintercept = -4, lty = 3) + geom_hline(yintercept = 4, lty = 3) +
+  geom_text(
+    data = v12_fitted %>% 
+      filter(abs(resc_std) > 4),
+    aes(label = index),
+    nudge_x = 0.35, nudge_y = 0.35, 
+    check_overlap = T,
+    size = 2
+  ) + 
+  theme(legend.position = "none")
 ```
 
 There are some outlying observations.
@@ -615,11 +664,13 @@ There are some outlying observations.
 ggplot(v12_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
 ```
 
-It seems to have the heteroscedasticity.
+It seems to have the heteroscedasticity. Since the conditional residual increases in variablity when fitted value increses.
 
 ```{r v12-plot6}
 ggplot(v12_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
 ```
+
+Tails on the left.
 
 ```{r}
 v12_lcr <- extract.lcr.mod.v1(v12.mod, v1_df2)
@@ -629,7 +680,7 @@ v12_lcr <- extract.lcr.mod.v1(v12.mod, v1_df2)
 ggplot(v12_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
 ```
 
-The least confounded conditional residual is relative normal than the conditional residual.
+The least confounded residual fits the normal distribution better than the conditional residual.
 
 ```{r v12-plot7}
 ggplot(v12_unit, aes(index, Mi)) + geom_point()
@@ -812,8 +863,11 @@ lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 9) %>%
 
 ```{r v12n-plo2, fig.height=6}
 lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 7) %>% 
-  ggplot(aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resm_std, color = Subject)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + 
+  theme(legend.position = "none")
 ```
 
 ```{r v12n-plo3, fig.height=6}
@@ -824,9 +878,16 @@ lineup(true = v12_unit, samples = v12.sim.unit, pos = 9) %>%
 
 ```{r v12n-plo4, fig.height=6}
 lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 9) %>% 
-  ggplot(aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resc_std, color = Subject)) + 
+  geom_point() + 
+  geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 4, lty = 3) +
+  geom_hline(yintercept = -4, lty = 3) +
+  facet_wrap(~.sample, nrow = 5) +
+  theme(legend.position = "none")
 ```
+
+The true plot from conditional residual is easy to identified compared with the null plots of marginal residuals.
 
 The true plot can be identified.
 
@@ -894,21 +955,43 @@ ggplot(v13_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_
 # Dashed line: third quartile + 1.5 interquartile range
 LSlesverb <- as.numeric(quantile(v13_unit$Vi,prob = 0.75) + 1.5*(quantile(v13_unit$Vi, prob = 0.75) - quantile(v13_unit$Vi,prob = 0.25)))
 
-ggplot(v13_unit, aes(1:nrow(v13_unit), Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3)
-
-index = which(v13_unit$Vi>LSlesverb)
+ggplot(v13_unit, aes(index, Vi)) + 
+  geom_point() + 
+  geom_hline(yintercept = LSlesverb, lty = 3) +
+  geom_text(
+    data = v13_unit %>% 
+      filter(Vi > LSlesverb),
+    aes(label = index),
+    nudge_x = 0.05, nudge_y = 0.05, 
+    check_overlap = T,
+    size = 2
+  )
 ```
 
 ```{r v13-plot4}
 ggplot(v13_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + geom_hline(yintercept = 0) + theme(legend.position = "none")
-
-which(abs(v13_fitted$resc_std) > 4)
+  geom_point(alpha = 0.8) + 
+  geom_hline(yintercept = 0) + 
+  geom_hline(yintercept = 4, lty = 3) +
+  geom_hline(yintercept = -4, lty = 3) +
+  geom_text(
+    data = v13_fitted %>% 
+      filter(abs(resc_std)>4),
+    aes(label = index),
+    nudge_x = 0.35, nudge_y = 0.35, 
+    check_overlap = T,
+    size = 2
+  ) +
+  theme(legend.position = "none")
 ```
+
+Outlying observations!
 
 ```{r v13-plot5}
-ggplot(v13_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(v13_fitted, aes(fitted, resc_std)) + geom_point(alpha = 0.8) + geom_hline(yintercept = 0)
 ```
+
+Heteroscadasticity!
 
 ```{r v13-plot6}
 ggplot(v13_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
@@ -921,6 +1004,8 @@ v13_lcr <- extract.lcr.mod.v1(v13.mod, v1_df3)
 ```{r v13-plot6-lcr}
 ggplot(v13_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
 ```
+
+Least confounded residual is more fitted compared with conditional residuals.
 
 ```{r v13-plot7}
 ggplot(v13_unit, aes(index, Mi)) + geom_point()
@@ -1097,7 +1182,9 @@ v13.sim.unit <- purrr::map_dfr(1:19, function(i){
 
 ```{r v13n-plo1, fig.height=6}
 lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+  ggplot(aes(fitted, resm_std)) + 
+  geom_point(alpha = 0.8) + 
+  geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5)
 ```
 
@@ -1113,13 +1200,17 @@ lineup(true = v13_unit, samples = v13.sim.unit, pos = 8) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
+For this plot, the true plot might be detected. Then the inadequate measure of covariance structure is identified.
+
 ```{r v13n-plo4, fig.height=6}
 lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 9) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
-The true plot should be identified, therefore, there is a strong evidence showing heteroscedasticity.
+The conditional residual plot is more easy compared with marginal residual to detect the true plot.
+
+True plot is identified, there is evidence showing the outlying observation.
 
 ```{r v13n-plo5, fig.height=6}
 lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 9) %>% 
@@ -1127,7 +1218,7 @@ lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 9) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
-True plot is identified, there is evidence showing the outlying observation.
+The true plot should be identified, therefore, there is a strong evidence showing heteroscedasticity.
 
 ```{r v13n-plo6, fig.height=6}
 lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 10) %>% 
@@ -1190,10 +1281,21 @@ ggplot(v14_unit, aes(1:nrow(v14_unit), Vi)) + geom_point() + geom_hline(yinterce
 
 ```{r v14-plot4}
 ggplot(v14_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + geom_hline(yintercept = 0) #+ theme(legend.position = "none")
+  geom_point(alpha = 0.8) + geom_hline(yintercept = 0) +
+  geom_hline(yintercept = 4, lty = 3) +
+  geom_hline(yintercept = -4, lty = 3) +
+  geom_text(
+    data = v14_fitted %>% 
+      filter(abs(resc_std)>4),
+    aes(label = index),
+    nudge_x = 0.35, nudge_y = 0.35,
+    check_overlap = T,
+    size = 2
+  ) + 
+  theme(legend.position = "none")
 ```
 
-Most outliers are in the 7th, 12th, 15th, 18th subject for the conditional residuals
+Outlying observations!
 
 ```{r v14-plot5}
 ggplot(v14_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
@@ -1400,8 +1502,8 @@ It is hard to distinguish the true plot, therefore, the linearity of the effects
 
 ```{r v14n-plo2, fig.height=6}
 lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 7) %>% 
-  ggplot(aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
 The lineup maybe hard to find the true plot
@@ -1463,14 +1565,15 @@ lineup(true = v14_unit, samples = v14.sim.unit, pos = 6) %>%
 
 ## Version 2
 
-Adding 10 to reaction value from the sampled 18 observation (10% of from the original data).
+Adding 20 to reaction value from the sampled 36 observation (20% of from the original data).
 
 ```{r}
 repc <- sleepstudy
 
-samp <- sample(1:180, 18)
+set.seed(1234)
+samp <- sample(1:180, 36)
 
-repc[samp,]$Reaction <-  repc[samp,]$Reaction+ 10
+repc[samp,]$Reaction <-  repc[samp,]$Reaction + 20
 ```
 
 
@@ -1531,7 +1634,7 @@ ggplot(v21_fitted, aes(fitted, resm_std)) + geom_point()
 ```
 
 ```{r v21-plot2}
-ggplot(v21_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(v21_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) + theme(legend.position = "none")
 ```
 
 ```{r v21-plot3}
@@ -1540,28 +1643,33 @@ LSlesverb <- as.numeric(quantile(v21_unit$Vi,prob = 0.75) + 1.5*(quantile(v21_un
 # 2 * mean(Vi)
 LS2lesverb <- 2*mean(v21_unit$Vi)
 
-ggplot(v21_unit, aes(1:nrow(v21_unit), Vi)) + geom_point() + geom_hline(yintercept =  LSlesverb, lty = 2)
+ggplot(v21_unit, aes(index, Vi)) + 
+  geom_point() + geom_hline(yintercept =  LSlesverb, lty = 2) +
+  geom_text(
+    data = v21_unit %>% 
+      filter(Vi > LSlesverb),
+    aes(label = index),
+    nudge_x = 0.05, nudge_y = 0.05,
+    check_overlap = T,
+    size = 2
+  )
 ```
 
 ```{r v21-plot4}
-ggplot(v21_fitted, aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0)
-
-which(abs(v21_fitted$resc_std) > 4)
+ggplot(v21_fitted, aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) + theme(legend.position = "none")
 ```
-
-It contains the outlying observation which index are `r which(abs(v21_fitted$resc_std) > 4)`.
 
 ```{r v21-plot5}
 ggplot(v21_fitted, aes(fitted, resc_std)) + geom_point()
 ```
 
-It seems to be heteroscedasticity since the conditional residual increases in variablity as the fitted value increases.
+Homoscadasticity!
 
 ```{r v21-plot6}
 ggplot(v21_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
 ```
 
-The normal distribution with some tail on the left.
+The normal distribution with some tail on the right.
 
 ```{r v21-plot6-lcr}
 v21_lcr <- extract.lcr.mod.v1(v21.mod, v2_df)
@@ -1569,7 +1677,9 @@ v21_lcr <- extract.lcr.mod.v1(v21.mod, v2_df)
 ggplot(v21_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color= "red")
 ```
 
-Right tail on the Normality of the least confouded conditional residual.
+Some fluctutations occured.
+
+least confouded conditional residual fits better.
 
 ```{r v21-plot7}
 ggplot(v21_unit, aes(index, Mi)) + geom_point()
@@ -1751,8 +1861,10 @@ lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 9) %>%
 
 ```{r v21n-plo2, fig.height=6}
 lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 7) %>% 
-  ggplot(aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resm_std, color = Subject)) + 
+  geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) +
+  theme(legend.position = "none")
 ```
 
 ```{r v21n-plo3, fig.height=6}
@@ -1763,13 +1875,12 @@ lineup(true = v21_unit, samples = v21.sim.unit, pos = 9) %>%
 
 ```{r v21n-plo4, fig.height=6}
 lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 9) %>% 
-  ggplot(aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resc_std, color = Subject)) + 
+  geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
-The presence of outlying observation exists for conditional residual.
-
-From this plot, we can see that the panel 9 is the most different one which is the true plot.
+Both marginal residual and conditional residual are hard to detect.
 
 ```{r v21n-plo5, fig.height=6}
 lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 9) %>% 
@@ -1777,8 +1888,7 @@ lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 9) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
-True plot should be identified (panel 9)
-Heteroscedasticity!
+Homoscedasticity in the case!
 
 ```{r v21n-plo6, fig.height=6}
 lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 10) %>% 
@@ -1786,9 +1896,6 @@ lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 10) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
-True plot should be identified (panel 10).
-
-Not a Normal distribution..
 
 ```{r v21n-plo6-lcr, fig.height=6}
 lineup(true = v21_lcr, samples = v21_simlcr, pos = 13) %>% 
@@ -1796,9 +1903,7 @@ lineup(true = v21_lcr, samples = v21_simlcr, pos = 13) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
-Maybe from this plot, the true plot can be identified.
-
-By comparing with the QQ-plot of standardised conditional residual, the QQ-plot of least confounded conditional residual is not easy to pick the true plot.
+In this case, both are hard to detect.
 
 ```{r v21n-plo7, fig.height=6}
 lineup(true = v21_unit, samples = v21.sim.unit, pos = 6) %>% 
@@ -1840,24 +1945,27 @@ ggplot(v22_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_
 # Dashed line: third quartile + 1.5 interquartile range
 LSlesverb <- as.numeric(quantile(v22_unit$Vi,prob = 0.75) + 1.5*(quantile(v22_unit$Vi, prob = 0.75) - quantile(v22_unit$Vi,prob = 0.25)))
 
-ggplot(v22_unit, aes(1:nrow(v22_unit), Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3)
+ggplot(v22_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3) + geom_text(
+  data = v22_unit %>% 
+    filter(Vi > LSlesverb),
+  aes(label = index),
+  nudge_x = 0.05, nudge_y = 0.05,
+  check_overlap = T,
+  size = 2
+)
 ```
 
 ```{r v22-plot4}
 ggplot(v22_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + geom_hline(yintercept = 0) + geom_hline(yintercept = 4, lty = 3) + geom_hline(yintercept = -4, lty = 3) +
+  geom_point() + geom_hline(yintercept = 0) +
   theme(legend.position = "none")
-
-which(abs(v22_fitted$resc_std) > 4)
 ```
 
-The index `r which(abs(v22_fitted$resc_std) > 4)` shows the outlying observations for conditional residuals.
 
 ```{r v22-plot5}
 ggplot(v22_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) 
 ```
 
-It shows an increase in variablity of conditional residual as increased in fitted value. - Heteroscedasticity
 
 ```{r v22-plot6}
 ggplot(v22_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
@@ -2054,8 +2162,8 @@ lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 9) %>%
 
 ```{r v22n-plo2, fig.height=6}
 lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 7) %>% 
-  ggplot(aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
 ```{r v22n-plo3, fig.height=6}
@@ -2066,11 +2174,11 @@ lineup(true = v22_unit, samples = v22.sim.unit, pos = 9) %>%
 
 ```{r v22n-plo4, fig.height=6}
 lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 9) %>% 
-  ggplot(aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
-The true plot is esay to be identified, therefore, the presence of outlying observations exists for the conditional residuals.
+Both plots are not that easy to identify the true plot.
 
 ```{r v22n-plo5, fig.height=6}
 lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 9) %>% 
@@ -2078,7 +2186,7 @@ lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 9) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
-The true plot is easy to be identified as well. Therefore, the heteroscedasticity of conditional residuals is presented.
+The true plot may not be identified, therefore, homoscedasticity.
 
 ```{r v22n-plo6, fig.height=6}
 lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 10) %>% 
@@ -2086,7 +2194,7 @@ lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 10) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
-The true plot can be distinguished. Therefore, the conditional residual does not follow a normal distribution.
+true plot should be identified.
 
 ```{r v22n-plo6-lcr, fig.height=6}
 lineup(true = v22_lcr, samples = v22_simlcr, pos = 13) %>% 
@@ -2094,7 +2202,7 @@ lineup(true = v22_lcr, samples = v22_simlcr, pos = 13) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
-If the true plot is identified, then the least confounded residual does not follow a Normal distribution.
+Least confounded residual follows a normal distribution.
 
 ```{r v22n-plo7, fig.height=6}
 lineup(true = v22_unit, samples = v22.sim.unit, pos = 6) %>% 
@@ -2136,7 +2244,14 @@ ggplot(v23_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_
 # Dashed line: third quartile + 1.5 interquartile range
 LSlesverb <- as.numeric(quantile(v23_unit$Vi,prob = 0.75) + 1.5*(quantile(v23_unit$Vi, prob = 0.75) - quantile(v23_unit$Vi,prob = 0.25)))
 
-ggplot(v23_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3)
+ggplot(v23_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3) + geom_text(
+  data = v23_unit %>% 
+    filter(Vi > LSlesverb),
+  aes(label = index),
+  nudge_x = 0.05, nudge_y = 0.05,
+  check_overlap = T,
+  size = 2
+)
 ```
 
 ```{r v23-plot4}
@@ -2147,13 +2262,11 @@ ggplot(v23_fitted, aes(index, resc_std, color = Subject)) +
   theme(legend.position = "none")
 ```
 
-The outlying observations exist.
 
 ```{r v23-plot5}
 ggplot(v23_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
 ```
 
-Heteroscedasticity of conditional residual
 
 ```{r v23-plot6}
 ggplot(v23_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
@@ -2352,8 +2465,8 @@ lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 9) %>%
 
 ```{r v23n-plo2, fig.height=6}
 lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 7) %>% 
-  ggplot(aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
 ```{r v23n-plo3, fig.height=6}
@@ -2364,8 +2477,8 @@ lineup(true = v23_unit, samples = v23.sim.unit, pos = 9) %>%
 
 ```{r v23n-plo4, fig.height=6}
 lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 9) %>% 
-  ggplot(aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
 The outlying observations are presented by panel 9.
@@ -2384,7 +2497,6 @@ lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 10) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
-The true plot can be identified, the conditional residual does not follow a normal distribution.
 
 ```{r v23n-plo6-lcr, fig.height=6}
 lineup(true = v23_lcr, samples = v23_simlcr, pos = 13) %>% 
@@ -2440,10 +2552,21 @@ ggplot(v24_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesv
 
 ```{r v24-plot4}
 ggplot(v24_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + geom_hline(yintercept = 0) + geom_hline(yintercept = 4, lty = 3) + geom_hline(yintercept = -4, lty = 3) + theme(legend.position = "none")
+  geom_point(alpha = 0.8) + 
+  geom_hline(yintercept = 0) + 
+  geom_hline(yintercept = 4, lty = 3) + geom_hline(yintercept = -4, lty = 3) + 
+  theme(legend.position = "none") + 
+  geom_text(
+    data = v24_fitted %>% 
+      filter(abs(resc_std)>4),
+    aes(label = index),
+    nudge_x = 0.35, nudge_y = 0.35,
+    check_overlap = T,
+    size = 2
+  )
 ```
 
-The index outlying observation are `r which(abs(v24_fitted$resc_std)>4)`
+outlying observations
 
 ```{r v24-plot5}
 ggplot(v24_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
@@ -2463,7 +2586,7 @@ v24_lcr <- extract.lcr.mod.v1(v24.mod, v2_df4)
 ggplot(v24_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
 ```
 
-In this case, the conditional residual follows a normal distribution. However, the least confounded residual does not quit follow a normal distribution.
+they are not normal
 
 ```{r v24-plot7}
 ggplot(v24_unit, aes(index, Mi)) + geom_point()
@@ -2646,8 +2769,8 @@ lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 9) %>%
 
 ```{r v24n-plo2, fig.height=6}
 lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 7) %>% 
-  ggplot(aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
 ```{r v24n-plo3, fig.height=6}
@@ -2658,8 +2781,8 @@ lineup(true = v24_unit, samples = v24.sim.unit, pos = 9) %>%
 
 ```{r v24n-plo4, fig.height=6}
 lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 19) %>% 
-  ggplot(aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
 The true plot is identified.
@@ -2686,7 +2809,7 @@ lineup(true = v24_lcr, samples = v24_simlcr, pos = 13) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
-True plot is identified, then, the least confounded residual does not follow a normal distribution.
+True plot may not be identified.
 
 
 ```{r v24n-plo7, fig.height=6}
@@ -2775,7 +2898,19 @@ ggplot(v31_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_
 ```
 
 ```{r plot3}
-ggplot(v31_unit, aes(index, Vi)) + geom_point()
+# Dashed line: third quartile + 1.5 interquartile range
+LSlesverb <- as.numeric(quantile(v31_unit$Vi,prob = 0.75) + 1.5*(quantile(v31_unit$Vi, prob = 0.75) - quantile(v31_unit$Vi,prob = 0.25)))
+
+ggplot(v31_unit, aes(index, Vi)) + geom_point() + 
+  geom_hline(yintercept = LSlesverb, lty = 3) + 
+  geom_text(
+    data = v31_unit %>% 
+      filter(Vi>LSlesverb),
+    aes(label = index),
+    nudge_x = 0.05, nudge_y = 0.05,
+    check_overlap = T,
+    size = 2
+  )
 ```
 
 ```{r plot4}
@@ -2787,13 +2922,9 @@ ggplot(v31_fitted, aes(index, resc_std, color = Subject)) +
   theme(legend.position = "none")
 ```
 
-The index of outlying observation are `r which(abs(v31_fitted$resc_std)>4)`.
-
 ```{r plot5}
 ggplot(v31_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
 ```
-
-Heteroscedasticity!
 
 ```{r plot6}
 ggplot(v31_fitted, aes(sample = resm_std)) + geom_qq() + geom_qq_line(color = "red")
@@ -2803,7 +2934,7 @@ ggplot(v31_fitted, aes(sample = resm_std)) + geom_qq() + geom_qq_line(color = "r
 ggplot(v31_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
 ```
 
-Least confounded residual quite follows a normal distribution compared with the conditional residual.
+Least confounded residual not follow a normal distribution.
 
 ```{r plot7}
 ggplot(v31_unit, aes(index, Mi)) + geom_point()
@@ -2984,8 +3115,8 @@ lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 9) %>%
 
 ```{r v31n-plo2, fig.height=6}
 lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 9) %>% 
-  ggplot(aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
 ```{r v31n-plo3, fig.height=6}
@@ -2998,11 +3129,10 @@ True plot might be seen (panel 9)
 
 ```{r v31n-plo4, fig.height=6}
 lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 9) %>% 
-  ggplot(aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
-True plot is identified.
 
 ```{r v31n-plo5, fig.height=6}
 lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 9) %>% 
@@ -3015,8 +3145,6 @@ lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 10) %>%
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5)
 ```
-
-True plot can be identified (panel 10)
 
 ```{r v31n-plo6-lcr, fig.height=6}
 lineup(true = v31_lcr, samples = v31_simlcr, pos = 13) %>% 
@@ -3074,6 +3202,14 @@ ggplot(v32_fitted, aes(index, resc_std, color = Subject)) +
   geom_hline(yintercept = 0) + 
   geom_hline(yintercept = 4, lty = 3) +
   geom_hline(yintercept = -4, lty = 3) +
+  geom_text(
+    data = v32_fitted %>% 
+      filter(abs(resc_std) > 4),
+    aes(label = index),
+    nudge_x = 0.35, nudge_y = 0.35,
+    check_overlap = T,
+    size = 2
+  ) + 
   theme(legend.position = "none")
 ```
 
@@ -3088,6 +3224,8 @@ Heteroscedasticity
 ```{r v32-plot6}
 ggplot(v32_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
 ```
+
+Left tails!
 
 ```{r}
 v32_lcr <- extract.lcr.mod.v1(v32.mod, v3_df2)
@@ -3278,8 +3416,8 @@ lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 9) %>%
 
 ```{r v32n-plo2, fig.height=6}
 lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 7) %>% 
-  ggplot(aes(index, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
 ```{r v32n-plo3, fig.height=6}
@@ -3290,9 +3428,11 @@ lineup(true = v32_unit, samples = v32.sim.unit, pos = 9) %>%
 
 ```{r v32n-plo4, fig.height=6}
 lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 9) %>% 
-  ggplot(aes(index, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
+
+Outlying observations!
 
 ```{r v32n-plo5, fig.height=6}
 lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 9) %>% 
@@ -3300,11 +3440,15 @@ lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 9) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
+Heteroscedasticity!
+
 ```{r v32n-plo6, fig.height=6}
 lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 10) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5)
 ```
+
+True plot is identified, then the conditonal residuals does not follow a normal distribution!
 
 ```{r v32n-plo6-lcr, fig.height=6}
 lineup(true = v32_lcr, samples = v32_simlcr, pos = 13) %>% 
@@ -3354,24 +3498,39 @@ ggplot(v33_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_
 # Dashed line: third quartile + 1.5 interquartile range
 LSlesverb <- as.numeric(quantile(v33_unit$Vi,prob = 0.75) + 1.5*(quantile(v33_unit$Vi, prob = 0.75) - quantile(v33_unit$Vi,prob = 0.25)))
 
-ggplot(v33_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3)
+ggplot(v33_unit, aes(index, Vi)) + geom_point() + 
+  geom_hline(yintercept = LSlesverb, lty = 3) + 
+  geom_text(
+    data = v33_unit %>% 
+      filter(Vi>LSlesverb),
+    aes(label = index),
+    nudge_x = 0.05, nudge_y = 0.05,
+    check_overlap = T,
+    size = 2
+  )
 ```
-
-The index `r which(v33_unit$Vi>LSlesverb)` covariance structure should be modified.
 
 ```{r v33-plot4}
 ggplot(v33_fitted, aes(index, resc_std, color = Subject)) +
-  geom_point() + 
+  geom_point(alpha = 0.8) + 
   geom_hline(yintercept = 0) + 
   geom_hline(yintercept = 4, lty = 3) +
   geom_hline(yintercept = -4, lty = 3) +
+  geom_text(
+    data = v33_fitted %>% 
+      filter(abs(resc_std)>4),
+    aes(label = index),
+    nudge_x = 0.35, nudge_y = 0.35,
+    check_overlap = T,
+    size = 2
+  ) + 
   theme(legend.position = "none")
 ```
 
 The index of outlying observation are `r which(abs(v33_fitted$resc_std)>4)`.
 
 ```{r v33-plot5}
-ggplot(v33_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(v33_fitted, aes(fitted, resc_std)) + geom_point(alpha = 0.8) + geom_hline(yintercept = 0)
 ```
 
 Heteroscadasticity!
@@ -3380,7 +3539,7 @@ Heteroscadasticity!
 ggplot(v33_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
 ```
 
-Tails on the right
+Tails on the left!
 
 ```{r}
 v33_lcr <- extract.lcr.mod.v1(v33.mod, v3_df3)
@@ -3600,11 +3759,15 @@ lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 9) %>%
   facet_wrap(~.sample, nrow = 5)
 ```
 
+Heteroscedasticity!
+
 ```{r v33n-plo6, fig.height=6}
 lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 10) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5)
 ```
+
+true plot is identified, the conditional residual does not follow a normal distribution.
 
 ```{r v33n-plo6-lcr, fig.height=6}
 lineup(true = v33_lcr, samples = v33_simlcr, pos = 13) %>% 
@@ -3654,7 +3817,15 @@ ggplot(v34_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_
 # Dashed line: third quartile + 1.5 interquartile range
 LSlesverb <- as.numeric(quantile(v34_unit$Vi,prob = 0.75) + 1.5*(quantile(v34_unit$Vi, prob = 0.75) - quantile(v34_unit$Vi,prob = 0.25)))
 
-ggplot(v34_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3)
+ggplot(v34_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3) + 
+  geom_text(
+    data = v34_unit %>% 
+      filter(Vi>LSlesverb),
+    aes(label = index),
+    nudge_x = 0.05, nudge_y = 0.05,
+    check_overlap = T,
+    size = 2
+  )
 ```
 
 ```{r v34-plot4}
@@ -3666,13 +3837,9 @@ ggplot(v34_fitted, aes(index, resc_std, color = Subject)) +
   theme(legend.position = "none")
 ```
 
-Index of outlying observations are `r which(abs(v34_fitted$resc_std)>4)`.
-
 ```{r v34-plot5}
 ggplot(v34_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
 ```
-
-Heteroscedasticity!
 
 ```{r v34-plot6}
 ggplot(v34_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
@@ -3685,6 +3852,8 @@ v34_lcr <- extract.lcr.mod.v1(v34.mod, v3_df4)
 ```{r v34-plot6-lcr}
 ggplot(v34_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
 ```
+
+Both of them are not quit follow a normal distribution!
 
 ```{r v34-plot7}
 ggplot(v34_unit, aes(index, Mi)) + geom_point()
@@ -3880,7 +4049,7 @@ lineup(true = v34_unit, samples = v34.sim.unit, pos = 9) %>%
 ```{r v34n-plo4, fig.height=6}
 lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 9) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
 ```{r v34n-plo5, fig.height=6}
@@ -3894,6 +4063,8 @@ lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 10) %>%
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5)
 ```
+
+If true plos is identified (panel 10), then the conditional distribution does not follow a normal distribution.
 
 ```{r v34n-plo6-lcr, fig.height=6}
 lineup(true = v34_lcr, samples = v34_simlcr, pos = 13) %>% 
