@@ -6,11 +6,11 @@
 + Submit Presentation Vedio and Slides (PDF)
 + Structure is in the Week 2_overview.pdf
 
-2nd Presentation Submission (Week 12): Friday, 6 November 2020, 6:00 PM (20%)
+2nd Presentation Submission (Week 12): Friday, 13 November 2020, 6:00 PM (20%)
 + No longer than 15 minutes
 + No longer than 20 slides
 
-Research Paper Submission (Week 13): Friday, 13 November 2020, 6:00 PM (70%)
+Research Paper Submission (Week 13): Friday, 20 November 2020, 6:00 PM (70%)
 + The research paper should consist of approximately 40 typed A4 pages including possible tables, graphs and references. 
 
 # R
