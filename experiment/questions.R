@@ -8,10 +8,10 @@ surveyQuestions <- function(demographics, scene){
 questions <- surveyQuestions(
   demographics =
     div(
-      # Contributor ID
-      textInput("contributor", "Please provide your Figure-Eight contributor ID: (necessary for payment)", 
-                placeholder = "Contributor ID"),
-      p("You will be shown a series of 12 displays.
+      # Name
+      textInput("Name", "Please provide your name:", 
+                placeholder = "Name"),
+      p("You will be shown a series of 20 displays.
         This survey should not take more than 10 minutes of your time,
         please answer all questions for each display."),
       tags$b("As this is an experiment, your responses will be used for analysis."),
@@ -20,7 +20,6 @@ questions <- surveyQuestions(
       p("-	Have had any questions answered to your satisfaction."),
       p("-	Understand that if you have any additional questions you can contact the research team."),
       p("-	Understand that you are free to withdraw without comment or penalty."),
-      p("-	Understand that if you have concerns about the ethical conduct of the research project you can contact the Research Ethics Advisory Team on +61 7 3138 5123 or email humanethics@qut.edu.au."), 
       radioButtons(inputId = "consent", label = "Do you consent to your responses being collected?", 
                    choices = c("Yes, I consent to my responses being used for research purposes and allow them to be published online in a de-identified form." = "Consented",
                                "No, I do not consent to my responses being used for research purposes and allow them to be published online in a de-identified form." = "No Consent"),
@@ -85,7 +84,15 @@ questions <- surveyQuestions(
                                  "9" = 9,
                                  "10" = 10,
                                  "11" = 11,
-                                 "12" = 12
+                                 "12" = 12,
+                                 "13" = 13,
+                                 "14" = 14,
+                                 "15" = 15,
+                                 "16" = 16,
+                                 "17" = 17,
+                                 "18" = 18,
+                                 "19" = 19,
+                                 "20" = 20
                   ), selected = 0),
       # Question 2, reason for their choice
       radioButtons("reason",
