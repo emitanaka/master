@@ -327,7 +327,7 @@ It shows that the covariance structure of last group should be modified.
 
 ```{r v11-plot4}
 ggplot(v11_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + geom_hline(yintercept = 0)
+  geom_point() + geom_hline(yintercept = 0)+
   theme(legend.position = "none")
 ```
 
@@ -428,24 +428,30 @@ lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 9) %>%
 ```
 
 
-```{r v11n-plot2, fig.height=6}
-lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 9) %>% 
+```{r v11n-plot2, fig.height = 6}
+lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
   facet_wrap( ~ .sample, ncol=5) + 
-  theme(legend.position = "none")
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 The true plot might be hard to be distinguished.
 
 ```{r v11n-plot4, fig.height=6}
-lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 9) %>% 
+lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
   facet_wrap( ~ .sample, ncol=5) + 
-  theme(legend.position = "none")
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 By comparing with the marginal residual, the conditional residual seems to be better on detecting the plots.
@@ -462,7 +468,11 @@ lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 9) %>%
 lineup(true = v11_fitted, samples = v11.sim.fitted, pos = 9) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap( ~ .sample, ncol=5)
+  facet_wrap( ~ .sample, ncol=5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 The plot might hard to identify the true plot.
@@ -525,7 +535,11 @@ v11_simlcr <- purrr::map_dfr(1:19, function(i){
 lineup(true = v11_lcr, samples = v11_simlcr, pos = 9) %>% 
   ggplot(aes(sample = resmcp)) + 
   geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap( ~ .sample, ncol=5)
+  facet_wrap( ~ .sample, ncol=5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 Same for the least confounded residual, which is hard to identified.
@@ -867,7 +881,10 @@ lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 7) %>%
   geom_point() + 
   geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + 
-  theme(legend.position = "none")
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v12n-plo3, fig.height=6}
@@ -877,14 +894,17 @@ lineup(true = v12_unit, samples = v12.sim.unit, pos = 9) %>%
 ```
 
 ```{r v12n-plo4, fig.height=6}
-lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 9) %>% 
+lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
   geom_hline(yintercept = 4, lty = 3) +
   geom_hline(yintercept = -4, lty = 3) +
   facet_wrap(~.sample, nrow = 5) +
-  theme(legend.position = "none")
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 The true plot from conditional residual is easy to identified compared with the null plots of marginal residuals.
@@ -900,17 +920,25 @@ lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 9) %>%
 Heteroscedasticity of the conditional error is detected.
 
 ```{r v12n-plo6, fig.height=6}
-lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 10) %>% 
+lineup(true = v12_fitted, samples = v12.sim.fitted, pos = 9) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 The true plot is identifiable, it seems that the conditional error does not follow a normal distribution.
 
 ```{r v12n-plo6-lcr, fig.height=6}
-lineup(true = v12_lcr, samples = v12_simlcr, pos = 13) %>% 
+lineup(true = v12_lcr, samples = v12_simlcr, pos = 9) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 For the least confounded residual, it is hard to distinguish the true plot among the null plots.
@@ -1189,9 +1217,13 @@ lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v13n-plo2, fig.height=6}
-lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 7) %>% 
+lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v13n-plo3, fig.height=6}
@@ -1203,9 +1235,13 @@ lineup(true = v13_unit, samples = v13.sim.unit, pos = 8) %>%
 For this plot, the true plot might be detected. Then the inadequate measure of covariance structure is identified.
 
 ```{r v13n-plo4, fig.height=6}
-lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 9) %>% 
+lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 The conditional residual plot is more easy compared with marginal residual to detect the true plot.
@@ -1221,15 +1257,23 @@ lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 9) %>%
 The true plot should be identified, therefore, there is a strong evidence showing heteroscedasticity.
 
 ```{r v13n-plo6, fig.height=6}
-lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 10) %>% 
+lineup(true = v13_fitted, samples = v13.sim.fitted, pos = 4) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v13n-plo6-lcr, fig.height=6}
-lineup(true = v13_lcr, samples = v13_simlcr, pos = 13) %>% 
+lineup(true = v13_lcr, samples = v13_simlcr, pos = 4) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 Same here, the conditional residual QQ-plot is easy to identify. However, the least confounded residual is hard to be distinguished.
@@ -1501,9 +1545,13 @@ lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 9) %>%
 It is hard to distinguish the true plot, therefore, the linearity of the effects fixed.
 
 ```{r v14n-plo2, fig.height=6}
-lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 7) %>% 
+lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 The lineup maybe hard to find the true plot
@@ -1515,9 +1563,13 @@ lineup(true = v14_unit, samples = v14.sim.unit, pos = 9) %>%
 ```
 
 ```{r v14n-plo4, fig.height=6}
-lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 9) %>% 
+lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 The true plot is easily identified. It shows that the outlying observation of $y$.
@@ -1531,17 +1583,25 @@ lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 9) %>%
 The true plot is easily identified. It shows that the conditional residuals have the evidence of heteroscedasticity.
 
 ```{r v14n-plo6, fig.height=6}
-lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 10) %>% 
+lineup(true = v14_fitted, samples = v14.sim.fitted, pos = 4) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 The true plot is identifiable, therefore, the conditional residual does not follow a Normal distribution.
 
 ```{r v14n-plo6-lcr, fig.height=6}
-lineup(true = v14_lcr, samples = v14_simlcr, pos = 13) %>% 
+lineup(true = v14_lcr, samples = v14_simlcr, pos = 4) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 It is hard to distinguish..
@@ -1860,11 +1920,14 @@ lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v21n-plo2, fig.height=6}
-lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 7) %>% 
+lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + 
   geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) +
-  theme(legend.position = "none")
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v21n-plo3, fig.height=6}
@@ -1874,10 +1937,14 @@ lineup(true = v21_unit, samples = v21.sim.unit, pos = 9) %>%
 ```
 
 ```{r v21n-plo4, fig.height=6}
-lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 9) %>% 
+lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + 
   geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 Both marginal residual and conditional residual are hard to detect.
@@ -1891,16 +1958,24 @@ lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 9) %>%
 Homoscedasticity in the case!
 
 ```{r v21n-plo6, fig.height=6}
-lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 10) %>% 
+lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 
 ```{r v21n-plo6-lcr, fig.height=6}
-lineup(true = v21_lcr, samples = v21_simlcr, pos = 13) %>% 
+lineup(true = v21_lcr, samples = v21_simlcr, pos = 8) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 In this case, both are hard to detect.
@@ -2161,9 +2236,13 @@ lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v22n-plo2, fig.height=6}
-lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 7) %>% 
+lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v22n-plo3, fig.height=6}
@@ -2173,9 +2252,13 @@ lineup(true = v22_unit, samples = v22.sim.unit, pos = 9) %>%
 ```
 
 ```{r v22n-plo4, fig.height=6}
-lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 9) %>% 
+lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 Both plots are not that easy to identify the true plot.
@@ -2189,17 +2272,24 @@ lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 9) %>%
 The true plot may not be identified, therefore, homoscedasticity.
 
 ```{r v22n-plo6, fig.height=6}
-lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 10) %>% 
+lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 true plot should be identified.
 
 ```{r v22n-plo6-lcr, fig.height=6}
-lineup(true = v22_lcr, samples = v22_simlcr, pos = 13) %>% 
+lineup(true = v22_lcr, samples = v22_simlcr, pos = 8) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) + xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 Least confounded residual follows a normal distribution.
@@ -2464,9 +2554,13 @@ lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v23n-plo2, fig.height=6}
-lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 7) %>% 
+lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v23n-plo3, fig.height=6}
@@ -2476,7 +2570,7 @@ lineup(true = v23_unit, samples = v23.sim.unit, pos = 9) %>%
 ```
 
 ```{r v23n-plo4, fig.height=6}
-lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 9) %>% 
+lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
@@ -2492,16 +2586,23 @@ lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 9) %>%
 Heteroscedasticity exsit!
 
 ```{r v23n-plo6, fig.height=6}
-lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 10) %>% 
+lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) + xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 
 ```{r v23n-plo6-lcr, fig.height=6}
-lineup(true = v23_lcr, samples = v23_simlcr, pos = 13) %>% 
+lineup(true = v23_lcr, samples = v23_simlcr, pos = 20) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 From these two plots, the conditional residual is easy to identified but the least confounded residual is hard to distinguish.
@@ -2768,9 +2869,12 @@ lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v24n-plo2, fig.height=6}
-lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 7) %>% 
+lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v24n-plo3, fig.height=6}
@@ -2780,9 +2884,13 @@ lineup(true = v24_unit, samples = v24.sim.unit, pos = 9) %>%
 ```
 
 ```{r v24n-plo4, fig.height=6}
-lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 19) %>% 
+lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 The true plot is identified.
@@ -2796,17 +2904,25 @@ lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 10) %>%
 The true plot is identified.
 
 ```{r v24n-plo6, fig.height=6}
-lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 14) %>% 
+lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 The true plot is identified.
 
 ```{r v24n-plo6-lcr, fig.height=6}
-lineup(true = v24_lcr, samples = v24_simlcr, pos = 13) %>% 
+lineup(true = v24_lcr, samples = v24_simlcr, pos = 20) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 True plot may not be identified.
@@ -3114,9 +3230,13 @@ lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v31n-plo2, fig.height=6}
-lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 9) %>% 
+lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v31n-plo3, fig.height=6}
@@ -3128,9 +3248,13 @@ lineup(true = v31_unit, samples = v31.sim.unit, pos = 9) %>%
 True plot might be seen (panel 9)
 
 ```{r v31n-plo4, fig.height=6}
-lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 9) %>% 
+lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 
@@ -3141,15 +3265,23 @@ lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v31n-plo6, fig.height=6}
-lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 10) %>% 
+lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v31n-plo6-lcr, fig.height=6}
-lineup(true = v31_lcr, samples = v31_simlcr, pos = 13) %>% 
+lineup(true = v31_lcr, samples = v31_simlcr, pos = 11) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v31n-plo7, fig.height=6}
@@ -3415,9 +3547,13 @@ lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v32n-plo2, fig.height=6}
-lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 7) %>% 
+lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v32n-plo3, fig.height=6}
@@ -3427,9 +3563,13 @@ lineup(true = v32_unit, samples = v32.sim.unit, pos = 9) %>%
 ```
 
 ```{r v32n-plo4, fig.height=6}
-lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 9) %>% 
+lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 Outlying observations!
@@ -3443,17 +3583,25 @@ lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 9) %>%
 Heteroscedasticity!
 
 ```{r v32n-plo6, fig.height=6}
-lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 10) %>% 
+lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 True plot is identified, then the conditonal residuals does not follow a normal distribution!
 
 ```{r v32n-plo6-lcr, fig.height=6}
-lineup(true = v32_lcr, samples = v32_simlcr, pos = 13) %>% 
+lineup(true = v32_lcr, samples = v32_simlcr, pos = 11) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 
@@ -3731,12 +3879,15 @@ lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 10) %>%
 ```
 
 ```{r v33n-plo2, fig.height=6}
-lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 7) %>% 
+lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) +
-  theme(legend.position = "none")
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v33n-plo3, fig.height=6}
@@ -3748,7 +3899,11 @@ lineup(true = v33_unit, samples = v33.sim.unit, pos = 11) %>%
 ```{r v33n-plo4, fig.height=6}
 lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 True plot is identified.
@@ -3762,17 +3917,25 @@ lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 9) %>%
 Heteroscedasticity!
 
 ```{r v33n-plo6, fig.height=6}
-lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 10) %>% 
+lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 2) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 true plot is identified, the conditional residual does not follow a normal distribution.
 
 ```{r v33n-plo6-lcr, fig.height=6}
-lineup(true = v33_lcr, samples = v33_simlcr, pos = 13) %>% 
+lineup(true = v33_lcr, samples = v33_simlcr, pos = 2) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 
@@ -4035,9 +4198,13 @@ lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v34n-plo2, fig.height=6}
-lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 7) %>% 
+lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v34n-plo3, fig.height=6}
@@ -4047,9 +4214,13 @@ lineup(true = v34_unit, samples = v34.sim.unit, pos = 9) %>%
 ```
 
 ```{r v34n-plo4, fig.height=6}
-lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 9) %>% 
+lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v34n-plo5, fig.height=6}
@@ -4059,17 +4230,25 @@ lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v34n-plo6, fig.height=6}
-lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 10) %>% 
+lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 6) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 If true plos is identified (panel 10), then the conditional distribution does not follow a normal distribution.
 
 ```{r v34n-plo6-lcr, fig.height=6}
-lineup(true = v34_lcr, samples = v34_simlcr, pos = 13) %>% 
+lineup(true = v34_lcr, samples = v34_simlcr, pos = 6) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5)
+  facet_wrap(~.sample, nrow = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 
