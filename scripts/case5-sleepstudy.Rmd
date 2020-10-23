@@ -1257,147 +1257,97 @@ lineup(true = v1.lcr, samples = v14_simlcr, pos = 4) %>%
 
 - It is hard to distinguish..
 
-```{r v14n-plo7, fig.height=6}
-lineup(true = v14_unit, samples = v14.sim.unit, pos = 6) %>% 
-  ggplot(aes(index, Mi)) + geom_point() +
-  facet_wrap(~.sample, nrow = 5)
-```
-
 ## Version 2
 
-Adding 20 to reaction value from the sampled 36 observation (20% of from the original data).
+Added the within unit correlation in the error term by value 1, that is for first subject, first 10 observations' error terms are correlated.
+
+Or we sampled the day (from 0 to 9) as the index. We added 50 to the reaction value for each subject on the same day which is sampled from.
 
 ```{r}
-repc <- sleepstudy
-
-set.seed(1234)
-samp <- sample(1:180, 36)
-
-repc[samp,]$Reaction <-  repc[samp,]$Reaction + 20
-```
-
-
-```{r}
-slmod3 <- lmer(Reaction ~ Days + (Days - 1|Subject) + (1|Subject), data = repc)
-
-N <- nrow(repc)
-subjects <- unique(repc$Subject)
+N <- nrow(sleepstudy)
+subjects <- unique(repc2$Subject)
 nsubjects <- length(subjects)
-
-y <- repc$Reaction
-X <- model.matrix(~ Days, data = repc)
-beta <- fixef(slmod3)
-Z <- getME(slmod3, "Z")
-u <- c(ranef(slmod3)$Subject[,1], ranef(slmod3)$Subject[,2])
+X <- getME(slmod2, "X")
+beta <- fixef(slmod2)
+Z <- getME(slmod2, "Z")
+u <- c(ranef(slmod2)$Subject[,1], ranef(slmod2)$Subject[,2])
 q <- length(u)
-
-vc <- as.data.frame(VarCorr(slmod3))
-R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+vc <- as.data.frame(VarCorr(slmod2))
+R <- vc$vcov[vc$grp == 'Residual'] * diag(N/nsubjects)
 G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
 G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
 G <- Matrix::bdiag(G1, G2)
 
+R[lower.tri(R)] <- 1
+R[upper.tri(R)] <- 1
+
+R <- kronecker(diag(18), R)
+
 Sigma <- Z %*% G %*% t(Z) + R 
 
 set.seed(1234)
-y1 <- as.vector(rmvnorm(1, mean = X %*% beta, sigma = Sigma, checkSymmetry = FALSE))
-v2_df <- tibble(y1, repc$Days, repc$Subject)
-colnames(v2_df) <- c('y', 'Days', 'Subject')
+y <- as.vector(mvtnorm::rmvnorm(1, mean = X%*% beta, sigma = Sigma, checkSymmetry = FALSE))
 
-y2 <- as.vector(rmvnorm(1, mean = X %*% beta, sigma = Sigma, checkSymmetry = FALSE))
-v2_df2 <- tibble(y1, repc$Days, repc$Subject)
-colnames(v2_df2) <- c('y', 'Days', 'Subject')
+repc2 <- tibble(y, sleepstudy$Days, sleepstudy$Subject)
+colnames(repc2) <- c("y", "Days", "Subject")
 
-y3 <- as.vector(rmvnorm(1, mean = X %*% beta, sigma = Sigma, checkSymmetry = FALSE))
-v2_df3 <- tibble(y1, repc$Days, repc$Subject)
-colnames(v2_df3) <- c('y', 'Days', 'Subject')
+# Second option:
+#repc2 <- sleepstudy
+#set.seed(1234)
+#samp <- sample(1:10, 1)
+#colnames(repc2)[1] <- "y"
+#mean_subject <- ddply(repc2, .(Subject), summarise, mean = mean(y))
+#mean(mean_subject$mean)*0.1
+#for (i in 1:n){
+#  repc2[(i*samp),]$y <- repc2[(i*samp),]$y + 30
+#}
 
-y4 <- as.vector(rmvnorm(1, mean = X %*% beta, sigma = Sigma, checkSymmetry = FALSE))
-v2_df4 <- tibble(y4, repc$Days, repc$Subject)
-colnames(v2_df4) <- c('y', 'Days', 'Subject')
+#repc2
 ```
-
-### 1st replication
 
 ```{r}
-v21.mod <- lmer(y ~ Days + (Days-1|Subject) + (1|Subject), data = v2_df)
+slmod3 <- lmer(y ~ Days + (Days - 1|Subject) + (1|Subject), data = repc2)
 
-v21_fitted <- extract.fitted.mod.v1(v21.mod, v2_df)
-
-v21_unit <- extract.unit.mod.v1(v21.mod, v2_df)
+v2.fitted <- extract.fitted.mod.v1(slmod3, repc2)
+v2.unit <- extract.unit.mod.v1(slmod3, repc2)
+v2.lcr <- extract.lcr.mod.v1(slmod3, repc2)
 ```
 
-#### Plots
+```{r}
+ggplot(v2.fitted, aes(fitted, resm_std)) + geom_point() + geom_smooth(method = 'loess')
+ggplot(v2.fitted, aes(index, resm_std, color = (index %in% c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180)))) + geom_point() + theme(legend.position = "none")
 
-```{r v21-plot1}
-ggplot(v21_fitted, aes(fitted, resm_std)) + geom_point()
-```
-
-```{r v21-plot2}
-ggplot(v21_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) + theme(legend.position = "none")
-```
-
-```{r v21-plot3}
 # Dashed line: third quartile + 1.5 interquartile range
-LSlesverb <- as.numeric(quantile(v21_unit$Vi,prob = 0.75) + 1.5*(quantile(v21_unit$Vi, prob = 0.75) - quantile(v21_unit$Vi,prob = 0.25)))
-# 2 * mean(Vi)
-LS2lesverb <- 2*mean(v21_unit$Vi)
+LSlesverb <- as.numeric(quantile(v2.unit$Vi,prob = 0.75) + 1.5*(quantile(v2.unit$Vi, prob = 0.75) - quantile(v2.unit$Vi,prob = 0.25)))
+ggplot(v2.unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 2) + geom_text(
+  data = v2.unit %>% 
+    filter(Vi>LSlesverb),
+  aes(label = index),
+  nudge_x = 0.05, nudge_y = 0.05,
+  size = 2
+)
 
-ggplot(v21_unit, aes(index, Vi)) + 
-  geom_point() + geom_hline(yintercept =  LSlesverb, lty = 2) +
-  geom_text(
-    data = v21_unit %>% 
-      filter(Vi > LSlesverb),
-    aes(label = index),
-    nudge_x = 0.05, nudge_y = 0.05,
-    check_overlap = T,
-    size = 2
-  )
+ggplot(v2.fitted, aes(index, resc_std, color = (index %in% c(10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150, 160, 170, 180)))) + geom_point() + theme(legend.position = "none")
+
+ggplot(v2.fitted, aes(fitted, resc_std)) + geom_point()
+
+ggplot(v2.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+
+ggplot(v2.lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
 ```
 
-```{r v21-plot4}
-ggplot(v21_fitted, aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) + theme(legend.position = "none")
-```
+By adding the noise,
 
-```{r v21-plot5}
-ggplot(v21_fitted, aes(fitted, resc_std)) + geom_point()
-```
+- plot 1 shows the nonlinearity of effects fixed
+- the blue points shown in plot 2 and 4 are the noise that I've added (by adding 50 to reaction value for each subject on day 9).
+- plot 6 shows the distribution is right skewed. One point on the lower end and one point on the upper end seem exceptional and thus the distribution is not normal for conditional residuals
 
-Homoscadasticity!
-
-```{r v21-plot6}
-ggplot(v21_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-The normal distribution with some tail on the right.
-
-```{r v21-plot6-lcr}
-v21_lcr <- extract.lcr.mod.v1(v21.mod, v2_df)
-
-ggplot(v21_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color= "red")
-```
-
-Some fluctutations occured.
-
-least confouded conditional residual fits better.
-
-```{r v21-plot7}
-ggplot(v21_unit, aes(index, Mi)) + geom_point()
-```
-
-```{r v21-plot8}
-ggplot(v21_unit, aes(sample = Mi)) + 
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) +
-  geom_qq_line(color = "Red",
-               distribution = stats::qchisq,
-               dparams = list(df = q))
-```
+### 1st replication
 
 ### Simulation
 
 ```{r}
-v21.sim <- sim(v21.mod, v2_df)
+v21.sim <- sim(slmod3, repc2, seed = 9876)
 ```
 
 ```{r nullfitted-v21}
@@ -1554,13 +1504,14 @@ v21.sim.unit <- purrr::map_dfr(1:19, function(i){
 #### Lineup plots
 
 ```{r v21n-plo1, fig.height=6}
-lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v21.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resm_std)) + geom_point() + 
+  geom_smooth(method = "loess") +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v21n-plo2, fig.height=6}
-lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 5) %>% 
+lineup(true = v1.fitted, samples = v21.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + 
   geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) +
@@ -1571,13 +1522,13 @@ lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 5) %>%
 ```
 
 ```{r v21n-plo3, fig.height=6}
-lineup(true = v21_unit, samples = v21.sim.unit, pos = 9) %>% 
+lineup(true = v1.unit, samples = v21.sim.unit, pos = 9) %>% 
   ggplot(aes(index, Vi)) + geom_point() +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v21n-plo4, fig.height=6}
-lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 5) %>% 
+lineup(true = v1.fitted, samples = v21.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + 
   geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + 
@@ -1590,15 +1541,15 @@ lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 5) %>%
 Both marginal residual and conditional residual are hard to detect.
 
 ```{r v21n-plo5, fig.height=6}
-lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v21.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resc_std)) + geom_point() +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 Homoscedasticity in the case!
 
 ```{r v21n-plo6, fig.height=6}
-lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 8) %>% 
+lineup(true = v1.fitted, samples = v21.sim.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -1607,9 +1558,10 @@ lineup(true = v21_fitted, samples = v21.sim.fitted, pos = 8) %>%
         legend.position="none")
 ```
 
+- The true plot should be identified.
 
 ```{r v21n-plo6-lcr, fig.height=6}
-lineup(true = v21_lcr, samples = v21_simlcr, pos = 8) %>% 
+lineup(true = v1.lcr, samples = v21_simlcr, pos = 8) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -1618,102 +1570,14 @@ lineup(true = v21_lcr, samples = v21_simlcr, pos = 8) %>%
         legend.position="none")
 ```
 
-In this case, both are hard to detect.
-
-```{r v21n-plo7, fig.height=6}
-lineup(true = v21_unit, samples = v21.sim.unit, pos = 6) %>% 
-  ggplot(aes(index, Mi)) + geom_point() +
-  facet_wrap(~.sample, nrow = 5)
-```
-
-```{r v21n-plo8, fig.height=6}
-lineup(true = v21_unit, samples = v21.sim.unit, pos = 6) %>% 
-  ggplot(aes(sample = Mi)) + 
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) +
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q)) +
-  facet_wrap(~.sample, nrow = 5)
-```
+- We hope the viewers can see that one point on the lower end and one point on the upper end are not expected in the true plot. Hence, the least confounded residual does not follow a normal distribution.
 
 ### 2nd replication
-```{r}
-v22.mod <- lmer(y ~ Days + (Days-1|Subject) + (1|Subject), data = v2_df2)
-
-v22_fitted <- extract.fitted.mod.v1(v22.mod, v2_df2)
-
-v22_unit <- extract.unit.mod.v1(v22.mod, v2_df2)
-```
-
-#### Plots
-```{r v22-plot1}
-ggplot(v22_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-```{r v22-plot2}
-ggplot(v22_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  theme(legend.position = "none")
-```
-
-```{r v22-plot3}
-# Dashed line: third quartile + 1.5 interquartile range
-LSlesverb <- as.numeric(quantile(v22_unit$Vi,prob = 0.75) + 1.5*(quantile(v22_unit$Vi, prob = 0.75) - quantile(v22_unit$Vi,prob = 0.25)))
-
-ggplot(v22_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3) + geom_text(
-  data = v22_unit %>% 
-    filter(Vi > LSlesverb),
-  aes(label = index),
-  nudge_x = 0.05, nudge_y = 0.05,
-  check_overlap = T,
-  size = 2
-)
-```
-
-```{r v22-plot4}
-ggplot(v22_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + geom_hline(yintercept = 0) +
-  theme(legend.position = "none")
-```
-
-
-```{r v22-plot5}
-ggplot(v22_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) 
-```
-
-
-```{r v22-plot6}
-ggplot(v22_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-```{r}
-v22_lcr <- extract.lcr.mod.v1(v22.mod, v2_df2)
-```
-
-```{r v22-plot6-lcr}
-ggplot(v22_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-Both of them seem that they are not following a normal distribution, since they have the tails.
-
-```{r v22-plot7}
-ggplot(v22_unit, aes(index, Mi)) + geom_point()
-```
-
-
-```{r v22-plot8}
-ggplot(v22_unit, aes(sample = Mi)) +
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) + 
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q))
-```
 
 ### Simulation
 
 ```{r}
-v22.sim <- sim(v22.mod, v2_df2)
+v22.sim <- sim(slmod3, repc2, seed = 8765)
 ```
 
 ```{r nullfitted-v22}
@@ -1870,13 +1734,13 @@ v22.sim.unit <- purrr::map_dfr(1:19, function(i){
 #### Lineup plots
 
 ```{r v22n-plo1, fig.height=6}
-lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v22.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resm_std)) + geom_point() + geom_smooth(method = 'loess') +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v22n-plo2, fig.height=6}
-lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 5) %>% 
+lineup(true = v1.fitted, samples = v22.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
@@ -1886,13 +1750,13 @@ lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 5) %>%
 ```
 
 ```{r v22n-plo3, fig.height=6}
-lineup(true = v22_unit, samples = v22.sim.unit, pos = 9) %>% 
+lineup(true = v1.unit, samples = v22.sim.unit, pos = 9) %>% 
   ggplot(aes(index, Vi)) + geom_point() +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v22n-plo4, fig.height=6}
-lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 5) %>% 
+lineup(true = v1.fitted, samples = v22.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
@@ -1901,18 +1765,17 @@ lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 5) %>%
         legend.position="none")
 ```
 
-Both plots are not that easy to identify the true plot.
+- The conditional residual should be more easily to be identified.
 
 ```{r v22n-plo5, fig.height=6}
-lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v22.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resc_std)) + geom_point() + 
   facet_wrap(~.sample, nrow = 5)
 ```
 
-The true plot may not be identified, therefore, homoscedasticity.
 
 ```{r v22n-plo6, fig.height=6}
-lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 8) %>% 
+lineup(true = v1.fitted, samples = v22.sim.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -1921,10 +1784,10 @@ lineup(true = v22_fitted, samples = v22.sim.fitted, pos = 8) %>%
         legend.position="none")
 ```
 
-true plot should be identified.
+- true plot should be identified.
 
 ```{r v22n-plo6-lcr, fig.height=6}
-lineup(true = v22_lcr, samples = v22_simlcr, pos = 8) %>% 
+lineup(true = v1.lcr, samples = v22_simlcr, pos = 8) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) + xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
@@ -1932,106 +1795,14 @@ lineup(true = v22_lcr, samples = v22_simlcr, pos = 8) %>%
         legend.position="none")
 ```
 
-Least confounded residual follows a normal distribution.
-
-```{r v22n-plo7, fig.height=6}
-lineup(true = v22_unit, samples = v22.sim.unit, pos = 6) %>% 
-  ggplot(aes(index, Mi)) + geom_point() +
-  facet_wrap(~.sample, nrow = 5)
-```
-
-```{r v22n-plo8, fig.height=6}
-lineup(true = v22_unit, samples = v22.sim.unit, pos = 6) %>% 
-  ggplot(aes(sample = Mi)) + 
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) +
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q)) +
-  facet_wrap(~.sample, nrow = 5)
-```
+- For checking the distribution of least confounded residual, the true plot may not easy to be distinguished among the 20 plots. Then we may fail to reject the null hypothesis thatt the least confounded residual follows a Gaussian distribution.
 
 ### 3rd replication
-```{r}
-v23.mod <- lmer(y ~ Days + (Days-1|Subject) + (1|Subject), data = v2_df3)
-
-v23_fitted <- extract.fitted.mod.v1(v23.mod, v2_df3)
-
-v23_unit <- extract.unit.mod.v1(v23.mod, v2_df3)
-```
-
-#### Plots
-```{r v23-plot1}
-ggplot(v23_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-```{r v23-plot2}
-ggplot(v23_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  theme(legend.position = "none")
-```
-
-```{r v23-plot3}
-# Dashed line: third quartile + 1.5 interquartile range
-LSlesverb <- as.numeric(quantile(v23_unit$Vi,prob = 0.75) + 1.5*(quantile(v23_unit$Vi, prob = 0.75) - quantile(v23_unit$Vi,prob = 0.25)))
-
-ggplot(v23_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3) + geom_text(
-  data = v23_unit %>% 
-    filter(Vi > LSlesverb),
-  aes(label = index),
-  nudge_x = 0.05, nudge_y = 0.05,
-  check_overlap = T,
-  size = 2
-)
-```
-
-```{r v23-plot4}
-ggplot(v23_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + geom_hline(yintercept = 0) + 
-  geom_hline(yintercept = 4, lty = 3) +
-  geom_hline(yintercept = -4, lty = 3) +
-  theme(legend.position = "none")
-```
-
-
-```{r v23-plot5}
-ggplot(v23_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-
-```{r v23-plot6}
-ggplot(v23_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-Tails
-
-```{r}
-v23_lcr <- extract.lcr.mod.v1(v23.mod, v2_df3)
-```
-
-```{r v23-plot6-lcr}
-ggplot(v23_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-Tails
-
-```{r v23-plot7}
-ggplot(v23_unit, aes(index, Mi)) + geom_point()
-```
-
-
-```{r v23-plot8}
-ggplot(v23_unit, aes(sample = Mi)) +
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) + 
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q))
-```
 
 #### Simulation
 
 ```{r}
-v23.sim <- sim(v23.mod, v2_df3)
+v23.sim <- sim(slmod3, repc2, seed = 4387)
 ```
 
 ```{r nullfitted-v23}
@@ -2188,13 +1959,13 @@ v23.sim.unit <- purrr::map_dfr(1:19, function(i){
 ##### Lineup plots
 
 ```{r v23n-plo1, fig.height=6}
-lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v23.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resm_std)) + geom_point() + geom_smooth(method = "loess") +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v23n-plo2, fig.height=6}
-lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 15) %>% 
+lineup(true = v1.fitted, samples = v23.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
@@ -2204,29 +1975,27 @@ lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 15) %>%
 ```
 
 ```{r v23n-plo3, fig.height=6}
-lineup(true = v23_unit, samples = v23.sim.unit, pos = 9) %>% 
+lineup(true = v1.unit, samples = v23.sim.unit, pos = 9) %>% 
   ggplot(aes(index, Vi)) + geom_point() +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v23n-plo4, fig.height=6}
-lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 15) %>% 
-  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v23.sim.fitted, pos = 15) %>% 
+  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + 
   facet_wrap(~.sample, nrow = 5) + theme(legend.position = "none")
 ```
 
-The outlying observations are presented by panel 9.
+- We wish the viewers to the outlying observations in the true plot since the three points are the outliers compared with others.
 
 ```{r v23n-plo5, fig.height=6}
-lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v23.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resc_std)) + geom_point() + 
   facet_wrap(~.sample, nrow = 5)
 ```
 
-Heteroscedasticity exsit!
-
 ```{r v23n-plo6, fig.height=6}
-lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 20) %>% 
+lineup(true = v1.fitted, samples = v23.sim.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) + xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
@@ -2234,9 +2003,10 @@ lineup(true = v23_fitted, samples = v23.sim.fitted, pos = 20) %>%
         legend.position="none")
 ```
 
+- The true plot should be identified.
 
 ```{r v23n-plo6-lcr, fig.height=6}
-lineup(true = v23_lcr, samples = v23_simlcr, pos = 20) %>% 
+lineup(true = v1.lcr, samples = v23_simlcr, pos = 20) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -2245,108 +2015,14 @@ lineup(true = v23_lcr, samples = v23_simlcr, pos = 20) %>%
         legend.position="none")
 ```
 
-From these two plots, the conditional residual is easy to identified but the least confounded residual is hard to distinguish.
-
-
-```{r v23n-plo7, fig.height=6}
-lineup(true = v23_unit, samples = v23.sim.unit, pos = 6) %>% 
-  ggplot(aes(index, Mi)) + geom_point() +
-  facet_wrap(~.sample, nrow = 5)
-```
-
-```{r v23n-plo8, fig.height=6}
-lineup(true = v23_unit, samples = v23.sim.unit, pos = 11) %>% 
-  ggplot(aes(sample = Mi)) + 
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) +
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q)) +
-  facet_wrap(~.sample, nrow = 5)
-```
+- From these two plots, the conditional residual is easy to identified but the least confounded residual is hard to distinguish.
 
 ### 4th replication
-```{r}
-v24.mod <- lmer(y ~ Days + (Days-1|Subject) + (1|Subject), data = v2_df4)
-
-v24_fitted <- extract.fitted.mod.v1(v24.mod, v2_df4)
-
-v24_unit <- extract.unit.mod.v1(v24.mod, v2_df4)
-```
-
-#### Plots
-```{r v24-plot1}
-ggplot(v24_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-```{r v24-plot2}
-ggplot(v24_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  theme(legend.position = "none")
-```
-
-```{r v24-plot3}
-# Dashed line: third quartile + 1.5 interquartile range
-LSlesverb <- as.numeric(quantile(v24_unit$Vi,prob = 0.75) + 1.5*(quantile(v24_unit$Vi, prob = 0.75) - quantile(v24_unit$Vi,prob = 0.25)))
-
-ggplot(v24_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3)
-```
-
-```{r v24-plot4}
-ggplot(v24_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point(alpha = 0.8) + 
-  geom_hline(yintercept = 0) + 
-  geom_hline(yintercept = 4, lty = 3) + geom_hline(yintercept = -4, lty = 3) + 
-  theme(legend.position = "none") + 
-  geom_text(
-    data = v24_fitted %>% 
-      filter(abs(resc_std)>4),
-    aes(label = index),
-    nudge_x = 0.35, nudge_y = 0.35,
-    check_overlap = T,
-    size = 2
-  )
-```
-
-outlying observations
-
-```{r v24-plot5}
-ggplot(v24_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-Heteroscedasticity presented.
-
-```{r v24-plot6}
-ggplot(v24_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-```{r}
-v24_lcr <- extract.lcr.mod.v1(v24.mod, v2_df4)
-```
-
-```{r v24-plot6-lcr}
-ggplot(v24_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-they are not normal
-
-```{r v24-plot7}
-ggplot(v24_unit, aes(index, Mi)) + geom_point()
-```
-
-
-```{r v24-plot8}
-ggplot(v24_unit, aes(sample = Mi)) +
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) + 
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q))
-```
 
 #### Simulation
 
 ```{r}
-v24.sim <- sim(v24.mod, v2_df4)
+v24.sim <- sim(slmod3, repc2, seed = 8696)
 ```
 
 ```{r nullfitted-v24}
@@ -2503,13 +2179,13 @@ v24.sim.unit <- purrr::map_dfr(1:19, function(i){
 ##### Lineup plots
 
 ```{r v24n-plo1, fig.height=6}
-lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v24.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resm_std)) + geom_point() + geom_smooth(method = "loess") +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v24n-plo2, fig.height=6}
-lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 15) %>% 
+lineup(true = v1.fitted, samples = v24.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
@@ -2518,14 +2194,14 @@ lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 15) %>%
 ```
 
 ```{r v24n-plo3, fig.height=6}
-lineup(true = v24_unit, samples = v24.sim.unit, pos = 9) %>% 
+lineup(true = v1.unit, samples = v24.sim.unit, pos = 9) %>% 
   ggplot(aes(index, Vi)) + geom_point() +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v24n-plo4, fig.height=6}
-lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 15) %>% 
-  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v24.sim.fitted, pos = 15) %>% 
+  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + 
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
@@ -2536,15 +2212,13 @@ lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 15) %>%
 The true plot is identified.
 
 ```{r v24n-plo5, fig.height=6}
-lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 10) %>% 
-  ggplot(aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v24.sim.fitted, pos = 10) %>% 
+  ggplot(aes(fitted, resc_std)) + geom_point() + 
   facet_wrap(~.sample, nrow = 5)
 ```
 
-The true plot is identified.
-
 ```{r v24n-plo6, fig.height=6}
-lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 20) %>% 
+lineup(true = v1.fitted, samples = v24.sim.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -2553,10 +2227,10 @@ lineup(true = v24_fitted, samples = v24.sim.fitted, pos = 20) %>%
         legend.position="none")
 ```
 
-The true plot is identified.
+- The true plot is identified.
 
 ```{r v24n-plo6-lcr, fig.height=6}
-lineup(true = v24_lcr, samples = v24_simlcr, pos = 20) %>% 
+lineup(true = v1.lcr, samples = v24_simlcr, pos = 20) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -2565,88 +2239,37 @@ lineup(true = v24_lcr, samples = v24_simlcr, pos = 20) %>%
         legend.position="none")
 ```
 
-True plot may not be identified.
-
-
-```{r v24n-plo7, fig.height=6}
-lineup(true = v24_unit, samples = v24.sim.unit, pos = 6) %>% 
-  ggplot(aes(index, Mi)) + geom_point() +
-  facet_wrap(~.sample, nrow = 5)
-```
-
-```{r v24n-plo8, fig.height=6}
-lineup(true = v24_unit, samples = v24.sim.unit, pos = 6) %>% 
-  ggplot(aes(sample = Mi)) + 
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) +
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q)) +
-  facet_wrap(~.sample, nrow = 5)
-```
+- True plot may not be identified.
 
 ## Version 3
 
 By sampling one value from 1 to 180 as the index of the data, I added 200 since the value is close to mean (`r summary(sleepstudy$Reaction)[4]`) to that specific reaction value as an obvious outlier.
 
 ```{r}
-set.seed(1234)
-samp <- sample(1:180, 1)
+set.seed(20201010)
+samp <- sample(1:180, 2)
 repc3 <- sleepstudy
-repc3[samp,]$Reaction <- repc3[samp,]$Reaction + 200 #summary(sleepstudy$Reaction)[4]/2
+repc3[samp,]$Reaction <- repc3[samp,]$Reaction + 150 #summary(sleepstudy$Reaction)[4]/2
 colnames(repc3)[1] <- c("y")
 ```
 
 ```{r}
 slmod4 <- lmer(y ~ Days + (Days - 1|Subject) + (1|Subject), data = repc3)
 
-N <- nrow(repc3)
-subjects <- unique(repc3$Subject)
-nsubjects <- length(subjects)
-
-y <- repc3$Reaction
-X <- model.matrix(~ Days, data = repc)
-beta <- fixef(slmod4)
-Z <- getME(slmod4, "Z")
-u <- c(ranef(slmod4)$Subject[,1], ranef(slmod4)$Subject[,2])
-q <- length(u)
-
-vc <- as.data.frame(VarCorr(slmod4))
-R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-G1 <- vc$vcov[vc$grp == 'Subject'] * diag(nsubjects)
-G2 <- vc$vcov[vc$grp == 'Subject.1'] * diag(nsubjects)
-G <- Matrix::bdiag(G1, G2)
-
-Sigma <- Z %*% G %*% t(Z) + R 
-
-set.seed(1234)
-
-y1 <- as.vector(rmvnorm(1, mean = X %*% beta, sigma = Sigma, checkSymmetry = FALSE))
-v3_df <- tibble(y1, repc$Days, repc$Subject)
-colnames(v3_df) <- c("y", 'Days', 'Subject')
-
-y2 <- as.vector(rmvnorm(1, mean = X %*% beta, sigma = Sigma, checkSymmetry = FALSE))
-v3_df2 <- tibble(y2, repc$Days, repc$Subject)
-colnames(v3_df2) <- c('y', 'Days', 'Subject')
-
-y3 <- as.vector(rmvnorm(1, mean = X %*% beta, sigma = Sigma, checkSymmetry = FALSE))
-v3_df3 <- tibble(y3, repc$Days, repc$Subject)
-colnames(v3_df3) <- c('y', 'Days', 'Subject')
-
-y4 <- as.vector(rmvnorm(1, mean = X %*% beta, sigma = Sigma, checkSymmetry = FALSE))
-v3_df4 <- tibble(y1, repc$Days, repc$Subject)
-colnames(v3_df4) <- c('y', 'Days', 'Subject')
-```
-
-
-```{r}
 v3.fitted <- extract.fitted.mod.v1(slmod4, repc3)
 v3.lcr <- extract.lcr.mod.v1(slmod4, repc3)
+v3.unit <- extract.unit.mod.v1(slmod4, repc3)
 ```
 
 
 ```{r}
-ggplot(v3.fitted, aes(index, resm_std, color = (index == samp))) + geom_point() 
+ggplot(v3.fitted, aes(fitted, resm_std)) + geom_point() + geom_smooth(method = "loess")
+ggplot(v3.fitted, aes(index, resm_std, color = (index %in% samp))) + geom_point() + theme(legend.position = "none")
+ggplot(v3.fitted, aes(index, resc_std, color = (index %in% samp))) + geom_point() + theme(legend.position = "none") + geom_text(data = v3.fitted %>% filter(abs(resc_std)>4), aes(label = index), nudge_x = 0.35, nudge_y = 0.35, size = 2)
+ggplot(v3.fitted,aes(fitted, resc_std)) + geom_point() 
+ggplot(v3.unit, aes(index, Vi)) + geom_point()
+ggplot(v3.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+ggplot(v3.lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
 ```
 
 ```{r}
@@ -2659,89 +2282,11 @@ abline(0,1)
 ```
 
 
-```{r}
-ggplot(v3.fitted, aes(index, resc_std, color = (index == samp))) + geom_point() + geom_text(
-  data = v3.fitted %>% 
-    filter(abs(resc_std)>4),
-  aes(label = index),
-  nudge_x = 0.35, nudge_y = 0.35,
-  size = 2
-)
-```
-
-
 ### 1st replication
+
+#### Simulation
 ```{r}
-v31.mod <- lmer(y ~ Days + (Days - 1|Subject) + (1|Subject), data = v3_df)
-v31_fitted <- extract.fitted.mod.v1(v31.mod, v3_df)
-v31_lcr <- extract.lcr.mod.v1(v31.mod, v3_df)
-v31_unit <- extract.unit.mod.v1(v31.mod, v3_df)
-```
-
-#### Plots
-```{r plot1}
-ggplot(v31_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-```{r plot2}
-ggplot(v31_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) + theme(legend.position = "none")
-```
-
-```{r plot3}
-# Dashed line: third quartile + 1.5 interquartile range
-LSlesverb <- as.numeric(quantile(v31_unit$Vi,prob = 0.75) + 1.5*(quantile(v31_unit$Vi, prob = 0.75) - quantile(v31_unit$Vi,prob = 0.25)))
-
-ggplot(v31_unit, aes(index, Vi)) + geom_point() + 
-  geom_hline(yintercept = LSlesverb, lty = 3) + 
-  geom_text(
-    data = v31_unit %>% 
-      filter(Vi>LSlesverb),
-    aes(label = index),
-    nudge_x = 0.05, nudge_y = 0.05,
-    check_overlap = T,
-    size = 2
-  )
-```
-
-```{r plot4}
-ggplot(v31_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + 
-  geom_hline(yintercept = 0) + 
-  geom_hline(yintercept = 4, lty = 3) +
-  geom_hline(yintercept = -4, lty =3) +
-  theme(legend.position = "none")
-```
-
-```{r plot5}
-ggplot(v31_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-```{r plot6}
-ggplot(v31_fitted, aes(sample = resm_std)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-```{r plot6-lcr}
-ggplot(v31_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-Least confounded residual not follow a normal distribution.
-
-```{r plot7}
-ggplot(v31_unit, aes(index, Mi)) + geom_point()
-```
-
-```{r plot8}
-ggplot(v31_unit, aes(sample = Mi)) + 
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) +
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q))
-```
-
-### Simulation
-```{r}
-v31.sim <- sim(v31.mod, v3_df)
+v31.sim <- sim(slmod4, repc3, seed = 2342)
 ```
 
 ```{r nullfitted-v31}
@@ -2898,14 +2443,14 @@ v31.sim.unit <- purrr::map_dfr(1:19, function(i){
 #### Lineup plots
 
 ```{r v31n-plo1, fig.height=6}
-lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v31.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resm_std)) + geom_point() + geom_smooth(method = 'loess') +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v31n-plo2, fig.height=6}
-lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 15) %>% 
-  ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v31.sim.fitted, pos = 15) %>% 
+  ggplot(aes(index, resm_std, color = Subject)) + geom_point() + 
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
@@ -2914,7 +2459,7 @@ lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 15) %>%
 ```
 
 ```{r v31n-plo3, fig.height=6}
-lineup(true = v31_unit, samples = v31.sim.unit, pos = 9) %>% 
+lineup(true = v1.unit, samples = v31.sim.unit, pos = 9) %>% 
   ggplot(aes(index, Vi)) + geom_point() +
   facet_wrap(~.sample, nrow = 5)
 ```
@@ -2922,8 +2467,8 @@ lineup(true = v31_unit, samples = v31.sim.unit, pos = 9) %>%
 True plot might be seen (panel 9)
 
 ```{r v31n-plo4, fig.height=6}
-lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 15) %>% 
-  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v31.sim.fitted, pos = 15) %>% 
+  ggplot(aes(index, resc_std, color = Subject)) + geom_point() + 
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
@@ -2931,15 +2476,16 @@ lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 15) %>%
         legend.position="none")
 ```
 
+- The true plot should be identified.
 
 ```{r v31n-plo5, fig.height=6}
-lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v31.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resc_std)) + geom_point() + 
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v31n-plo6, fig.height=6}
-lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 11) %>% 
+lineup(true = v1.fitted, samples = v31.sim.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -2949,7 +2495,7 @@ lineup(true = v31_fitted, samples = v31.sim.fitted, pos = 11) %>%
 ```
 
 ```{r v31n-plo6-lcr, fig.height=6}
-lineup(true = v31_lcr, samples = v31_simlcr, pos = 11) %>% 
+lineup(true = v1.lcr, samples = v31_simlcr, pos = 11) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -2958,107 +2504,14 @@ lineup(true = v31_lcr, samples = v31_simlcr, pos = 11) %>%
         legend.position="none")
 ```
 
-```{r v31n-plo7, fig.height=6}
-lineup(true = v31_unit, samples = v31.sim.unit, pos = 6) %>% 
-  ggplot(aes(index, Mi)) + geom_point() +
-  facet_wrap(~.sample, nrow = 5)
-```
+- The conditional residual is easier to detect that if it follows a normal distribution. While the least confounded residual may be hard to identify.
 
-```{r v31n-plo8, fig.height=6}
-lineup(true = v31_unit, samples = v31.sim.unit, pos = 6) %>% 
-  ggplot(aes(sample = Mi)) + 
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) +
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q)) +
-  facet_wrap(~.sample, nrow = 5)
-```
-
-## 2nd replication
-
-```{r}
-v32.mod <- lmer(y ~ Days + (Days-1|Subject) + (1|Subject), data = v3_df2)
-
-v32_fitted <- extract.fitted.mod.v1(v32.mod, v3_df2)
-
-v32_unit <- extract.unit.mod.v1(v32.mod, v3_df2)
-```
-
-#### Plots
-```{r v32-plot1}
-ggplot(v32_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-```{r v32-plot2}
-ggplot(v32_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  theme(legend.position = "none")
-```
-
-```{r v32-plot3}
-# Dashed line: third quartile + 1.5 interquartile range
-LSlesverb <- as.numeric(quantile(v32_unit$Vi,prob = 0.75) + 1.5*(quantile(v32_unit$Vi, prob = 0.75) - quantile(v32_unit$Vi,prob = 0.25)))
-
-ggplot(v32_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3)
-```
-
-```{r v32-plot4}
-ggplot(v32_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + 
-  geom_hline(yintercept = 0) + 
-  geom_hline(yintercept = 4, lty = 3) +
-  geom_hline(yintercept = -4, lty = 3) +
-  geom_text(
-    data = v32_fitted %>% 
-      filter(abs(resc_std) > 4),
-    aes(label = index),
-    nudge_x = 0.35, nudge_y = 0.35,
-    check_overlap = T,
-    size = 2
-  ) + 
-  theme(legend.position = "none")
-```
-
-The index of outlying observation are list in `r which(abs(v32_fitted$resc_std) > 4)`.
-
-```{r v32-plot5}
-ggplot(v32_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-Heteroscedasticity
-
-```{r v32-plot6}
-ggplot(v32_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-Left tails!
-
-```{r}
-v32_lcr <- extract.lcr.mod.v1(v32.mod, v3_df2)
-```
-
-```{r v32-plot6-lcr}
-ggplot(v32_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-```{r v32-plot7}
-ggplot(v32_unit, aes(index, Mi)) + geom_point()
-```
-
-
-```{r v32-plot8}
-ggplot(v32_unit, aes(sample = Mi)) +
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) + 
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q))
-```
+### 2nd replication
 
 #### Simulation
 
 ```{r}
-v32.sim <- sim(v32.mod, v3_df2)
+v32.sim <- sim(slmod4, repc3, seed = 2353)
 ```
 
 ```{r nullfitted-v32}
@@ -3215,13 +2668,13 @@ v32.sim.unit <- purrr::map_dfr(1:19, function(i){
 ##### Lineup plots
 
 ```{r v32n-plo1, fig.height=6}
-lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v32.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resm_std)) + geom_point() + geom_smooth(method = 'loess') +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v32n-plo2, fig.height=6}
-lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 15) %>% 
+lineup(true = v1.fitted, samples = v32.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
@@ -3231,13 +2684,13 @@ lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 15) %>%
 ```
 
 ```{r v32n-plo3, fig.height=6}
-lineup(true = v32_unit, samples = v32.sim.unit, pos = 9) %>% 
+lineup(true = v1.unit, samples = v32.sim.unit, pos = 9) %>% 
   ggplot(aes(index, Vi)) + geom_point() +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v32n-plo4, fig.height=6}
-lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 15) %>% 
+lineup(true = v1.fitted, samples = v32.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
@@ -3246,18 +2699,15 @@ lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 15) %>%
         legend.position="none")
 ```
 
-Outlying observations!
 
 ```{r v32n-plo5, fig.height=6}
-lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v32.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resc_std)) + geom_point() + 
   facet_wrap(~.sample, nrow = 5)
 ```
 
-Heteroscedasticity!
-
 ```{r v32n-plo6, fig.height=6}
-lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 11) %>% 
+lineup(true = v1.fitted, samples = v32.sim.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -3266,10 +2716,10 @@ lineup(true = v32_fitted, samples = v32.sim.fitted, pos = 11) %>%
         legend.position="none")
 ```
 
-True plot is identified, then the conditonal residuals does not follow a normal distribution!
+- True plot is identified, then the conditonal residuals does not follow a normal distribution!
 
 ```{r v32n-plo6-lcr, fig.height=6}
-lineup(true = v32_lcr, samples = v32_simlcr, pos = 11) %>% 
+lineup(true = v1.lcr, samples = v32_simlcr, pos = 11) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -3278,119 +2728,12 @@ lineup(true = v32_lcr, samples = v32_simlcr, pos = 11) %>%
         legend.position="none")
 ```
 
-
-```{r v32n-plo7, fig.height=6}
-lineup(true = v32_unit, samples = v32.sim.unit, pos = 6) %>% 
-  ggplot(aes(index, Mi)) + geom_point() +
-  facet_wrap(~.sample, nrow = 5)
-```
-
-```{r v32n-plo8, fig.height=6}
-lineup(true = v32_unit, samples = v32.sim.unit, pos = 6) %>% 
-  ggplot(aes(sample = Mi)) + 
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) +
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q)) +
-  facet_wrap(~.sample, nrow = 5)
-```
-
-## 3rd replication
-
-```{r}
-v33.mod <- lmer(y ~ Days + (Days-1|Subject) + (1|Subject), data = v3_df3)
-
-v33_fitted <- extract.fitted.mod.v1(v33.mod, v3_df3)
-
-v33_unit <- extract.unit.mod.v1(v33.mod, v3_df3)
-```
-
-### Plots
-```{r v33-plot1}
-ggplot(v33_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-```{r v33-plot2}
-ggplot(v33_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  theme(legend.position = "none")
-```
-
-```{r v33-plot3}
-# Dashed line: third quartile + 1.5 interquartile range
-LSlesverb <- as.numeric(quantile(v33_unit$Vi,prob = 0.75) + 1.5*(quantile(v33_unit$Vi, prob = 0.75) - quantile(v33_unit$Vi,prob = 0.25)))
-
-ggplot(v33_unit, aes(index, Vi)) + geom_point() + 
-  geom_hline(yintercept = LSlesverb, lty = 3) + 
-  geom_text(
-    data = v33_unit %>% 
-      filter(Vi>LSlesverb),
-    aes(label = index),
-    nudge_x = 0.05, nudge_y = 0.05,
-    check_overlap = T,
-    size = 2
-  )
-```
-
-```{r v33-plot4}
-ggplot(v33_fitted, aes(index, resc_std, color = Subject)) +
-  geom_point(alpha = 0.8) + 
-  geom_hline(yintercept = 0) + 
-  geom_hline(yintercept = 4, lty = 3) +
-  geom_hline(yintercept = -4, lty = 3) +
-  geom_text(
-    data = v33_fitted %>% 
-      filter(abs(resc_std)>4),
-    aes(label = index),
-    nudge_x = 0.35, nudge_y = 0.35,
-    check_overlap = T,
-    size = 2
-  ) + 
-  theme(legend.position = "none")
-```
-
-The index of outlying observation are `r which(abs(v33_fitted$resc_std)>4)`.
-
-```{r v33-plot5}
-ggplot(v33_fitted, aes(fitted, resc_std)) + geom_point(alpha = 0.8) + geom_hline(yintercept = 0)
-```
-
-Heteroscadasticity!
-
-```{r v33-plot6}
-ggplot(v33_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-Tails on the left!
-
-```{r}
-v33_lcr <- extract.lcr.mod.v1(v33.mod, v3_df3)
-```
-
-```{r v33-plot6-lcr}
-ggplot(v33_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-The least confounded residuals fit a normal distribution better comparing with the conditional residuals.
-
-```{r v33_lcr-plot7}
-ggplot(v33_unit, aes(index, Mi)) + geom_point()
-```
-
-
-```{r v33-plot8}
-ggplot(v33_unit, aes(sample = Mi)) +
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) + 
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q))
-```
+### 3rd replication
 
 #### Simulation
 
 ```{r}
-v33.sim <- sim(v33.mod, v3_df3)
+v33.sim <- sim(slmod4, repc3, seed = 4352)
 ```
 
 ```{r nullfitted-v33}
@@ -3547,13 +2890,13 @@ v33.sim.unit <- purrr::map_dfr(1:19, function(i){
 ##### Lineup plots
 
 ```{r v33n-plo1, fig.height=6}
-lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 10) %>% 
-  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v33.sim.fitted, pos = 10) %>% 
+  ggplot(aes(fitted, resm_std)) + geom_point() + geom_smooth(method = "loess") +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v33n-plo2, fig.height=6}
-lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 2) %>% 
+lineup(true = v1.fitted, samples = v33.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -3565,13 +2908,13 @@ lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 2) %>%
 ```
 
 ```{r v33n-plo3, fig.height=6}
-lineup(true = v33_unit, samples = v33.sim.unit, pos = 11) %>% 
+lineup(true = v1.unit, samples = v33.sim.unit, pos = 11) %>% 
   ggplot(aes(index, Vi)) + geom_point() +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v33n-plo4, fig.height=6}
-lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 2) %>% 
+lineup(true = v1.fitted, samples = v33.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
@@ -3583,15 +2926,14 @@ lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 2) %>%
 True plot is identified.
 
 ```{r v33n-plo5, fig.height=6}
-lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v33.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resc_std)) + geom_point() + 
   facet_wrap(~.sample, nrow = 5)
 ```
 
-Heteroscedasticity!
 
 ```{r v33n-plo6, fig.height=6}
-lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 2) %>% 
+lineup(true = v1.fitted, samples = v33.sim.fitted, pos = 2) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -3603,7 +2945,7 @@ lineup(true = v33_fitted, samples = v33.sim.fitted, pos = 2) %>%
 true plot is identified, the conditional residual does not follow a normal distribution.
 
 ```{r v33n-plo6-lcr, fig.height=6}
-lineup(true = v33_lcr, samples = v33_simlcr, pos = 2) %>% 
+lineup(true = v1.lcr, samples = v33_simlcr, pos = 2) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -3612,104 +2954,14 @@ lineup(true = v33_lcr, samples = v33_simlcr, pos = 2) %>%
         legend.position="none")
 ```
 
+- The least conditional residual maybe not easy to be identified.
 
-```{r v33n-plo7, fig.height=6}
-lineup(true = v33_unit, samples = v33.sim.unit, pos = 6) %>% 
-  ggplot(aes(index, Mi)) + geom_point() +
-  facet_wrap(~.sample, nrow = 5)
-```
-
-```{r v33n-plo8, fig.height=6}
-lineup(true = v33_unit, samples = v33.sim.unit, pos = 6) %>% 
-  ggplot(aes(sample = Mi)) + 
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) +
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q)) +
-  facet_wrap(~.sample, nrow = 5)
-```
-
-## 4th replication
-
-```{r}
-v34.mod <- lmer(y ~ Days + (Days-1|Subject) + (1|Subject), data = v3_df4)
-
-v34_fitted <- extract.fitted.mod.v1(v34.mod, v3_df4)
-
-v34_unit <- extract.unit.mod.v1(v34.mod, v3_df4)
-```
-
-### Plots
-```{r v34-plot1}
-ggplot(v34_fitted, aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-```{r v34-plot2}
-ggplot(v34_fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  theme(legend.position = "none")
-```
-
-```{r v34-plot3}
-# Dashed line: third quartile + 1.5 interquartile range
-LSlesverb <- as.numeric(quantile(v34_unit$Vi,prob = 0.75) + 1.5*(quantile(v34_unit$Vi, prob = 0.75) - quantile(v34_unit$Vi,prob = 0.25)))
-
-ggplot(v34_unit, aes(index, Vi)) + geom_point() + geom_hline(yintercept = LSlesverb, lty = 3) + 
-  geom_text(
-    data = v34_unit %>% 
-      filter(Vi>LSlesverb),
-    aes(label = index),
-    nudge_x = 0.05, nudge_y = 0.05,
-    check_overlap = T,
-    size = 2
-  )
-```
-
-```{r v34-plot4}
-ggplot(v34_fitted, aes(index, resc_std, color = Subject)) + 
-  geom_point() + 
-  geom_hline(yintercept = 0) + 
-  geom_hline(yintercept = 4, lty = 3) +
-  geom_hline(yintercept = -4, lty = 3) +
-  theme(legend.position = "none")
-```
-
-```{r v34-plot5}
-ggplot(v34_fitted, aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0)
-```
-
-```{r v34-plot6}
-ggplot(v34_fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-```{r}
-v34_lcr <- extract.lcr.mod.v1(v34.mod, v3_df4)
-```
-
-```{r v34-plot6-lcr}
-ggplot(v34_lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
-```
-
-Both of them are not quit follow a normal distribution!
-
-```{r v34-plot7}
-ggplot(v34_unit, aes(index, Mi)) + geom_point()
-```
-
-
-```{r v34-plot8}
-ggplot(v34_unit, aes(sample = Mi)) +
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) + 
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q))
-```
+### 4th replication
 
 #### Simulation
 
 ```{r}
-v34.sim <- sim(v34.mod, v3_df4)
+v34.sim <- sim(slmod4, repc3, seed = 1234)
 ```
 
 ```{r nullfitted-v34}
@@ -3866,13 +3118,13 @@ v34.sim.unit <- purrr::map_dfr(1:19, function(i){
 #### Lineup plots
 
 ```{r v34n-plo1, fig.height=6}
-lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v34.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resm_std)) + geom_point() + geom_smooth(method = "loess") +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v34n-plo2, fig.height=6}
-lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 2) %>% 
+lineup(true = v1.fitted, samples = v34.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
@@ -3882,13 +3134,13 @@ lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 2) %>%
 ```
 
 ```{r v34n-plo3, fig.height=6}
-lineup(true = v34_unit, samples = v34.sim.unit, pos = 9) %>% 
+lineup(true = v1.unit, samples = v34.sim.unit, pos = 9) %>% 
   ggplot(aes(index, Vi)) + geom_point() +
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v34n-plo4, fig.height=6}
-lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 2) %>% 
+lineup(true = v1.fitted, samples = v34.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
@@ -3898,13 +3150,13 @@ lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 2) %>%
 ```
 
 ```{r v34n-plo5, fig.height=6}
-lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resc_std)) + geom_point() + geom_hline(yintercept = 0) +
+lineup(true = v1.fitted, samples = v34.sim.fitted, pos = 9) %>% 
+  ggplot(aes(fitted, resc_std)) + geom_point() + 
   facet_wrap(~.sample, nrow = 5)
 ```
 
 ```{r v34n-plo6, fig.height=6}
-lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 6) %>% 
+lineup(true = v1.fitted, samples = v34.sim.fitted, pos = 6) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) +
   xlab(NULL) + ylab(NULL) +
@@ -3913,34 +3165,15 @@ lineup(true = v34_fitted, samples = v34.sim.fitted, pos = 6) %>%
         legend.position="none")
 ```
 
-If true plos is identified (panel 10), then the conditional distribution does not follow a normal distribution.
 
 ```{r v34n-plo6-lcr, fig.height=6}
-lineup(true = v34_lcr, samples = v34_simlcr, pos = 6) %>% 
+lineup(true = v1.lcr, samples = v34_simlcr, pos = 6) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
   facet_wrap(~.sample, nrow = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
-```
-
-
-```{r v34n-plo7, fig.height=6}
-lineup(true = v34_unit, samples = v34.sim.unit, pos = 6) %>% 
-  ggplot(aes(index, Mi)) + geom_point() +
-  facet_wrap(~.sample, nrow = 5)
-```
-
-```{r v34n-plo8, fig.height=6}
-lineup(true = v34_unit, samples = v34.sim.unit, pos = 6) %>% 
-  ggplot(aes(sample = Mi)) + 
-  geom_qq(distribution = stats::qchisq,
-          dparams = list(df = q)) +
-  geom_qq_line(color = "red",
-               distribution = stats::qchisq,
-               dparams = list(df = q)) +
-  facet_wrap(~.sample, nrow = 5)
 ```
 
 
