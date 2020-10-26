@@ -1,5 +1,6 @@
 library(shiny)
 library(shinydashboard)
+library(googlesheets4)
 source("questions.R")
 
 # Define UI ---
@@ -76,6 +77,11 @@ ui <- dashboardPage(
 
 # Define server logic ---
 server <- function(input, output){
+  
+  sheet <- tryCatch({
+    gs4_auth("data/authentication.rds")
+    sheet <- gs4_get("1JcmIB5dOi7qkArfGawTkOIVFyKMOU-xxHZRuV_7Kzlw")
+  })
   
   # load survey image
   image.list <- list.files(paste0("www/images"), full.names = T)
