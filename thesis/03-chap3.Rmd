@@ -1,0 +1,83 @@
+---
+chapter: 3
+knit: "bookdown::render_book"
+---
+
+# Literature review
+
+what is a linear mixed model?
+why the visual inference is important?
+what are we going to diagnostic?
+how can we diagnostic?
+why we should use this diagnostic?
+how does it works? where it will be used?
+why the lmm is useful?
+
+## Singer
+
+@singer2017graphical introduced three types of residuals for linear mixed models to do the residual analysis, which are marginal residuals ($\hat\xi = y - X \hat\beta$), conditional residuals ($\hat e = y - X\hat \beta -Z\hat b$) and random effect residual ($Z\hat b$).
+@singer2017graphical summarised the areas of application for each type of residual defined by LMMs such as detecting the linearity of effects, assessing the normality and homoscedasticity of errors, and also checking outliers and influential observations.
+Marginal residuals are useful in checking the linearity of effects fixed, outlying observations and the covariance structure of $\boldsymbol\Omega_i$, while the conditional residuals can be used to detect the outlying observations, homoscedasticity and normality of the conditional errors. Moreover, the random effects can be applied to examine the outlying subjects and the normality of the random effects (@singer2017graphical). 
+According to @hilden1995multilevel, a residual is confounded when it is dependent on the other types of errors. Sine the conditional and random effects residual may be correlated, then the conditional residual may not be adequate to check the normality of conditional errors. @hilden1995multilevel proposed a linear transformation of the conditional residuals to get the ($n-q$) least confounded conditional residuals ($c^\top_k \hat e$). However, the linearly transformed residuals do not correspond to individual observations anymore. Besides, they may amplify the super-normality effect, which tends to look more normal than the underlying effects actually are [@schutzenmeister2012residual]. @schutzenmeister2012residual prefer to use the studentization for conditional residuals. 
+
+
+## Adam Loy
+
+People always use classical statistic inference such as p-value or the test statistics. But these methods only tell that there is a problem with the model. However, graphical diagnostic can not only tell the problem but also can tell the cause of the problem. 
+Visual inference is parallel with the classical statistical inference. As we all knew, the classical statistical inference makes up of 1) formulating the null and alternative hypotheses, 2) calculating the test statistic from the observed data, 3) comparing the test statistic based on a null distribution, and 4) making a decision for any rejections. However, for visual inference, the true data plot is treated as a test statistic [@loy2017model; @buja2009statistical; @majumder2013validation; @chowdhury2018measuring]. While, the plots that drawn from data generated consistently with the null hypothesis are named as null plots. Picking the plot of the data from the null plots represents a rejection of that null hypothesis based on the viewer's cognition to distinguish between the cases under the null hypotheses from scenarios under the alternative hypotheses [@loy2017model; @buja2009statistical].
+
+@loy2017model introduced two type of residuals of LMMs for model checking: 1)level-1 residuals ($\hat{\mathbf e} = \mathbf y - \boldsymbol{X\hat\beta}- \mathbf{Z\hat b}$) which is the conditional residual refered by @singer2017graphical, and 2) level-2 residuals ($\mathbf{\hat b}$).
+@loy2017model did the model selection analysis based on the fixed effects and random effects through the lineup protocols. They used the residuals to detect the siginicance of a fixed effect by ploting a residual quantity from thr model without the variable of interest with the values of that variable. They also detected if the model needs the random effect, if the random effects include both random intercept and random slope, and whether the random effects need to be correlated.
+Residual plots with lineups to check the assumprions of homogeneous residual variance, linearity, and normality of the random effects has been introduced by @loy2017model.
+
+@singer2017graphical used the standardised conditional residual versus the fitted value to detect the homoscedasticity of the conditional errors, but @loy2017model checked the relationship between conditional residual and one of the model's covariate. They also check the homogeneity of conditional residual variance between groups by comparing the conditional residual and grouping variable. @loy2017model tested the linearity of conditional residual by plotting the explanatory variable versus the conditional errors. However, the linearity diagnostic only occurred in the fixed effect as @singer2017graphical mentioned by plotting the standardised marginal residuals against the fitted value.
+Moreover, the distributional assessment of the random effect for @loy2017model is based on the Q-Q plot of the predicted random slopes after refitting the model. Whereas, plotting the $\chi^2_q$ QQ-plot for the Mahalannobis's distance between $\hat b_i$ and $\mathbb E (\mathbf b_i) = 0$ is the way to check the normality of the random effects ($\mathbf b_i$) denoted by @singer2017graphical.
+
+
+### lineup protocol
+One of the protocols, lineup, it randomly insert the plot of observed data among the 19 null plots which are generated from the reference distribution. 
+
+1. Create lineup data: Assuming that the proposed models are correct, we use the parameteric bootstrap to simulate new responses, refit the model to these simulated responses, and extract the residuals of interest from the proposed model. For each lineup, this process is used to obtain $m-1=19$ simulated null datasets.
+2. Render lineups: Draw samll multiples of each of the null datasets and randomly insert the observed data among the nulls. Each plot is labeled by a number from 1 to $m$. These IDs are used for identification and later evaluation of results.
+3. Evaluate lineups: Present the lineups to independent observers, instructing them to identify the plot most different from the set and asking them what feature led to their choice. Thses choices came in the form of four suggestions (in checkboxes) and one text box for a free-form answer.
+4. Evaluate the strength of evidence: For a lineup of size $m=20$ that has been evaluated by $K$ independent observers, the number of evaluations of a lineuo in which the observer identifies the data plot, $Y$, has a Visual distribution $V_{K,m, s =3} as defined by **Hofmann (2015)**
+#### p-value of protocol from the Majumder
+@majumder2013validation compute the $p$-value in the visual inference with the lineup: let $X$ be the random variable describing the number of independent observations, out of $N$, identifying the data plot. Then the $p$-value is the probability that at least $x$ observers chose the data plot, given the null hypothesis is true, if $X = x$ is the number of observers who chose the data plot from the lineup. Under the null hypothesis, the probability of choosing the true plot is $1/m$ where $m$ is the size of lineup, usually 20, and $X$ is distributed according to a distribution similar to a Binomial distribution $B_{N,1/m}$
+#### Experimental setup
+The visual inference also collect the information about the reason for the observers to make their decisions such as outlier, trend or asymmetry.
+
+## Majumder
+[@majumder2013validation] new research on formalizing statistical graphics with language characteristics makes it easier to abstractly define, compare, and contrast data plots. In section 2, it contains 6 definitions which including the visual statistic, lineup, $p$-value. - what is the $p$-value in this case?
+
+They have test on the linear regression model 
+$$Y_i = \beta_0 + \beta_1 X_{i1} + \beta_2 X_{i2} + \beta_3 X_{i1}X_{i2} + \ldots + \epsilon_i$$
+where $\epsilon_i \sim iid N(0, \sigma^2)$, $i = 1, 2, 3, \ldots, n$. The covariates ($X_j, j = 1, 2, \ldots, p$) can be continuous or discrete. They introduce different types of visual test statistics for testing hypotheses such as to examine the effect of variable $X_j$ on $Y$, linearity, distributions and so on.
+
+They publish the expriement on the Amazon's online web servie, Machanical Turk. The participants are asked to select the plot refering to the question, provide the reason why they choose, and tell the confidence level that they believe in their choice. At the meanwhile, each participant's age, gender, education level and geographic location are collected.
+When they do the experiment, they have to estimate the observer's visual skills. For example, they gives the observers an easy lineup plot which is distinguishable and let them to choose the most different one. If the actual plot is correctly chosen by the participants, they keep the answers from their. 
+
+They using the lineup protocol mainly focus on three data set, discrete, continuous and comtanimated. The comparison of the expected power of a visual test with the power of the conventional test is applied.
+
+### Spherical random effects
+If the variance component is estimated as zero or near zero, the covariance matrix of random effects is singular and its inverse is not defined.
+
+Then introduce the lower triangular Cholesky factor of the covariance matirx of the random effects, for example, $V_b(\theta) = U_b(\theta)U_b(\theta)^\top$. Therefore, the spherical random effects as the vector $B^*$ that fullfills
+$$B = U_b(\theta)B^*$$
+
+The components of $B^*$ corresponding to zero variance component are assumed to have a value of zero.
+
+$$Y = X\beta + ZU_b(\theta)B^* + U_\varepsilon \varepsilon^*$$
+where replacing $\varepsilon$ with $\varepsilon^* = U^{-1}_e \varepsilon$ for $V_e = U_eU_e^\top$.
+
+## Stephinie Project Protocol
+They created three different version and replicate each version by four times. Each participant evaluate 12 lineups without same plot shown.
+
+what is replication in the exprimental setup?
+
+## Statistical inference for graphics
+
+They outline the similarity between quantitative testing and visual discovery. Under the null hypothesis, the test statistics and rejection rules are computed for the quantitative testing. However, visual discovery is based on the viewer's cognition when they see the plots. Any discoveries are found, the null hypothesis may be rejected.  
+
+The concept of "null distribution of plots" is introduced. This is treated as the test statistics for null distributions. Sampling from the null hypothesis with a finite number R for example, the null datasets $\mathbf y^{*1}, \mathbf y^{*2},...,\mathbf y^{*R} $ are generated and the null plots can be drawn. There are three different ways to compute the null datasets, (i) conditioning, (ii) parametric bootstrap sampling, (iii) posterior inference.
+
+They introduced two protocols, the Rorschach and lineup, which are used for the process of visual discovery. The Rorschach is taken as the cognitive experimentation. To measure a data analyst's tendency to overinterpret plots in which there is no or only obvious structure is the goal. Although it can be bias based on the analysts' knowledge, the aim of this training is to improve the awareness of the features when they detect. For the lineup, they asked the viewer to identify the most different plot among the 19 null plots by randomly inserting the plot of real data. Also, it can be made to choose the rank of the difference level of the plots. Based on the examples that they give and also refer to the survey design (Dawes 2000), the wording of the instruction might help the viewers to make the decisions.

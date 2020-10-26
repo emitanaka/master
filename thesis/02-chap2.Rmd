@@ -3,24 +3,103 @@ chapter: 2
 knit: "bookdown::render_book"
 ---
 
-# Exponential Smoothing {#sec:expsmooth}
+# Linear Mixed Model
 
-## Organizing your ideas
+- what is a linear mixed model
 
-Imagine you are writing for your fellow Honours students. Topics that are well-known to them do not have to be included here. But things that they may not know about should be included. Resist the temptation to discuss everything you've read in the last year.
+Linear mixed model is useful on dealing with the dependency structure with the data which is in groups.
 
-Do not organize your chapter around the papers you have read with one section per paper. Instead, you should organize your chapters around themes, and within each theme provide a story explaining the development of ideas. It is usually helpful to plan out a table of contents first with major section headings.
+The linear mixed model may be expressed as
+$$\underset{(m_i \times 1)}{\mathbf{y}_i} = \underset{(m_i \times p)}{\mathbf{X}_i} \underset{(p\times 1)}{\boldsymbol{\beta}} + \underset{(m_i \times q)}{\mathbf{Z}_i}\underset{(q \times 1)}{\mathbf{b}_i} + \underset{(m_i \times 1)}{\mathbf{e}_i}$$
 
-When you are discussing results from several papers or books, you will need to adopt a common notation to ensure your chapter makes sense. Do not use different notation for the same thing.
+where there are $i = 1, 2, \ldots, n$ nonoverlapping groups. $\boldsymbol \beta$ is a vector of $p$ fixed effects governing the global mean structure, $\mathbf{b}_i$ is a vector of $q$ random effects describing the between-group covariance structure and $\mathbf e$ is an vector of random errors.
 
-## Citations
+We can rewrite the model as
+$$\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \mathbf{Zb}+\mathbf{e}$$
+where $\mathbf y = (\mathbf y_1^\top, \ldots, \mathbf y_n^\top)^\top, \mathbf X = (\mathbf X_1^\top, \ldots, \mathbf X_n^\top)^\top, Z = \oplus_{i=1}^n \mathbf Z_i, \mathbf b = (\mathbf b_1^\top, \ldots, \mathbf b_n^\top)^\top$ and $\mathbf e = (\mathbf e_1^\top, \ldots, \mathbf e_n^\top)^\top$.
 
-All citations should be done using markdown notation as shown below. This way, your bibliography will be compiled automatically and correctly.
+The key assumption of LMMs is that the residual errors and random effects are normally distributed, namely
+\begin{align*}
+   \begin{bmatrix}
+      \mathbf{b} \\ \mathbf{e}
+   \end{bmatrix}
+   \sim \mathcal{N_{M+N}}\left(\begin{bmatrix}\mathbf{0_M} \\ \mathbf{0_N} \end{bmatrix}, \begin{bmatrix} \mathbf{\Gamma} & \mathbf{0_{M\times N}} \\ \mathbf{0_{M \times N}} & \mathbf{R} \end{bmatrix}\right)
+\end{align*}
+where $\mathbf N = \sum_{i=1}^n m_i$ and $\mathbf M = nq$.
 
-Exponential smoothing was originally developed in the late 1950s [@Brown59;@Brown63;@Holt57;@Winters60]. Because of their computational simplicity and interpretability, they became widely used in practice.
+Based on the model, the marginal distribution of $\mathbf{y}$ is
+\begin{align*}
+   \mathbf{y} \sim \mathcal{N}(\mathbf{X} \boldsymbol{\beta}, \mathbf{\Omega})
+\end{align*}
+with $\mathbb E(\mathbf y) = \boldsymbol{X\beta}$ and $\mathbb V(\mathbf y) = \mathbf{\Omega} = \mathbf{Z\Gamma Z}^\top + \mathbf{R}$, and the conditional distribution of $\mathbf{y}$ given $\mathbf{b}$ is given by
+\begin{align*}
+   \mathbf{y}|\mathbf{b} \sim \mathcal{N}(\mathbf{X} \boldsymbol{\beta} + \mathbf{Zb},\mathbf{R})
+\end{align*}
 
-Empirical studies by @MH79 and @Metal82 found little difference in forecast accuracy between exponential smoothing and ARIMA models. This made the family of exponential smoothing procedures an attractive proposition [see @CKOS01].
+The joint density function of $\mathbf{y}$ and $\mathbf{b}$ is defined as
+\begin{align*}
+   f(\mathbf{y}, \mathbf{b}) &= g(\mathbf{y}|\mathbf{b})h(\mathbf{b}) \\
+   &= const \times \exp\left(-\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})-\frac{1}{2}\mathbf{b}^\top \mathbf{\Gamma}^{-1} \mathbf{b}\right)
+\end{align*}
 
-The methods were less popular in academic circles until  @OKS97 introduced a state space formulation of some of the methods, which was extended in @HKSG02 to cover the full range of exponential smoothing methods.
+\begin{align*}
+    \frac{\partial f(\mathbf{y}, \boldsymbol{b})}{\partial \mathbf{\beta}} &\propto \frac{(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb}) + \mathbf{b}^\top \mathbf{\Gamma}^{-1} \mathbf{b}}{\partial \boldsymbol{\beta}} \\
+    &\propto \frac{-\mathbf{y}^\top \mathbf{R}^{-1}\mathbf{X}\boldsymbol{\beta} - \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Zb} + \mathbf{b}^\top \mathbf{Z}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta}}{\partial \boldsymbol{\beta}} \\
+    &= -2 \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} + 2\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta} + 2\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Zb} = 0 \\
+    &\Rightarrow \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta} + \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Zb} = \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y}
+\end{align*}
 
+\begin{align*}
+    \frac{\partial f(\mathbf{y}, \boldsymbol{b})}{\partial \mathbf{b}} &\propto \frac{(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb}) + \mathbf{b}^\top \mathbf{\Gamma}^{-1} \mathbf{b}}{\partial \mathbf{b}} \\
+    &\propto \frac{-\mathbf{y}^\top \mathbf{R}^{-1}\mathbf{Zb} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1}\mathbf{Zb} -\mathbf{b^\top Z^\top R}^{-1}\mathbf{y} + \mathbf{b^\top Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta}+ \mathbf{b^\top Z^\top R}^{-1}\mathbf{Zb} + \mathbf{b^\top}\mathbf{\Gamma}^{-1}\mathbf{b}}{\partial \mathbf{b}} \\
+    &= -2\mathbf{Z^\top R}^{-1}\mathbf{y} + 2\mathbf{Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta} + 2\mathbf{Z^\top R}^{-1}\mathbf{Zb} + 2\mathbf{\Gamma}^{-1}\mathbf{b} = 0\\
+    &\Rightarrow \mathbf{Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta} + \mathbf{Z^\top R}^{-1}\mathbf{Zb} + \mathbf{\Gamma}^{-1}\mathbf{b} = \mathbf{Z^\top R}^{-1}\mathbf{y}
+\end{align*}
 
+\begin{align*}
+    \begin{pmatrix} \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X} & \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z} \\ \mathbf{Z^\top R}^{-1}\mathbf{X} & \mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} 
+    \end{pmatrix}
+    \begin{pmatrix} \boldsymbol{\beta} \\ \mathbf{b} \end{pmatrix}
+    =
+    \begin{pmatrix}
+    \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} \\ \mathbf{Z^\top R}^{-1}\mathbf{y}
+    \end{pmatrix}
+\end{align*}
+
+Write the coefficient matrix as:
+\begin{align*}
+    \mathbf{C} = \begin{bmatrix} \mathbf{C}_{XX} & \mathbf{C}_{XZ} \\ \mathbf{C}_{ZX} & \mathbf{C}_{ZZ}\end{bmatrix}
+\end{align*}
+Then, the model can be shown as,
+\begin{align*}
+    \mathbf{C}_{XX}\boldsymbol{\beta} + \mathbf{C}_{XZ} \mathbf{b} &= \mathbf{c}_{Xy} \\
+    \mathbf{C}_{ZX}\boldsymbol{\beta} +\mathbf{C}_{ZZ} \mathbf{b} &= \mathbf{c}_{Zy}
+\end{align*}
+From the second equation, we can get $$\mathbf{b} = \mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy} - \mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX}\boldsymbol{\beta}$$
+
+By substituting into the first equation,
+$$(\mathbf{C}_{XX} - \mathbf{C}_{XZ}\mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX})\boldsymbol{\beta} = \mathbf{c}_{Xy} - \mathbf{C}_{XZ}\mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy}$$
+where
+\begin{align*}
+    & \mathbf{C}_{XX} - \mathbf{C}_{XZ}\mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX}\\
+    &=  \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X} - \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}\mathbf{X} \\
+    &=\mathbf{X}^\top (\mathbf{R}^{-1} - \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1})\mathbf{X} \\
+    &= \mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X}
+\end{align*}
+Then,
+\begin{align*}
+    \boldsymbol{\beta} &= (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1}(\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} -  \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}\mathbf{y}) \\
+    &= (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1}\mathbf{X}^\top(\mathbf{R}^{-1} - \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1})\mathbf{y} \\
+    &= (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y}
+\end{align*}
+
+Then, using the 
+\begin{align*}
+    \mathbf{b} &= \mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy} - \mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX} (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y} \\
+    &= \mathbf{C}_{ZZ}^{-1}(\mathbf{c}_{Zy} - \mathbf{C}_{ZX} (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y}) \\
+    &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}(\mathbf{Z^\top R}^{-1}\mathbf{y} - \mathbf{Z^\top R}^{-1}\mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y}) \\
+    &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} )\mathbf{y} \\
+    &= \mathbf{\Gamma}\mathbf{Z^\top}\mathbf{\Omega}^{-1}(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} )\mathbf{y} \\
+    &= \mathbf{\Gamma}\mathbf{Z^\top}\mathbf{\Omega}^{-1} \mathbf{Q}\mathbf{y}
+\end{align*}
+where $$\mathbf{Q} = \mathbf{\Omega}^{-1} - \mathbf{\Omega}^{-1}\mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1}$$
