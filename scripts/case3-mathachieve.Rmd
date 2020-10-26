@@ -15,6 +15,7 @@ library(ggbeeswarm)
 library(stringr)
 library(colorspace)
 library(nullabor)
+library(ggforce)
 ```
 
 Each row in `MathAchieve` represents each of the 7185 students within 160 schools. Each row in `MathAchSchool` represents each of 160 schools.
@@ -33,9 +34,10 @@ data("MathAchieve")
 summary(MathAchieve)
 ```
 ```{r}
-attach(MathAchieve)
-mses <- tapply(SES, School, mean)
-detach(MathAchieve)
+df <- MathAchieve %>% 
+  filter(Minority == "No", Sex == "Female")
+head(df)
+length(unique(df$School))
 ```
 
 ```{r}
@@ -43,75 +45,119 @@ data("MathAchSchool")
 head(MathAchSchool)
 ```
 
-Since the `MEANSES` is different in `MathAchieve` and `MathAchSchool`, the new mean of SES for students in each school is generated.
+```{r}
+attach(df)
+mses <- tapply(SES, School, mean)
+detach(df)
+```
+
 
 ```{r}
-Bryk <- as.data.frame(MathAchieve[,c("School","Sex", "Minority", "SES", "MathAch")])
+Bryk <- as.data.frame(df[,c("School", "SES", "MathAch")])
 Bryk$meanses <- mses[as.character(Bryk$School)]
+Bryk$cses <- Bryk$SES - Bryk$meanses
 sector <- MathAchSchool$Sector
 names(sector) <- row.names(MathAchSchool)
 Bryk$Sector <- sector[as.character(Bryk$School)]
-contrasts(Bryk$Sector)
-```
-
-```{r fig.height=40, fig.width=10}
-ggplot(MathAchieve, aes(SES, MathAch, color = Sex)) + geom_point() + 
-  facet_wrap(~School, ncol = 6) + geom_smooth(method = "lm")
-```
-```{r fig.height=40, fig.width=10}
-ggplot(MathAchieve, aes(SES, MathAch, color = Minority)) + geom_point() + 
-  facet_wrap(~School, ncol = 6)
+Bryk <- Bryk %>% group_by(School) %>% dplyr::mutate(size = n())
+dat <- Bryk %>% filter(size>min(Bryk$size))
+length(unique(dat$School))
+dat <- dat %>% mutate(Sector = ifelse(Sector == "Public", 0, 1))
+colnames(dat)[3] <- c("y")
 ```
 
 ```{r}
-ggplot(Bryk, aes(Sector, MathAch)) + geom_boxplot()
-```
+testrandom <- plyr::ddply(dat, .(School), function(x) {
+  m <- lm(y ~ SES + Sector, data = x)
+  data.frame(x, fitted = fitted(m))	
+})
 
+ggplot(testrandom, aes(SES+Sector, fitted, group = School)) + geom_line()
+```
 
 
 ```{r}
-ggplot(MathAchieve, aes(Sex, MathAch)) +
-  geom_boxplot() + facet_grid(.~Minority)
+# random intercept and random slope
+ma.mod1 <- lmer(y ~ SES + Sector + (SES|School), data = dat)
+# independent random effects
+ma.mod2 <- lmer(y ~ SES*cses + Sector*cses + (cses -1 |School) + (1|School), data = dat)
+#summary(slmod1)
+#summary(slmod2)
+
+set.seed(987654321)
+ma.mod2.sims  <- simulate(ma.mod2, nsim = 19)
+ma.mod2.refit <- lapply(ma.mod2.sims, refit, object = ma.mod2)
+ma.mod2.sim.ranef <- lapply(ma.mod2.refit, function(x) ranef(x)[[1]])
+ma.mod2.sim.ranef <- do.call("rbind", ma.mod2.sim.ranef)
+ma.mod2.sim.ranef$.n <- rownames(ma.mod2.sim.ranef)
+ma.mod2.sim.ranef$.n <- as.numeric(str_extract(ma.mod2.sim.ranef$.n, "\\d+"))
+true.ma.mod1.ranef <- ranef(ma.mod1)$School
+ma_df <- nullabor:::add_true(ma.mod2.sim.ranef, true.ma.mod1.ranef, pos = 9)
+ggplot(data = ma_df, aes(x = `(Intercept)`, y = cses)) + 
+  geom_point(alpha = 0.4) +
+  geom_smooth(method = "lm", se = FALSE, alpha = 0.4) +
+  facet_wrap( ~ .sample, ncol=5) + 
+  xlab(NULL) + 
+  ylab(NULL)
+```
+
+Hence, the `mod1` should be used.
+
+```{r fitfn}
+extract.fitted.mod <- function(mod, data){
+  N <- nrow(data)
+  schools <- unique(data$School)
+  nschools <- length(schools)
+
+  y <- data$y
+  X <- getME(mod, "X")
+  beta <- fixef(mod)
+  Z <- getME(mod, "Z")
+  u <- c(ranef(mod)$School[,1], ranef(mod)$School[,2])
+  q <- length(u)
+
+  vc <- as.data.frame(VarCorr(mod))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'School'][1] * diag(nschools)
+  G2 <- vc$vcov[vc$grp == 'School'][2] * diag(nschools)
+  G <- Matrix::bdiag(G1, G2)
+  G[lower.tri(G)] <- vc$vcov[vc$grp == 'School'][3]
+  G[upper.tri(G)] <- vc$vcov[vc$grp == 'School'][3]
+
+  Sigma <- Z %*% G %*% t(Z) + R 
+
+  Sigma_inv <- solve(Sigma)
+
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(mod) %*% t(X) %*% Sigma_inv
+
+  varMargRes <- Sigma - X %*% vcov(mod) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+
+  fitted_df <- data %>% 
+    mutate(
+      fitted = as.vector(X %*% beta),
+      resm = y - fitted,
+      resc = as.vector(y - fitted - Z %*% u),
+      index = 1:nrow(data)) %>% 
+    mutate(resm_std = resm/sqrt(diag(varMargRes)[index]),
+           resc_std = resc/sqrt(diag(varCondRes)[index])) %>% 
+    ungroup()
+  
+  return(fitted_df)
+}
 ```
 
 ```{r}
-length(unique(MathAchieve$School))
-```
-160 schools with the `MEANSES` is the nummeric vector of the mean SES for the school.
-
-```{r}
-df <- MathAchieve %>% mutate(Sex = ifelse(Sex == "Male", 0, 1), Minority = ifelse(Minority == "No", 0, 1))
-str(df)
+ma.fitted <- extract.fitted.mod(ma.mod1, dat)
 ```
 
 ```{r}
-model <- lmer(MathAch ~ Sex + SES + (1|School), data = df)
-summary(model)
+ggplot(ma.fitted, aes(index, resc_std)) + geom_point()
+ggplot(ma.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line()
 ```
 
-```{r}
-fit <- lmer(MathAch ~ SES + Sector + Minority + Sex + (1|School), data = Bryk)
 
-N <- nrow(Bryk) 
-school <- unique(as.character(Bryk$School))
-nschool <- length(school)
-
-y <-  Bryk$MathAch
-X <- model.matrix(~ SES + Sector + Minority + Sex, data = Bryk)
-beta <- fixef(fit)
-Z <- model.matrix(~ School - 1, data = Bryk)
-u <- ranef(fit)$School[,1]
-q <- length(u)
-vc <- as.data.frame(VarCorr(fit))
-R <- vc$vcov[vc$grp == "Residual"] * diag(N)
-G <- vc$vcov[vc$grp == "School"] * diag(q)
-Sigma <- Z %*% G %*% t(Z) + R
-Sigma_inv <- solve(Sigma)
-varMargRes <- Sigma - X %*% solve(t(X) %*% solve(Sigma) %*% X) %*% t(X)
-P <- Sigma_inv - Sigma_inv %*% X %*% solve(t(X) %*% Sigma_inv %*% X) %*% t(X) %*% Sigma_inv
-varCondRes <- R %*% P %*% R
-varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-```
 
 ```{r}
 fit_bryk <- Bryk %>% 
