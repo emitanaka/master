@@ -227,7 +227,7 @@ ggplot(autism.lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red
 - the outlying observations are more allocated in the female with non-white feature
 - the conditional residuals do not follow a normal distribution while the least confounded conditional residual does not follow a normal distribution as well.
 
-# Version 1
+# *Version 1
 
 Simulate from the true model:
 
@@ -809,15 +809,15 @@ lineup(true = v1.lcr, samples = autism.v14n.lcr, pos = 4) %>%
   facet_wrap(~.sample, ncol = 5)
 ```
 
-# Version 2
+# *Version 2
 
 We added the error term as student t distributed.
 
 ```{r}
-set.seed(1234)
+set.seed(5692)
 ## t distribution
-e  <- rt(n = n, ncp = sig.e, df = 3)
-y <- as.vector(getME(autism.mod, "X") %*% fixef(autism.mod) + getME(autism.mod, "Z") %*% b + e)
+e  <- rt(n = n, ncp = sig.e, df = n)
+y <- as.vector(getME(autism.mod, "X") %*% fixef(autism.mod) + getME(autism.mod, "Z") %*% bvec + e)
 
 autism.repc2 <- tibble(autism[,-4], y)
 a.v2.mod <- lmer(y ~ age2 + sicdegp + race + bestest2 + (age2 - 1|childid) + (I(age2^2) -1 |childid), data = autism.repc2)
@@ -828,12 +828,17 @@ a.v2.fitted <- autism.extract.fitted.mod(a.v2.mod, autism.repc2)
 a.v2.lcr <- autism.extract.lcr.mod(a.v2.mod, autism.repc2)
 ```
 
+# Data plots
+
 ```{r}
-ggplot(a.v2.fitted, aes(index, resm_std)) + geom_point()
-ggplot(a.v2.fitted, aes(index, resc_std)) + geom_point()
+ggplot(a.v2.fitted, aes(index, resm_std, color = gender, shape = race)) + geom_point()
+ggplot(a.v2.fitted, aes(index, resc_std, color = gender, shape = race)) + geom_point()
 ggplot(a.v2.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
 ggplot(a.v2.lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
 ```
+
+- The outlying observations can be detected as the non-white female in the marginal residuals but more with non-white males are detected in the conditional residuals
+- Both conditional residual and least confounded residual are less normally distributed compared with version 1.
 
 ## 1st replication
 
@@ -942,28 +947,28 @@ autism.v21n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v21n.fitted, pos = 5) %>%
-  ggplot(aes(index, resm_std)) + geom_point() +
+lineup(true = a.v2.fitted, samples = autism.v21n.fitted, pos = 5) %>%
+  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v21n.fitted, pos = 5) %>%
-  ggplot(aes(index, resc_std)) + geom_point() +
+lineup(true = a.v2.fitted, samples = autism.v21n.fitted, pos = 5) %>%
+  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ### Normality checking
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v21n.fitted, pos = 8) %>% 
+lineup(true = a.v2.fitted, samples = autism.v21n.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r}
-lineup(true = autism.lcr, samples = autism.v21n.lcr, pos = 8) %>% 
+lineup(true = a.v2.lcr, samples = autism.v21n.lcr, pos = 8) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
   facet_wrap(~.sample, ncol = 5)
@@ -972,7 +977,7 @@ lineup(true = autism.lcr, samples = autism.v21n.lcr, pos = 8) %>%
 ## 2st replication
 
 ```{r v22.sim}
-autism.v22.sim <- autism.sim(autism.mod, autism.repc2, seed = 7620)
+autism.v22.sim <- autism.sim(a.v2.mod, autism.repc2, seed = 7620)
 ```
 
 ```{r v22n.fitted}
@@ -1076,13 +1081,13 @@ autism.v22n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v22n.fitted, pos = 5) %>%
+lineup(true = a.v2.fitted, samples = autism.v22n.fitted, pos = 5) %>%
   ggplot(aes(index, resm_std)) + geom_point() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v22n.fitted, pos = 5) %>%
+lineup(true = a.v2.fitted, samples = autism.v22n.fitted, pos = 5) %>%
   ggplot(aes(index, resc_std)) + geom_point() +
   facet_wrap(~.sample, ncol = 5)
 ```
@@ -1090,15 +1095,15 @@ lineup(true = autism.fitted, samples = autism.v22n.fitted, pos = 5) %>%
 ### Normality checking
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v22n.fitted, pos = 8) %>% 
+lineup(true = a.v2.fitted, samples = autism.v22n.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v22n.lcr, pos = 8) %>% 
-  ggplot(aes(sample = resc_std)) + geom_qq() +
+lineup(true = a.v2.lcr, samples = autism.v22n.lcr, pos = 8) %>% 
+  ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
   facet_wrap(~.sample, ncol = 5)
 ```
@@ -1106,7 +1111,7 @@ lineup(true = autism.fitted, samples = autism.v22n.lcr, pos = 8) %>%
 ## 3rd replication
 
 ```{r v23.sim}
-autism.v23.sim <- autism.sim(autism.mod, autism.repc2, seed = 4739)
+autism.v23.sim <- autism.sim(a.v2.mod, autism.repc2, seed = 4739)
 ```
 
 ```{r v23n.fitted}
@@ -1210,29 +1215,29 @@ autism.v23n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v23n.fitted, pos = 15) %>%
-  ggplot(aes(index, resm_std)) + geom_point() +
+lineup(true = a.v2.fitted, samples = autism.v23n.fitted, pos = 15) %>%
+  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v23n.fitted, pos = 15) %>%
-  ggplot(aes(index, resc_std)) + geom_point() +
+lineup(true = a.v2.fitted, samples = autism.v23n.fitted, pos = 15) %>%
+  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ### Normality checking
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v23n.fitted, pos = 20) %>% 
+lineup(true = a.v2.fitted, samples = autism.v23n.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v23n.lcr, pos = 20) %>% 
-  ggplot(aes(sample = resc_std)) + geom_qq() +
+lineup(true = a.v2.lcr, samples = autism.v23n.lcr, pos = 20) %>% 
+  ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
   facet_wrap(~.sample, ncol = 5)
 ```
@@ -1240,7 +1245,7 @@ lineup(true = autism.fitted, samples = autism.v23n.lcr, pos = 20) %>%
 ## 4th replication
 
 ```{r v24.sim}
-autism.v24.sim <- autism.sim(autism.mod, autism.repc2, seed = 8502)
+autism.v24.sim <- autism.sim(a.v2.mod, autism.repc2, seed = 8502)
 ```
 
 ```{r v24n.fitted}
@@ -1342,29 +1347,29 @@ autism.v24n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v24n.fitted, pos = 15) %>%
-  ggplot(aes(index, resm_std)) + geom_point() +
+lineup(true = a.v2.fitted, samples = autism.v24n.fitted, pos = 15) %>%
+  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v24n.fitted, pos = 15) %>%
-  ggplot(aes(index, resc_std)) + geom_point() +
+lineup(true = a.v2.fitted, samples = autism.v24n.fitted, pos = 15) %>%
+  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ### Normality checking
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v24n.fitted, pos = 20) %>% 
+lineup(true = a.v2.fitted, samples = autism.v24n.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r}
-lineup(true = autism.fitted, samples = autism.v24n.lcr, pos = 20) %>% 
-  ggplot(aes(sample = resc_std)) + geom_qq() +
+lineup(true = a.v2.lcr, samples = autism.v24n.lcr, pos = 20) %>% 
+  ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
   facet_wrap(~.sample, ncol = 5)
 ```
