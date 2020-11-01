@@ -1374,16 +1374,588 @@ lineup(true = a.v2.lcr, samples = autism.v24n.lcr, pos = 20) %>%
   facet_wrap(~.sample, ncol = 5)
 ```
 
+- The data plot of least confounded residual is hard to be identified.
 
+# *Version 3
 
+```{r}
+autism %>% group_by(childid) %>% summarise(mean = mean(y))
 
+mean(autism$y)
+```
 
+```{r}
+set.seed(2639)
+ind <- sample(604, 120, replace = F)
+autism.repc3 <- autism
+autism.repc3[ind,]$y <- autism.repc3[ind,]$y + median(autism.repc3$y) * 0.2
+```
 
+```{r}
+a.v3.mod <- lmer(y ~ age2 + sicdegp + race + bestest2 + (age2 - 1|childid) + (I(age2^2) -1 |childid), data = autism.repc3)
+```
 
+```{r}
+a.v3.fitted <- autism.extract.fitted.mod(a.v3.mod, autism.repc3)
+a.v3.lcr <- autism.extract.lcr.mod(a.v3.mod, autism.repc3)
+```
 
+# Data plots
 
+```{r}
+ggplot(a.v3.fitted, aes(index, resm_std, color = gender, shape = race)) + geom_point()
 
+ggplot(a.v3.fitted, aes(index, resc_std, color = gender, shape = race)) + geom_point()
 
+ggplot(a.v3.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+
+ggplot(a.v3.lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
+```
+
+- With version 3, there are more outliers on the both marginal residual and conditional residuals. While, conditional residual may works better on detecting the outlying observations.
+- Both conditional residual and least confounded residual are not normally distributed as the tails on both side for conditional residual and the tails on the bottom for least confounded residual.
+
+## 1st replication
+
+```{r}
+autism.v31.sim <- autism.sim(a.v3.mod, autism.repc3, seed = 1234)
+```
+
+```{r v31n.fitted}
+autism.v31n.fitted <- purrr::map_dfr(1:19, function(i){
+  df <- autism.v31.sim %>% filter(.n == i)
+  m <- lmer(y ~ age2 + sicdegp + race + bestest2 + (age2 - 1|childid) + (I(age2^2) - 1 | childid), data = df)
+  
+  n <- getME(m, "n")
+  child <- unique(df$childid)
+  nchild <- length(child)
+  
+  y <- getME(m, "y")
+  X <- getME(m, "X")
+  beta <- getME(m, "beta")
+  Z <- getME(m, "Z")
+  u <- getME(m, "b")
+  q <- getME(m, "q")
+  
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == "Residual"] * diag(n)
+  G1 <- vc$vcov[vc$grp == "childid"] * diag(nchild)
+  G2 <- vc$vcov[vc$grp == "childid.1"] * diag(nchild)
+  G <- Matrix::bdiag(G1, G2)
+  
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+  
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv 
+  
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
+```{r v31n.lcr}
+autism.v31n.lcr <- purrr::map_dfr(1:19, function(i){
+  df <- autism.v31.sim %>% filter(.n == i)
+  m <- lmer(y ~ age2 + sicdegp + race + bestest2 + (age2 - 1|childid) + (I(age2^2) - 1 | childid), data = df)
+  
+  n <- getME(m, "n")
+  child <- unique(df$childid)
+  nchild <- length(child)
+  
+  y <- getME(m, "y")
+  X <- getME(m, "X")
+  beta <- getME(m, "beta")
+  Z <- getME(m, "Z")
+  u <- getME(m, "b")
+  q <- getME(m, "q")
+  
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == "Residual"] * diag(n)
+  G1 <- vc$vcov[vc$grp == "childid"] * diag(nchild)
+  G2 <- vc$vcov[vc$grp == "childid.1"] * diag(nchild)
+  G <- Matrix::bdiag(G1, G2)
+  
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+  
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv 
+  
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  R_half <- expm::sqrtm(R)
+
+  auxqn <- eigen((R_half %*% P %*% R_half), symmetric = T, only.values = FALSE)
+
+  p <- length(beta)
+
+  lt <- sqrt(solve(diag((auxqn$values[1:(n-p)])))) %*% t(auxqn$vectors[1:n,1:(n-p)]) %*% solve(expm::sqrtm(R[1:n,1:n]))
+
+  var.resmcp <- lt %*% varCondRes[1:n,1:n] %*% t(lt)
+
+  resmcp <- (lt %*% resc[1:n] )/sqrt(diag(var.resmcp))
+  
+  .n = i
+
+  tibble::tibble(.n, resmcp)
+})
+```
+
+### Outlying observations
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v31n.fitted, pos = 15) %>%
+  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v31n.fitted, pos = 15) %>%
+  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+- Outlying observations can be detected on both conditional and marginal residuals
+
+### Normality checking
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v31n.fitted, pos = 11) %>% 
+  ggplot(aes(sample = resc_std)) + geom_qq() +
+  geom_qq_line(color = "red") +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+- The data plot can be identified immediately.
+
+```{r}
+lineup(true = a.v3.lcr, samples = autism.v31n.lcr, pos = 11) %>% 
+  ggplot(aes(sample = resmcp)) + geom_qq() +
+  geom_qq_line(color = "red") +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+- The least confounded residual for the data plot can be detected as well as the outlier on the lower bottom.
+
+## 2nd replication
+
+```{r}
+autism.v32.sim <- autism.sim(a.v3.mod, autism.repc3, seed = 7620)
+```
+
+```{r v32n.fitted}
+autism.v32n.fitted <- purrr::map_dfr(1:19, function(i){
+  df <- autism.v32.sim %>% filter(.n == i)
+  m <- lmer(y ~ age2 + sicdegp + race + bestest2 + (age2 - 1|childid) + (I(age2^2) - 1 | childid), data = df)
+  
+  n <- getME(m, "n")
+  child <- unique(df$childid)
+  nchild <- length(child)
+  
+  y <- getME(m, "y")
+  X <- getME(m, "X")
+  beta <- getME(m, "beta")
+  Z <- getME(m, "Z")
+  u <- getME(m, "b")
+  q <- getME(m, "q")
+  
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == "Residual"] * diag(n)
+  G1 <- vc$vcov[vc$grp == "childid"] * diag(nchild)
+  G2 <- vc$vcov[vc$grp == "childid.1"] * diag(nchild)
+  G <- Matrix::bdiag(G1, G2)
+  
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+  
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv 
+  
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
+```{r v32n.lcr}
+autism.v32n.lcr <- purrr::map_dfr(1:19, function(i){
+  df <- autism.v32.sim %>% filter(.n == i)
+  m <- lmer(y ~ age2 + sicdegp + race + bestest2 + (age2 - 1|childid) + (I(age2^2) - 1 | childid), data = df)
+  
+  n <- getME(m, "n")
+  child <- unique(df$childid)
+  nchild <- length(child)
+  
+  y <- getME(m, "y")
+  X <- getME(m, "X")
+  beta <- getME(m, "beta")
+  Z <- getME(m, "Z")
+  u <- getME(m, "b")
+  q <- getME(m, "q")
+  
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == "Residual"] * diag(n)
+  G1 <- vc$vcov[vc$grp == "childid"] * diag(nchild)
+  G2 <- vc$vcov[vc$grp == "childid.1"] * diag(nchild)
+  G <- Matrix::bdiag(G1, G2)
+  
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+  
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv 
+  
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  R_half <- expm::sqrtm(R)
+
+  auxqn <- eigen((R_half %*% P %*% R_half), symmetric = T, only.values = FALSE)
+
+  p <- length(beta)
+
+  lt <- sqrt(solve(diag((auxqn$values[1:(n-p)])))) %*% t(auxqn$vectors[1:n,1:(n-p)]) %*% solve(expm::sqrtm(R[1:n,1:n]))
+
+  var.resmcp <- lt %*% varCondRes[1:n,1:n] %*% t(lt)
+
+  resmcp <- (lt %*% resc[1:n] )/sqrt(diag(var.resmcp))
+  
+  .n = i
+
+  tibble::tibble(.n, resmcp)
+})
+```
+
+### Outlying observations
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v32n.fitted, pos = 15) %>%
+  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v32n.fitted, pos = 15) %>%
+  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+### Normality checking
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v32n.fitted, pos = 11) %>% 
+  ggplot(aes(sample = resc_std)) + geom_qq() +
+  geom_qq_line(color = "red") +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+```{r}
+lineup(true = a.v3.lcr, samples = autism.v32n.lcr, pos = 11) %>% 
+  ggplot(aes(sample = resmcp)) + geom_qq() +
+  geom_qq_line(color = "red") +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+## 3rd replication
+
+```{r}
+autism.v33.sim <- autism.sim(a.v3.mod, autism.repc3, seed = 4739)
+```
+
+```{r v33n.fitted}
+autism.v33n.fitted <- purrr::map_dfr(1:19, function(i){
+  df <- autism.v33.sim %>% filter(.n == i)
+  m <- lmer(y ~ age2 + sicdegp + race + bestest2 + (age2 - 1|childid) + (I(age2^2) - 1 | childid), data = df)
+  
+  n <- getME(m, "n")
+  child <- unique(df$childid)
+  nchild <- length(child)
+  
+  y <- getME(m, "y")
+  X <- getME(m, "X")
+  beta <- getME(m, "beta")
+  Z <- getME(m, "Z")
+  u <- getME(m, "b")
+  q <- getME(m, "q")
+  
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == "Residual"] * diag(n)
+  G1 <- vc$vcov[vc$grp == "childid"] * diag(nchild)
+  G2 <- vc$vcov[vc$grp == "childid.1"] * diag(nchild)
+  G <- Matrix::bdiag(G1, G2)
+  
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+  
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv 
+  
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
+```{r v33n.lcr}
+autism.v33n.lcr <- purrr::map_dfr(1:19, function(i){
+  df <- autism.v33.sim %>% filter(.n == i)
+  m <- lmer(y ~ age2 + sicdegp + race + bestest2 + (age2 - 1|childid) + (I(age2^2) - 1 | childid), data = df)
+  
+  n <- getME(m, "n")
+  child <- unique(df$childid)
+  nchild <- length(child)
+  
+  y <- getME(m, "y")
+  X <- getME(m, "X")
+  beta <- getME(m, "beta")
+  Z <- getME(m, "Z")
+  u <- getME(m, "b")
+  q <- getME(m, "q")
+  
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == "Residual"] * diag(n)
+  G1 <- vc$vcov[vc$grp == "childid"] * diag(nchild)
+  G2 <- vc$vcov[vc$grp == "childid.1"] * diag(nchild)
+  G <- Matrix::bdiag(G1, G2)
+  
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+  
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv 
+  
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  R_half <- expm::sqrtm(R)
+
+  auxqn <- eigen((R_half %*% P %*% R_half), symmetric = T, only.values = FALSE)
+
+  p <- length(beta)
+
+  lt <- sqrt(solve(diag((auxqn$values[1:(n-p)])))) %*% t(auxqn$vectors[1:n,1:(n-p)]) %*% solve(expm::sqrtm(R[1:n,1:n]))
+
+  var.resmcp <- lt %*% varCondRes[1:n,1:n] %*% t(lt)
+
+  resmcp <- (lt %*% resc[1:n] )/sqrt(diag(var.resmcp))
+  
+  .n = i
+
+  tibble::tibble(.n, resmcp)
+})
+```
+
+### Outlying observations
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v33n.fitted, pos = 2) %>%
+  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v33n.fitted, pos = 2) %>%
+  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+### Normality checking
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v33n.fitted, pos = 6) %>% 
+  ggplot(aes(sample = resc_std)) + geom_qq() +
+  geom_qq_line(color = "red") +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+```{r}
+lineup(true = a.v3.lcr, samples = autism.v33n.lcr, pos = 6) %>% 
+  ggplot(aes(sample = resmcp)) + geom_qq() +
+  geom_qq_line(color = "red") +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+## 4th replication
+
+```{r}
+autism.v34.sim <- autism.sim(a.v3.mod, autism.repc3, seed = 8502)
+```
+
+```{r v34n.fitted}
+autism.v34n.fitted <- purrr::map_dfr(1:19, function(i){
+  df <- autism.v34.sim %>% filter(.n == i)
+  m <- lmer(y ~ age2 + sicdegp + race + bestest2 + (age2 - 1|childid) + (I(age2^2) - 1 | childid), data = df)
+  
+  n <- getME(m, "n")
+  child <- unique(df$childid)
+  nchild <- length(child)
+  
+  y <- getME(m, "y")
+  X <- getME(m, "X")
+  beta <- getME(m, "beta")
+  Z <- getME(m, "Z")
+  u <- getME(m, "b")
+  q <- getME(m, "q")
+  
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == "Residual"] * diag(n)
+  G1 <- vc$vcov[vc$grp == "childid"] * diag(nchild)
+  G2 <- vc$vcov[vc$grp == "childid.1"] * diag(nchild)
+  G <- Matrix::bdiag(G1, G2)
+  
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+  
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv 
+  
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  tibble::tibble(df, fitted, resm_std, resc_std, index)
+})
+```
+
+```{r v34n.lcr}
+autism.v34n.lcr <- purrr::map_dfr(1:19, function(i){
+  df <- autism.v34.sim %>% filter(.n == i)
+  m <- lmer(y ~ age2 + sicdegp + race + bestest2 + (age2 - 1|childid) + (I(age2^2) - 1 | childid), data = df)
+  
+  n <- getME(m, "n")
+  child <- unique(df$childid)
+  nchild <- length(child)
+  
+  y <- getME(m, "y")
+  X <- getME(m, "X")
+  beta <- getME(m, "beta")
+  Z <- getME(m, "Z")
+  u <- getME(m, "b")
+  q <- getME(m, "q")
+  
+  vc <- as.data.frame(VarCorr(m))
+  R <- vc$vcov[vc$grp == "Residual"] * diag(n)
+  G1 <- vc$vcov[vc$grp == "childid"] * diag(nchild)
+  G2 <- vc$vcov[vc$grp == "childid.1"] * diag(nchild)
+  G <- Matrix::bdiag(G1, G2)
+  
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+  
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv 
+  
+  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fitted = as.vector(X %*% beta)
+  resm = y - fitted
+  resc = y - fitted - as.vector(Z %*% u)
+  index = 1:nrow(df)
+  resm_std = resm / sqrt(diag(varMargRes)[index])
+  resc_std = resc / sqrt(diag(varCondRes)[index])
+  
+  R_half <- expm::sqrtm(R)
+
+  auxqn <- eigen((R_half %*% P %*% R_half), symmetric = T, only.values = FALSE)
+
+  p <- length(beta)
+
+  lt <- sqrt(solve(diag((auxqn$values[1:(n-p)])))) %*% t(auxqn$vectors[1:n,1:(n-p)]) %*% solve(expm::sqrtm(R[1:n,1:n]))
+
+  var.resmcp <- lt %*% varCondRes[1:n,1:n] %*% t(lt)
+
+  resmcp <- (lt %*% resc[1:n] )/sqrt(diag(var.resmcp))
+  
+  .n = i
+
+  tibble::tibble(.n, resmcp)
+})
+```
+
+### Outlying observations
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v34n.fitted, pos = 2) %>%
+  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v34n.fitted, pos = 2) %>%
+  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+### Normality checking
+
+```{r}
+lineup(true = a.v3.fitted, samples = autism.v34n.fitted, pos = 6) %>% 
+  ggplot(aes(sample = resc_std)) + geom_qq() +
+  geom_qq_line(color = "red") +
+  facet_wrap(~.sample, ncol = 5)
+```
+
+```{r}
+lineup(true = a.v3.lcr, samples = autism.v34n.lcr, pos = 6) %>% 
+  ggplot(aes(sample = resmcp)) + geom_qq() +
+  geom_qq_line(color = "red") +
+  facet_wrap(~.sample, ncol = 5)
+```
 
 
 
