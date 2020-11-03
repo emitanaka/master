@@ -14,6 +14,7 @@ library(ggbeeswarm)
 library(colorspace)
 library(dplyr)
 library(nullabor)
+library(mvtnorm)
 knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE#,
@@ -384,7 +385,7 @@ ggplot(lin.unit, aes(sample = Mi)) +
                dparams = list(df = q))
 ```
 
-## Version 1 - "best" model
+## *Version 1 - "best" model
 
 ```{r v1data}
 set.seed(1234)
@@ -449,7 +450,7 @@ ggplot(v1.lin.lcr, aes(sample = reslc_lin)) + geom_qq() + geom_qq_line(color = "
 ### 1st replication
 
 ```{r v11-sim}
-v11.sim <- lin.sim(fit, df, seed = 1234)
+v11.sim <- lin.sim(v1.lin.mod, v1.lin, seed = 1234)
 ```
 
 ```{r fittednull-v11}
@@ -556,86 +557,24 @@ v11.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
 
   reslc_lin <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
-
-  tibble::tibble(df[1:(N-p),], reslc_lin)
-})
-```
-
-```{r nullunit-v11}
-v11.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
-  df <- v11.sim %>% filter(.n == i)
-  m <- lmer(y ~ 1 +attitude + gender + 
-              (1|subject) + (1|scenario),
-            data = df)
   
-  N <- nrow(df)
-  subjects <- unique(df$subject)
-  nsubject <- length(subjects)
-  scenarios <- unique(df$scenario)
-  nscenario <- length(scenarios)
+  .n = i
 
-  y <- df$y
-  X <- model.matrix(~attitude + gender, data = df)
-  beta <- fixef(m)
-  Z1 <- model.matrix(~scenario - 1, data = df)
-  Z2 <- model.matrix(~subject - 1, data = df)
-  Z <- cbind(Z1, Z2)
-  u <- c(ranef(m)$scenario[,1], ranef(m)$subject[,1])
-  q <- length(u)
-
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-  G1 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
-  G2 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
-  G <- Matrix::bdiag(G1, G2)
-
-  Sigma <- Z %*% G %*% t(Z) + R 
-  Sigma_inv <- solve(Sigma)
-
-  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
-
-  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
-  varCondRes <- R %*% P %*% R  
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - as.vector(Z %*% u)
-  index = 1:nrow(df)
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  expand_grid(subjects, scenarios) %>% 
-    dplyr::mutate(Vi = map2_dbl(subjects, scenarios, ~{
-                        ind <- df %>% 
-                          dplyr::mutate(index = 1:n()) %>% 
-                          filter(subject==.x,
-                                 scenario==.y) %>% 
-                          pull(index)
-                        mi <- length(ind)
-                        # standardised marginal residual
-                        Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
-                        v1 <- (diag(mi)- Ei %*% t(Ei))
-                        sqrt(sum(diag(v1 %*% t(v1)))) / mi
-                      }),
-         Mi = as.vector(t(u) %*% solve(varU) %*% u),
-         index = 1:n(),
-         .n = i
-         )
+  tibble::tibble(.n, reslc_lin)
 })
 ```
 
 #### Lineups
 
 ```{r v11n-plot}
-lineup(true = lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>% 
+lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(interaction(attitude, gender), resm_std)) +
   geom_boxplot() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r v11n-plot21}
-lineup(true = lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>% 
+lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
@@ -643,24 +582,16 @@ lineup(true = lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v11n-plot22}
-lineup(true = lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>% 
+lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resm_std, color = scenario)) +
   geom_point() +
   geom_hline(yintercept = 0) +
   facet_wrap(~.sample, ncol = 5)
 ```
 
-```{r v11n-plot3}
-lineup(true = lin.unit, samples = v11.lin.sim.unit, pos = 9) %>% 
-  ggplot(aes(index, Vi)) +
-  geom_point() +
-  #geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
 
 ```{r v11n-plot4}
-lineup(true = lin.fitted, samples = v11.lin.sim.fitted, pos = 7) %>% 
+lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -672,7 +603,7 @@ lineup(true = lin.fitted, samples = v11.lin.sim.fitted, pos = 7) %>%
 ```
 
 ```{r v11n-plot5}
-lineup(true = lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>% 
+lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(fitted, resc_std)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -680,7 +611,7 @@ lineup(true = lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v11n-plot6}
-lineup(true = lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>% 
+lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -691,7 +622,7 @@ lineup(true = lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r}
-lineup(true = lin.lcr, samples = v11.lin.sim.lcr, pos = 9) %>% 
+lineup(true = v1.lin.lcr, samples = v11.lin.sim.lcr, pos = 9) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -705,7 +636,7 @@ lineup(true = lin.lcr, samples = v11.lin.sim.lcr, pos = 9) %>%
 ### 2nd replication
 
 ```{r v12-sim}
-v12.sim <- lin.sim(fit, df, seed = 2345)
+v12.sim <- lin.sim(v1.lin.mod, v1.lin, seed = 2492)
 ```
 
 ```{r fittednull-v12}
@@ -812,111 +743,33 @@ v12.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
 
   reslc_lin <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
-
-  tibble::tibble(df[1:(N-p),], reslc_lin)
-})
-```
-
-```{r nullunit-v12}
-v12.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
-  df <- v12.sim %>% filter(.n == i)
-  m <- lmer(y ~ 1 +attitude + gender + 
-              (1|subject) + (1|scenario),
-            data = df)
   
-  N <- nrow(df)
-  subjects <- unique(df$subject)
-  nsubject <- length(subjects)
-  scenarios <- unique(df$scenario)
-  nscenario <- length(scenarios)
+  .n = i
 
-  y <- df$y
-  X <- model.matrix(~attitude + gender, data = df)
-  beta <- fixef(m)
-  Z1 <- model.matrix(~scenario - 1, data = df)
-  Z2 <- model.matrix(~subject - 1, data = df)
-  Z <- cbind(Z1, Z2)
-  u <- c(ranef(m)$scenario[,1], ranef(m)$subject[,1])
-  q <- length(u)
-
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-  G1 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
-  G2 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
-  G <- Matrix::bdiag(G1, G2)
-
-  Sigma <- Z %*% G %*% t(Z) + R 
-  Sigma_inv <- solve(Sigma)
-
-  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
-
-  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
-  varCondRes <- R %*% P %*% R  
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - as.vector(Z %*% u)
-  index = 1:nrow(df)
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  expand_grid(subjects, scenarios) %>% 
-    dplyr::mutate(Vi = map2_dbl(subjects, scenarios, ~{
-                        ind <- df %>% 
-                          dplyr::mutate(index = 1:n()) %>% 
-                          filter(subject==.x,
-                                 scenario==.y) %>% 
-                          pull(index)
-                        mi <- length(ind)
-                        # standardised marginal residual
-                        Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
-                        v1 <- (diag(mi)- Ei %*% t(Ei))
-                        sqrt(sum(diag(v1 %*% t(v1)))) / mi
-                      }),
-         Mi = as.vector(t(u) %*% solve(varU) %*% u),
-         index = 1:n(),
-         .n = i
-         )
+  tibble::tibble(.n, reslc_lin)
 })
 ```
 
 #### Lineups
 
 ```{r v12n-plot1}
-lineup(true = lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>% 
-  ggplot(aes(fitted, resm_std)) +
-  geom_point() +
+lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>% 
+  ggplot(aes(interaction(attitude, gender), resm_std)) +
+  geom_boxplot() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r v12n-plot2}
-lineup(true = lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>% 
+lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
   facet_wrap(~.sample, ncol = 5)
 ```
 
-```{r v12n-plot22}
-lineup(true = lin.fitted, samples = v12.lin.sim.fitted, pos = 9) %>% 
-  ggplot(aes(index, resm_std, color = scenario)) +
-  geom_point() +
-  geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
-```{r v12n-plot3}
-lineup(true = lin.unit, samples = v12.lin.sim.unit, pos = 9) %>% 
-  ggplot(aes(index, Vi)) +
-  geom_point() +
-  #geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
 
 ```{r v12n-plot4}
-lineup(true = lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>% 
+lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -928,7 +781,7 @@ lineup(true = lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>%
 ```
 
 ```{r v12n-plot5}
-lineup(true = lin.fitted, samples = v12.lin.sim.fitted, pos = 9) %>% 
+lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(fitted, resc_std)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -936,7 +789,7 @@ lineup(true = lin.fitted, samples = v12.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v12n-plot6}
-lineup(true = lin.fitted, samples = v12.lin.sim.fitted, pos = 9) %>% 
+lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -947,7 +800,7 @@ lineup(true = lin.fitted, samples = v12.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v12n-plot-lcr}
-lineup(true = lin.lcr, samples = v12.lin.sim.lcr, pos = 9) %>% 
+lineup(true = v1.lin.lcr, samples = v12.lin.sim.lcr, pos = 9) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -957,12 +810,10 @@ lineup(true = lin.lcr, samples = v12.lin.sim.lcr, pos = 9) %>%
         legend.position="none")
 ```
 
-- Comparing with the conditional residual with the least confounded residual, the observed data plot for the conditional residual is easier to be detected. However, the observed data plot is hard to be distinguished among the the linup for least confounded residual.
-
 ### 3st replication
 
 ```{r v13-sim}
-v13.sim <- lin.sim(fit, df, seed = 9876)
+v13.sim <- lin.sim(v1.lin.mod, v1.lin, seed = 9876)
 ```
 
 ```{r fittednull-v13}
@@ -1069,111 +920,33 @@ v13.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
 
   reslc_lin <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
-
-  tibble::tibble(df[1:(N-p),], reslc_lin)
-})
-```
-
-```{r nullunit-v13}
-v13.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
-  df <- v13.sim %>% filter(.n == i)
-  m <- lmer(y ~ 1 +attitude + gender + 
-              (1|subject) + (1|scenario),
-            data = df)
   
-  N <- nrow(df)
-  subjects <- unique(df$subject)
-  nsubject <- length(subjects)
-  scenarios <- unique(df$scenario)
-  nscenario <- length(scenarios)
+  .n = i
 
-  y <- df$y
-  X <- model.matrix(~attitude + gender, data = df)
-  beta <- fixef(m)
-  Z1 <- model.matrix(~scenario - 1, data = df)
-  Z2 <- model.matrix(~subject - 1, data = df)
-  Z <- cbind(Z1, Z2)
-  u <- c(ranef(m)$scenario[,1], ranef(m)$subject[,1])
-  q <- length(u)
-
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-  G1 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
-  G2 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
-  G <- Matrix::bdiag(G1, G2)
-
-  Sigma <- Z %*% G %*% t(Z) + R 
-  Sigma_inv <- solve(Sigma)
-
-  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
-
-  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
-  varCondRes <- R %*% P %*% R  
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - as.vector(Z %*% u)
-  index = 1:nrow(df)
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  expand_grid(subjects, scenarios) %>% 
-    dplyr::mutate(Vi = map2_dbl(subjects, scenarios, ~{
-                        ind <- df %>% 
-                          dplyr::mutate(index = 1:n()) %>% 
-                          filter(subject==.x,
-                                 scenario==.y) %>% 
-                          pull(index)
-                        mi <- length(ind)
-                        # standardised marginal residual
-                        Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
-                        v1 <- (diag(mi)- Ei %*% t(Ei))
-                        sqrt(sum(diag(v1 %*% t(v1)))) / mi
-                      }),
-         Mi = as.vector(t(u) %*% solve(varU) %*% u),
-         index = 1:n(),
-         .n = i
-         )
+  tibble::tibble(.n, reslc_lin)
 })
 ```
 
 #### Lineups
 
 ```{r v13n-plot1}
-lineup(true = lin.fitted, samples = v13.lin.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) +
-  geom_point() +
+lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 9) %>% 
+  ggplot(aes(interaction(attitude, gender), resm_std)) +
+  geom_boxplot() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r v13n-plot21}
-lineup(true = lin.fitted, samples = v13.lin.sim.fitted, pos = 13) %>% 
+lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
   facet_wrap(~.sample, ncol = 5)
 ```
 
-```{r v13n-plot22}
-lineup(true = lin.fitted, samples = v13.lin.sim.fitted, pos = 13) %>% 
-  ggplot(aes(index, resm_std, color = scenario)) +
-  geom_point() +
-  geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
-```{r v13n-plot3}
-lineup(true = lin.unit, samples = v13.lin.sim.unit, pos = 8) %>% 
-  ggplot(aes(index, Vi)) +
-  geom_point() +
-  #geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
 
 ```{r v13n-plot4}
-lineup(true = lin.fitted, samples = v13.lin.sim.fitted, pos = 13) %>% 
+lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -1185,7 +958,7 @@ lineup(true = lin.fitted, samples = v13.lin.sim.fitted, pos = 13) %>%
 ```
 
 ```{r v13n-plot5}
-lineup(true = lin.fitted, samples = v13.lin.sim.fitted, pos = 9) %>% 
+lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(fitted, resc_std)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -1193,7 +966,7 @@ lineup(true = lin.fitted, samples = v13.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v13n-plot6}
-lineup(true = lin.fitted, samples = v13.lin.sim.fitted, pos = 4) %>% 
+lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 4) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -1204,7 +977,7 @@ lineup(true = lin.fitted, samples = v13.lin.sim.fitted, pos = 4) %>%
 ```
 
 ```{r v13n-plot-lcr}
-lineup(true = lin.lcr, samples = v13.lin.sim.lcr, pos = 4) %>% 
+lineup(true = v1.lin.lcr, samples = v13.lin.sim.lcr, pos = 4) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -1217,7 +990,7 @@ lineup(true = lin.lcr, samples = v13.lin.sim.lcr, pos = 4) %>%
 ### 4th replication
 
 ```{r v14-sim}
-v14.sim <- lin.sim(fit, df, seed = 6839)
+v14.sim <- lin.sim(v1.lin.mod, v1.lin, seed = 6839)
 ```
 
 ```{r fittednull-v14}
@@ -1324,111 +1097,32 @@ v14.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
 
   reslc_lin <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
-
-  tibble::tibble(df[1:(N-p),], reslc_lin)
-})
-```
-
-```{r nullunit-v14}
-v14.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
-  df <- v14.sim %>% filter(.n == i)
-  m <- lmer(y ~ 1 +attitude + gender + 
-              (1|subject) + (1|scenario),
-            data = df)
   
-  N <- nrow(df)
-  subjects <- unique(df$subject)
-  nsubject <- length(subjects)
-  scenarios <- unique(df$scenario)
-  nscenario <- length(scenarios)
+  .n = i
 
-  y <- df$y
-  X <- model.matrix(~attitude + gender, data = df)
-  beta <- fixef(m)
-  Z1 <- model.matrix(~scenario - 1, data = df)
-  Z2 <- model.matrix(~subject - 1, data = df)
-  Z <- cbind(Z1, Z2)
-  u <- c(ranef(m)$scenario[,1], ranef(m)$subject[,1])
-  q <- length(u)
-
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-  G1 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
-  G2 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
-  G <- Matrix::bdiag(G1, G2)
-
-  Sigma <- Z %*% G %*% t(Z) + R 
-  Sigma_inv <- solve(Sigma)
-
-  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
-
-  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
-  varCondRes <- R %*% P %*% R  
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - as.vector(Z %*% u)
-  index = 1:nrow(df)
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  expand_grid(subjects, scenarios) %>% 
-    dplyr::mutate(Vi = map2_dbl(subjects, scenarios, ~{
-                        ind <- df %>% 
-                          dplyr::mutate(index = 1:n()) %>% 
-                          filter(subject==.x,
-                                 scenario==.y) %>% 
-                          pull(index)
-                        mi <- length(ind)
-                        # standardised marginal residual
-                        Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
-                        v1 <- (diag(mi)- Ei %*% t(Ei))
-                        sqrt(sum(diag(v1 %*% t(v1)))) / mi
-                      }),
-         Mi = as.vector(t(u) %*% solve(varU) %*% u),
-         index = 1:n(),
-         .n = i
-         )
+  tibble::tibble(.n, reslc_lin)
 })
 ```
 
 #### Lineups
 
 ```{r v14n-plot1}
-lineup(true = lin.fitted, samples = v14.lin.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) +
-  geom_point() +
+lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 9) %>% 
+  ggplot(aes(interaction(attitude, gender), resm_std)) +
+  geom_boxplot() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ```{r v14n-plot21}
-lineup(true = lin.fitted, samples = v14.lin.sim.fitted, pos = 13) %>% 
+lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
   facet_wrap(~.sample, ncol = 5)
 ```
 
-```{r v14n-plot22}
-lineup(true = lin.fitted, samples = v14.lin.sim.fitted, pos = 13) %>% 
-  ggplot(aes(index, resm_std, color = scenario)) +
-  geom_point() +
-  geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
-```{r v14n-plot3}
-lineup(true = lin.unit, samples = v14.lin.sim.unit, pos = 8) %>% 
-  ggplot(aes(index, Vi)) +
-  geom_point() +
-  #geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
-
 ```{r v14n-plot4}
-lineup(true = lin.fitted, samples = v14.lin.sim.fitted, pos = 13) %>% 
+lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -1439,8 +1133,10 @@ lineup(true = lin.fitted, samples = v14.lin.sim.fitted, pos = 13) %>%
         legend.position="none")
 ```
 
+- the conditional residual plot is less able to be identified than the marginal residiual
+
 ```{r v14n-plot5}
-lineup(true = lin.fitted, samples = v14.lin.sim.fitted, pos = 9) %>% 
+lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(fitted, resc_std)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -1448,7 +1144,7 @@ lineup(true = lin.fitted, samples = v14.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v14n-plot6}
-lineup(true = lin.fitted, samples = v14.lin.sim.fitted, pos = 4) %>% 
+lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 4) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -1459,7 +1155,7 @@ lineup(true = lin.fitted, samples = v14.lin.sim.fitted, pos = 4) %>%
 ```
 
 ```{r v14n-plot-lcr}
-lineup(true = lin.lcr, samples = v14.lin.sim.lcr, pos = 4) %>% 
+lineup(true = v1.lin.lcr, samples = v14.lin.sim.lcr, pos = 4) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -1469,75 +1165,49 @@ lineup(true = lin.lcr, samples = v14.lin.sim.lcr, pos = 4) %>%
         legend.position="none")
 ```
 
-## Version 2
+- Overall, it maybe the case that the least confounded residual is easier to be identified compared to standardised conditional residual based on version 1.
 
-I randomly alter 4 reaction time value for each table corresponding to the gender and attitude (female with polite attitude, female with informal attitude, male with polite attitude, male with informal attitude) by adding 20% of the  mean value of the reaction time with respective to each table.
+## *Version 2
 
-```{r}
-set.seed(194253)
-samp1 <- sample(21, 4)
-f_pol <- round(as.numeric(df %>% filter(gender == "F", attitude == "pol") %>% summarise(mean(y)))*0.20,1)
-repc.f.pol <- df %>% filter(gender == "F", attitude == "pol")
-repc.f.pol[c(samp1),]$y <- repc.f.pol[c(samp1),]$y+f_pol
-```
+I added the student t distribution to the error term.
 
 ```{r}
-set.seed(107623)
-samp2 <- sample(21, 4)
-m_pol <- round(as.numeric(df %>% filter(gender == "M", attitude == "pol") %>% summarise(mean(y)))*0.20,1)
-repc.m.pol <- df %>% filter(gender == "M", attitude == "pol")
-repc.m.pol[c(samp2),]$y <- repc.m.pol[c(samp2),]$y+m_pol
+set.seed(1234)
+# multivariate t error term
+e <- as.vector(rmvt(1, sigma = R, df = 1))
+y <- as.vector(getME(fit, "X") %*% fixef(fit) + getME(fit, "Z") %*% b + e)
+v2.lin <- tibble(df[,-5], y)
 ```
 
-```{r}
-set.seed(274302)
-samp3 <- sample(21, 4)
-m_inf <- round(as.numeric(df %>% filter(gender == "M", attitude == "inf") %>% summarise(mean(y)))*0.20,1)
-repc.m.inf <- df %>% filter(gender == "M", attitude == "inf")
-repc.m.inf[c(samp3),]$y <- repc.m.inf[c(samp3),]$y+m_inf
-```
-
-```{r}
-set.seed(981234)
-samp4 <- sample(21, 4)
-f_inf <- round(as.numeric(df %>% filter(gender == "F", attitude == "inf") %>% summarise(mean(y)))*0.20,1)
-repc.f.inf <- df %>% filter(gender == "F", attitude == "inf")
-repc.f.inf[c(samp4),]$y <- repc.f.inf[c(samp4),]$y+f_inf
-```
-
-```{r}
-repc2 <- rbind(repc.f.inf, repc.f.pol, repc.m.inf, repc.m.pol)
-repc2 <- repc2[order(repc2$subject),]
-```
-
-```{r v2.mod}
-v2.mod <- lmer(y ~ attitude + gender + 
+```{r v2mod}
+v2.lin.mod <- lmer(y ~ attitude + gender + 
               (1|subject) + (1|scenario),
-            data = repc2)
+            data = v2.lin)
 ```
 
-```{r}
-v2.fitted <- lin.extract.fitted.mod(v2.mod, repc2)
-v2.unit <- lin.extract.unit.mod(v2.mod, repc2)
-v2.lcr <- lin.extract.lcr.mod(v2.mod, repc2)
+```{r v2-extract}
+v2.lin.fitted <- lin.extract.fitted.mod(v2.lin.mod, v2.lin)
+v2.lin.lcr <- lin.extract.lcr.mod(v2.lin.mod, v2.lin)
 ```
 
-### Observed plot
+# Data plots
 
-```{r}
-ggplot(v2.fitted, aes(index, resm_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
-ggplot(v2.fitted, aes(index, resc_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
-ggplot(v2.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
-ggplot(v2.lcr, aes(sample = reslc_lin)) + geom_qq() + geom_qq_line(color = "red")
+```{r v2-plots}
+ggplot(v2.lin.fitted, aes(index, resm_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(v2.lin.fitted, aes(index, resc_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(v2.lin.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+ggplot(v2.lin.lcr, aes(sample = reslc_lin)) + geom_qq() + geom_qq_line(color = "red")
 ```
 
-- we may see that there are more points above the horizontal line. It may tends to be more outliers.
-- The conditional residual seems that does not follow a normal distribution.
+- There are more outlying observations presented in F3 subject compared with version 1
+- The subject M4 and M3 are not well fitted under the conditional residuals
+- Both conditional residual and conditional residual are not normally distributed.
 
 
 ### 1st replication
+
 ```{r v21-sim}
-v21.sim <- lin.sim(v2.mod, repc2, seed = 1234)
+v21.sim <- lin.sim(v2.lin.mod, v2.lin, seed = 1234)
 ```
 
 ```{r fittednull-v21}
@@ -1589,7 +1259,7 @@ v21.lin.sim.fitted <- purrr::map_dfr(1:19, function(i){
 })
 ```
 
-```{r lcrsimnull-v11}
+```{r lcrsimnull-v21}
 v21.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   df <- v21.sim %>% filter(.n == i)
   m <- lmer(y ~ attitude + gender + 
@@ -1644,111 +1314,35 @@ v21.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
 
   reslc_lin <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
-
-  tibble::tibble(df[1:(N-p),], reslc_lin)
-})
-```
-
-```{r nullunit-v11}
-v21.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
-  df <- v21.sim %>% filter(.n == i)
-  m <- lmer(y ~ attitude + gender + 
-              (1|subject) + (1|scenario),
-            data = df)
   
-  N <- nrow(df)
-  subjects <- unique(df$subject)
-  nsubject <- length(subjects)
-  scenarios <- unique(df$scenario)
-  nscenario <- length(scenarios)
+  .n = i
 
-  y <- df$y
-  X <- model.matrix(~attitude + gender, data = df)
-  beta <- fixef(m)
-  Z1 <- model.matrix(~scenario - 1, data = df)
-  Z2 <- model.matrix(~subject - 1, data = df)
-  Z <- cbind(Z1, Z2)
-  u <- c(ranef(m)$scenario[,1], ranef(m)$subject[,1])
-  q <- length(u)
-
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-  G1 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
-  G2 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
-  G <- Matrix::bdiag(G1, G2)
-
-  Sigma <- Z %*% G %*% t(Z) + R 
-  Sigma_inv <- solve(Sigma)
-
-  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
-
-  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
-  varCondRes <- R %*% P %*% R  
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - as.vector(Z %*% u)
-  index = 1:nrow(df)
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  expand_grid(subjects, scenarios) %>% 
-    dplyr::mutate(Vi = map2_dbl(subjects, scenarios, ~{
-                        ind <- df %>% 
-                          dplyr::mutate(index = 1:n()) %>% 
-                          filter(subject==.x,
-                                 scenario==.y) %>% 
-                          pull(index)
-                        mi <- length(ind)
-                        # standardised marginal residual
-                        Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
-                        v1 <- (diag(mi)- Ei %*% t(Ei))
-                        sqrt(sum(diag(v1 %*% t(v1)))) / mi
-                      }),
-         Mi = as.vector(t(u) %*% solve(varU) %*% u),
-         index = 1:n(),
-         .n = i
-         )
+  tibble::tibble(.n, reslc_lin)
 })
 ```
 
 #### Lineups
 
 ```{r v21n-plot}
-lineup(true = lin.fitted, samples = v21.lin.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) +
-  geom_point() +
+lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 9) %>% 
+  ggplot(aes(interaction(attitude, gender), resm_std)) +
+  geom_boxplot() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
+##### Outlying observations
+
 ```{r v21n-plot21}
-lineup(true = lin.fitted, samples = v21.lin.sim.fitted, pos = 5) %>% 
+lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
   facet_wrap(~.sample, ncol = 5)
 ```
 
-```{r v21n-plot22}
-lineup(true = lin.fitted, samples = v21.lin.sim.fitted, pos = 5) %>% 
-  ggplot(aes(index, resm_std, color = scenario)) +
-  geom_point() +
-  geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
-```{r v21n-plot3}
-lineup(true = lin.unit, samples = v21.lin.sim.unit, pos = 9) %>% 
-  ggplot(aes(index, Vi)) +
-  geom_point() +
-  #geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
 
 ```{r v21n-plot4}
-lineup(true = lin.fitted, samples = v21.lin.sim.fitted, pos = 5) %>% 
+lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -1759,18 +1353,10 @@ lineup(true = lin.fitted, samples = v21.lin.sim.fitted, pos = 5) %>%
         legend.position="none")
 ```
 
-```{r v21n-plot5}
-lineup(true = lin.fitted, samples = v21.lin.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resc_std)) + 
-  geom_point() + 
-  geom_hline(yintercept = 0) +
-  facet_wrap( ~ .sample, ncol=5)
-```
-
 ##### Checking normality
 
 ```{r v21n-plot6}
-lineup(true = lin.fitted, samples = v21.lin.sim.fitted, pos = 8) %>% 
+lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -1781,7 +1367,7 @@ lineup(true = lin.fitted, samples = v21.lin.sim.fitted, pos = 8) %>%
 ```
 
 ```{r v21n-plot6-lcr}
-lineup(true = lin.lcr, samples = v21.lin.sim.lcr, pos = 14) %>% 
+lineup(true = v2.lin.lcr, samples = v21.lin.sim.lcr, pos = 8) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -1793,7 +1379,7 @@ lineup(true = lin.lcr, samples = v21.lin.sim.lcr, pos = 14) %>%
 
 ### 2nd replication
 ```{r v22-sim}
-v22.sim <- lin.sim(v2.mod, repc2, seed = 2632)
+v22.sim <- lin.sim(v2.lin.mod, v2.lin, seed = 2632)
 ```
 
 ```{r fittednull-v22}
@@ -1900,116 +1486,33 @@ v22.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
 
   reslc_lin <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
-
-  tibble::tibble(df[1:(N-p),], reslc_lin)
-})
-```
-
-```{r nullunit-v22}
-v22.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
-  df <- v22.sim %>% filter(.n == i)
-  m <- lmer(y ~ attitude + gender + 
-              (1|subject) + (1|scenario),
-            data = df)
   
-  N <- nrow(df)
-  subjects <- unique(df$subject)
-  nsubject <- length(subjects)
-  scenarios <- unique(df$scenario)
-  nscenario <- length(scenarios)
+  .n = i
 
-  y <- df$y
-  X <- model.matrix(~attitude + gender, data = df)
-  beta <- fixef(m)
-  Z1 <- model.matrix(~scenario - 1, data = df)
-  Z2 <- model.matrix(~subject - 1, data = df)
-  Z <- cbind(Z1, Z2)
-  u <- c(ranef(m)$scenario[,1], ranef(m)$subject[,1])
-  q <- length(u)
-
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-  G1 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
-  G2 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
-  G <- Matrix::bdiag(G1, G2)
-
-  Sigma <- Z %*% G %*% t(Z) + R 
-  Sigma_inv <- solve(Sigma)
-
-  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
-
-  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
-  varCondRes <- R %*% P %*% R  
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - as.vector(Z %*% u)
-  index = 1:nrow(df)
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  expand_grid(subjects, scenarios) %>% 
-    dplyr::mutate(Vi = map2_dbl(subjects, scenarios, ~{
-                        ind <- df %>% 
-                          dplyr::mutate(index = 1:n()) %>% 
-                          filter(subject==.x,
-                                 scenario==.y) %>% 
-                          pull(index)
-                        mi <- length(ind)
-                        # standardised marginal residual
-                        Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
-                        v1 <- (diag(mi)- Ei %*% t(Ei))
-                        sqrt(sum(diag(v1 %*% t(v1)))) / mi
-                      }),
-         Mi = as.vector(t(u) %*% solve(varU) %*% u),
-         index = 1:n(),
-         .n = i
-         )
+  tibble::tibble(.n, reslc_lin)
 })
 ```
 
 #### Lineups
 
 ```{r v22n-plot}
-lineup(true = lin.fitted, samples = v22.lin.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resm_std)) +
-  geom_point() +
-  facet_wrap(~.sample, ncol = 5)
-
-lineup(true = lin.fitted, samples = v22.lin.sim.fitted, pos = 9) %>% 
+lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(interaction(attitude, gender), resm_std)) + 
   geom_boxplot() +
   facet_wrap(~.sample, ncol = 5)
 ```
+##### Outlying observations
 
-```{r v21n-plot22}
-lineup(true = lin.fitted, samples = v22.lin.sim.fitted, pos = 5) %>% 
+```{r v22n-plot22}
+lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
   facet_wrap(~.sample, ncol = 5)
 ```
 
-```{r v22n-plot22}
-lineup(true = lin.fitted, samples = v22.lin.sim.fitted, pos = 5) %>% 
-  ggplot(aes(index, resm_std, color = scenario)) +
-  geom_point() +
-  geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
-```{r v22n-plot3}
-lineup(true = lin.unit, samples = v22.lin.sim.unit, pos = 9) %>% 
-  ggplot(aes(index, Vi)) +
-  geom_point() +
-  #geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
-
 ```{r v22n-plot4}
-lineup(true = lin.fitted, samples = v22.lin.sim.fitted, pos = 5) %>% 
+lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -2020,18 +1523,10 @@ lineup(true = lin.fitted, samples = v22.lin.sim.fitted, pos = 5) %>%
         legend.position="none")
 ```
 
-```{r v22n-plot5}
-lineup(true = lin.fitted, samples = v22.lin.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resc_std)) + 
-  geom_point() + 
-  geom_hline(yintercept = 0) +
-  facet_wrap( ~ .sample, ncol=5)
-```
-
 ##### Checking normality
 
 ```{r v21n-plot6}
-lineup(true = lin.fitted, samples = v22.lin.sim.fitted, pos = 8) %>% 
+lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -2042,7 +1537,7 @@ lineup(true = lin.fitted, samples = v22.lin.sim.fitted, pos = 8) %>%
 ```
 
 ```{r v21n-plot6-lcr}
-lineup(true = lin.lcr, samples = v22.lin.sim.lcr, pos = 14) %>% 
+lineup(true = v2.lin.lcr, samples = v22.lin.sim.lcr, pos = 8) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -2054,7 +1549,7 @@ lineup(true = lin.lcr, samples = v22.lin.sim.lcr, pos = 14) %>%
 
 ### 3rd replication
 ```{r v21-sim}
-v23.sim <- lin.sim(v2.mod, repc2, seed = 1932)
+v23.sim <- lin.sim(v2.lin.mod, v2.lin, seed = 7374)
 ```
 
 ```{r fittednull-v21}
@@ -2106,7 +1601,7 @@ v23.lin.sim.fitted <- purrr::map_dfr(1:19, function(i){
 })
 ```
 
-```{r lcrsimnull-v11}
+```{r lcrsimnull-v23}
 v23.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   df <- v23.sim %>% filter(.n == i)
   m <- lmer(y ~ attitude + gender + 
@@ -2161,120 +1656,42 @@ v23.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
 
   reslc_lin <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
-
-  tibble::tibble(df[1:(N-p),], reslc_lin)
-})
-```
-
-```{r nullunit-v11}
-v23.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
-  df <- v23.sim %>% filter(.n == i)
-  m <- lmer(y ~ attitude + gender + 
-              (1|subject) + (1|scenario),
-            data = df)
   
-  N <- nrow(df)
-  subjects <- unique(df$subject)
-  nsubject <- length(subjects)
-  scenarios <- unique(df$scenario)
-  nscenario <- length(scenarios)
+  .n = i
 
-  y <- df$y
-  X <- model.matrix(~attitude + gender, data = df)
-  beta <- fixef(m)
-  Z1 <- model.matrix(~scenario - 1, data = df)
-  Z2 <- model.matrix(~subject - 1, data = df)
-  Z <- cbind(Z1, Z2)
-  u <- c(ranef(m)$scenario[,1], ranef(m)$subject[,1])
-  q <- length(u)
-
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-  G1 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
-  G2 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
-  G <- Matrix::bdiag(G1, G2)
-
-  Sigma <- Z %*% G %*% t(Z) + R 
-  Sigma_inv <- solve(Sigma)
-
-  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
-
-  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
-  varCondRes <- R %*% P %*% R  
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - as.vector(Z %*% u)
-  index = 1:nrow(df)
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  expand_grid(subjects, scenarios) %>% 
-    dplyr::mutate(Vi = map2_dbl(subjects, scenarios, ~{
-                        ind <- df %>% 
-                          dplyr::mutate(index = 1:n()) %>% 
-                          filter(subject==.x,
-                                 scenario==.y) %>% 
-                          pull(index)
-                        mi <- length(ind)
-                        # standardised marginal residual
-                        Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
-                        v1 <- (diag(mi)- Ei %*% t(Ei))
-                        sqrt(sum(diag(v1 %*% t(v1)))) / mi
-                      }),
-         Mi = as.vector(t(u) %*% solve(varU) %*% u),
-         index = 1:n(),
-         .n = i
-         )
+  tibble::tibble(.n, reslc_lin)
 })
 ```
 
 #### Lineups
 
-```{r v21n-plot}
-lineup(true = lin.fitted, samples = v23.lin.sim.fitted, pos = 9) %>% 
+```{r v23n-plot}
+lineup(true = v2.lin.fitted, samples = v23.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(interaction(attitude, gender), resm_std)) +
   geom_boxplot() +
   facet_wrap(~.sample, ncol = 5)
 ```
 
 ##### Presence of outlying observations
-```{r v21n-plot21}
-lineup(true = lin.fitted, samples = v23.lin.sim.fitted, pos = 15) %>% 
+
+```{r v23n-plot21}
+lineup(true = v2.lin.fitted, samples = v23.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
   facet_wrap(~.sample, ncol = 5)
 ```
 
-```{r v21n-plot22}
-lineup(true = lin.fitted, samples = v23.lin.sim.fitted, pos = 15) %>% 
+```{r v23n-plot}
+lineup(true = v2.lin.fitted, samples = v23.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = subject)) + geom_point() + 
   geom_hline(yintercept = 0) + 
   facet_wrap(~.sample, ncol = 5)
 ```
-
-```{r v21n-plot3}
-lineup(true = lin.unit, samples = v23.lin.sim.unit, pos = 9) %>% 
-  ggplot(aes(index, Vi)) +
-  geom_point() +
-  #geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
-
-```{r v21n-plot5}
-lineup(true = lin.fitted, samples = v23.lin.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resc_std)) + 
-  geom_point() + 
-  geom_hline(yintercept = 0) +
-  facet_wrap( ~ .sample, ncol=5)
-```
 ##### Checking normality
 
-```{r v21n-plot6}
-lineup(true = lin.fitted, samples = v23.lin.sim.fitted, pos = 20) %>% 
+```{r v23n-plot6}
+lineup(true = v2.lin.fitted, samples = v23.lin.sim.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -2285,7 +1702,7 @@ lineup(true = lin.fitted, samples = v23.lin.sim.fitted, pos = 20) %>%
 ```
 
 ```{r v21n-plot6-lcr}
-lineup(true = lin.lcr, samples = v23.lin.sim.lcr, pos = 20) %>% 
+lineup(true = v2.lin.lcr, samples = v23.lin.sim.lcr, pos = 20) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -2297,7 +1714,7 @@ lineup(true = lin.lcr, samples = v23.lin.sim.lcr, pos = 20) %>%
 
 ### 4th replication
 ```{r v21-sim}
-v24.sim <- lin.sim(v2.mod, repc2, seed = 8821)
+v24.sim <- lin.sim(v2.lin.mod, v2.lin, seed = 8821)
 ```
 
 ```{r fittednull-v21}
@@ -2349,7 +1766,7 @@ v24.lin.sim.fitted <- purrr::map_dfr(1:19, function(i){
 })
 ```
 
-```{r lcrsimnull-v11}
+```{r lcrsimnull-v24}
 v24.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   df <- v24.sim %>% filter(.n == i)
   m <- lmer(y ~ attitude + gender + 
@@ -2404,79 +1821,17 @@ v24.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
 
   reslc_lin <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
-
-  tibble::tibble(df[1:(N-p),], reslc_lin)
-})
-```
-
-```{r nullunit-v11}
-v24.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
-  df <- v24.sim %>% filter(.n == i)
-  m <- lmer(y ~ attitude + gender + 
-              (1|subject) + (1|scenario),
-            data = df)
   
-  N <- nrow(df)
-  subjects <- unique(df$subject)
-  nsubject <- length(subjects)
-  scenarios <- unique(df$scenario)
-  nscenario <- length(scenarios)
+  .n = i
 
-  y <- df$y
-  X <- model.matrix(~attitude + gender, data = df)
-  beta <- fixef(m)
-  Z1 <- model.matrix(~scenario - 1, data = df)
-  Z2 <- model.matrix(~subject - 1, data = df)
-  Z <- cbind(Z1, Z2)
-  u <- c(ranef(m)$scenario[,1], ranef(m)$subject[,1])
-  q <- length(u)
-
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-  G1 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
-  G2 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
-  G <- Matrix::bdiag(G1, G2)
-
-  Sigma <- Z %*% G %*% t(Z) + R 
-  Sigma_inv <- solve(Sigma)
-
-  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
-
-  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
-  varCondRes <- R %*% P %*% R  
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - as.vector(Z %*% u)
-  index = 1:nrow(df)
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  expand_grid(subjects, scenarios) %>% 
-    dplyr::mutate(Vi = map2_dbl(subjects, scenarios, ~{
-                        ind <- df %>% 
-                          dplyr::mutate(index = 1:n()) %>% 
-                          filter(subject==.x,
-                                 scenario==.y) %>% 
-                          pull(index)
-                        mi <- length(ind)
-                        # standardised marginal residual
-                        Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
-                        v1 <- (diag(mi)- Ei %*% t(Ei))
-                        sqrt(sum(diag(v1 %*% t(v1)))) / mi
-                      }),
-         Mi = as.vector(t(u) %*% solve(varU) %*% u),
-         index = 1:n(),
-         .n = i
-         )
+  tibble::tibble(.n, reslc_lin)
 })
 ```
 
 #### Lineups
 
-```{r v21n-plot}
-lineup(true = lin.fitted, samples = v24.lin.sim.fitted, pos = 9) %>% 
+```{r v24n-plot}
+lineup(true = v2.lin.fitted, samples = v24.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(interaction(attitude, gender), resm_std)) +
   geom_boxplot() +
   facet_wrap(~.sample, ncol = 5)
@@ -2484,40 +1839,24 @@ lineup(true = lin.fitted, samples = v24.lin.sim.fitted, pos = 9) %>%
 
 ##### Presence of outlying observations
 ```{r v21n-plot21}
-lineup(true = lin.fitted, samples = v24.lin.sim.fitted, pos = 15) %>% 
+lineup(true = v2.lin.fitted, samples = v24.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
   facet_wrap(~.sample, ncol = 5)
 ```
 
-```{r v21n-plot22}
-lineup(true = lin.fitted, samples = v24.lin.sim.fitted, pos = 15) %>% 
+```{r v24n-plot}
+lineup(true = v2.lin.fitted, samples = v24.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = subject)) + geom_point() + 
   geom_hline(yintercept = 0) + 
   facet_wrap(~.sample, ncol = 5)
 ```
 
-```{r v21n-plot3}
-lineup(true = lin.unit, samples = v24.lin.sim.unit, pos = 9) %>% 
-  ggplot(aes(index, Vi)) +
-  geom_point() +
-  #geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
-```
-
-
-```{r v21n-plot5}
-lineup(true = lin.fitted, samples = v24.lin.sim.fitted, pos = 9) %>% 
-  ggplot(aes(fitted, resc_std)) + 
-  geom_point() + 
-  geom_hline(yintercept = 0) +
-  facet_wrap( ~ .sample, ncol=5)
-```
 ##### Checking normality
 
-```{r v21n-plot6}
-lineup(true = lin.fitted, samples = v24.lin.sim.fitted, pos = 20) %>% 
+```{r v24n-plot6}
+lineup(true = v2.lin.fitted, samples = v24.lin.sim.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -2527,8 +1866,8 @@ lineup(true = lin.fitted, samples = v24.lin.sim.fitted, pos = 20) %>%
         legend.position="none")
 ```
 
-```{r v21n-plot6-lcr}
-lineup(true = lin.lcr, samples = v24.lin.sim.lcr, pos = 20) %>% 
+```{r v24n-plot6-lcr}
+lineup(true = v2.lin.lcr, samples = v24.lin.sim.lcr, pos = 20) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -2547,7 +1886,7 @@ set.seed(194253)
 samp5 <- sample(21, 1)
 f_pol <- round(as.numeric(df %>% filter(gender == "F", attitude == "pol") %>% summarise(mean(y))),1)
 repc.f.pol <- df %>% filter(gender == "F", attitude == "pol")
-repc.f.pol[c(samp5),]$y <- repc.f.pol[c(samp5),]$y+f_pol
+repc.f.pol[c(samp5),]$y <- repc.f.pol[c(samp5),]$y+f_pol*0.2
 ```
 
 ```{r}
@@ -2555,7 +1894,7 @@ set.seed(107623)
 samp6 <- sample(21, 1)
 m_pol <- round(as.numeric(df %>% filter(gender == "M", attitude == "pol") %>% summarise(mean(y))),1)
 repc.m.pol <- df %>% filter(gender == "M", attitude == "pol")
-repc.m.pol[c(samp6),]$y <- repc.m.pol[c(samp6),]$y+m_pol
+repc.m.pol[c(samp6),]$y <- repc.m.pol[c(samp6),]$y+m_pol*0.2
 ```
 
 ```{r}
@@ -2563,7 +1902,7 @@ set.seed(274302)
 samp7 <- sample(21, 1)
 m_inf <- round(as.numeric(df %>% filter(gender == "M", attitude == "inf") %>% summarise(mean(y))),1)
 repc.m.inf <- df %>% filter(gender == "M", attitude == "inf")
-repc.m.inf[c(samp7),]$y <- repc.m.inf[c(samp7),]$y+m_inf
+repc.m.inf[c(samp7),]$y <- repc.m.inf[c(samp7),]$y+m_inf*0.2
 ```
 
 ```{r}
@@ -2571,32 +1910,31 @@ set.seed(981234)
 samp8 <- sample(21, 1)
 f_inf <- round(as.numeric(df %>% filter(gender == "F", attitude == "inf") %>% summarise(mean(y))),1)
 repc.f.inf <- df %>% filter(gender == "F", attitude == "inf")
-repc.f.inf[c(samp8),]$y <- repc.f.inf[c(samp8),]$y+f_inf
+repc.f.inf[c(samp8),]$y <- repc.f.inf[c(samp8),]$y+f_inf*0.2
 ```
 
 ```{r}
 repc3 <- rbind(repc.f.inf, repc.f.pol, repc.m.inf, repc.m.pol)
-repc3 <- repc3[order(repc3$subject),]
+v3.lin <- repc3[order(repc3$subject),]
 ```
 
 ```{r v3.mod}
-v3.mod <- lmer(y ~ attitude + gender + 
+v3.lin.mod <- lmer(y ~ attitude + gender + 
               (1|subject) + (1|scenario),
-            data = repc3)
+            data = v3.lin)
 ```
 
 ```{r}
-v3.fitted <- lin.extract.fitted.mod(v3.mod, repc3)
-v3.unit <- lin.extract.unit.mod(v3.mod, repc3)
-v3.lcr <- lin.extract.lcr.mod(v3.mod, repc3)
+v3.lin.fitted <- lin.extract.fitted.mod(v3.lin.mod, v3.lin)
+v3.lin.lcr <- lin.extract.lcr.mod(v3.lin.mod, v3.lin)
 ```
 
 
 ```{r}
-ggplot(v3.fitted, aes(index, resm_std)) + geom_point()
-ggplot(v3.fitted, aes(index, resc_std)) + geom_point()
-ggplot(v3.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
-ggplot(v3.lcr, aes(sample = reslc_lin)) + geom_qq() + geom_qq_line(color = "red")
+ggplot(v3.lin.fitted, aes(index, resm_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(v3.lin.fitted, aes(index, resc_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(v3.lin.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+ggplot(v3.lin.lcr, aes(sample = reslc_lin)) + geom_qq() + geom_qq_line(color = "red")
 ```
 
 - The outlying observations are shown in both marginal residual and conditional residuals
@@ -2605,7 +1943,7 @@ ggplot(v3.lcr, aes(sample = reslc_lin)) + geom_qq() + geom_qq_line(color = "red"
 ## 1st replication
 
 ```{r}
-v31.sim <- lin.sim(v3.mod, repc3, seed = 1234)
+v31.sim <- lin.sim(v3.lin.mod, v3.lin, seed = 1234)
 ```
 
 ```{r fittednull-v31}
@@ -2712,71 +2050,10 @@ v31.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
 
   reslc_lin <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
-
-  tibble::tibble(df[1:(N-p),], reslc_lin)
-})
-```
-
-```{r nullunit-v32}
-v31.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
-  df <- v31.sim %>% filter(.n == i)
-  m <- lmer(y ~ attitude + gender + 
-              (1|subject) + (1|scenario),
-            data = df)
   
-  N <- nrow(df)
-  subjects <- unique(df$subject)
-  nsubject <- length(subjects)
-  scenarios <- unique(df$scenario)
-  nscenario <- length(scenarios)
+  .n= i
 
-  y <- df$y
-  X <- model.matrix(~attitude + gender, data = df)
-  beta <- fixef(m)
-  Z1 <- model.matrix(~scenario - 1, data = df)
-  Z2 <- model.matrix(~subject - 1, data = df)
-  Z <- cbind(Z1, Z2)
-  u <- c(ranef(m)$scenario[,1], ranef(m)$subject[,1])
-  q <- length(u)
-
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-  G1 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
-  G2 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
-  G <- Matrix::bdiag(G1, G2)
-
-  Sigma <- Z %*% G %*% t(Z) + R 
-  Sigma_inv <- solve(Sigma)
-
-  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
-
-  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
-  varCondRes <- R %*% P %*% R  
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - as.vector(Z %*% u)
-  index = 1:nrow(df)
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  expand_grid(subjects, scenarios) %>% 
-    dplyr::mutate(Vi = map2_dbl(subjects, scenarios, ~{
-                        ind <- df %>% 
-                          dplyr::mutate(index = 1:n()) %>% 
-                          filter(subject==.x,
-                                 scenario==.y) %>% 
-                          pull(index)
-                        mi <- length(ind)
-                        # standardised marginal residual
-                        Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
-                        v1 <- (diag(mi)- Ei %*% t(Ei))
-                        sqrt(sum(diag(v1 %*% t(v1)))) / mi
-                      }),
-         index = 1:n(),
-         .n = i
-         )
+  tibble::tibble(.n, reslc_lin)
 })
 ```
 
@@ -2784,16 +2061,16 @@ v31.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
 
 ##### Detecting outlying observations
 
-```{r v32n-plot21, fig.height=6}
-lineup(true = lin.fitted, samples = v31.lin.sim.fitted, pos = 15) %>% 
+```{r v31n-plot21, fig.height=6}
+lineup(true = v3.lin.fitted, samples = v31.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
   facet_wrap(~.sample, ncol = 5)
 ```
 
-```{r v32n-plot4, fig.height=6}
-lineup(true = lin.fitted, samples = v31.lin.sim.fitted, pos = 15) %>% 
+```{r v31n-plot4, fig.height=6}
+lineup(true = v3.lin.fitted, samples = v31.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -2804,12 +2081,10 @@ lineup(true = lin.fitted, samples = v31.lin.sim.fitted, pos = 15) %>%
         legend.position="none")
 ```
 
-
-
 ##### Checking normality
 
 ```{r v31n-plot6, fig.height=6}
-lineup(true = lin.fitted, samples = v31.lin.sim.fitted, pos = 11) %>% 
+lineup(true = v3.lin.fitted, samples = v31.lin.sim.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -2820,7 +2095,7 @@ lineup(true = lin.fitted, samples = v31.lin.sim.fitted, pos = 11) %>%
 ```
 
 ```{r v32n-plot6-lcr, fig.height=6}
-lineup(true = lin.lcr, samples = v31.lin.sim.lcr, pos = 11) %>% 
+lineup(true = v3.lin.lcr, samples = v31.lin.sim.lcr, pos = 11) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -2833,7 +2108,7 @@ lineup(true = lin.lcr, samples = v31.lin.sim.lcr, pos = 11) %>%
 ## 2nd replication
 
 ```{r}
-v32.sim <- lin.sim(v3.mod, repc3, seed = 4252)
+v32.sim <- lin.sim(v3.lin.mod, v3.lin, seed = 4252)
 ```
 
 ```{r fittednull-v32}
@@ -2940,71 +2215,10 @@ v32.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
   var.resmcp <- lt %*% varCondRes[1:N,1:N] %*% t(lt)
 
   reslc_lin <- (lt %*% resc[1:N] )/sqrt(diag(var.resmcp))
-
-  tibble::tibble(df[1:(N-p),], reslc_lin)
-})
-```
-
-```{r nullunit-v32}
-v32.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
-  df <- v32.sim %>% filter(.n == i)
-  m <- lmer(y ~ attitude + gender + 
-              (1|subject) + (1|scenario),
-            data = df)
   
-  N <- nrow(df)
-  subjects <- unique(df$subject)
-  nsubject <- length(subjects)
-  scenarios <- unique(df$scenario)
-  nscenario <- length(scenarios)
+  .n = i
 
-  y <- df$y
-  X <- model.matrix(~attitude + gender, data = df)
-  beta <- fixef(m)
-  Z1 <- model.matrix(~scenario - 1, data = df)
-  Z2 <- model.matrix(~subject - 1, data = df)
-  Z <- cbind(Z1, Z2)
-  u <- c(ranef(m)$scenario[,1], ranef(m)$subject[,1])
-  q <- length(u)
-
-  vc <- as.data.frame(VarCorr(m))
-  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-  G1 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
-  G2 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
-  G <- Matrix::bdiag(G1, G2)
-
-  Sigma <- Z %*% G %*% t(Z) + R 
-  Sigma_inv <- solve(Sigma)
-
-  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(m) %*% t(X) %*% Sigma_inv
-
-  varMargRes <- Sigma - X %*% vcov(m) %*% t(X) 
-  varCondRes <- R %*% P %*% R  
-  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-  
-  fitted = as.vector(X %*% beta)
-  resm = y - fitted
-  resc = y - fitted - as.vector(Z %*% u)
-  index = 1:nrow(df)
-  resm_std = resm / sqrt(diag(varMargRes)[index])
-  resc_std = resc / sqrt(diag(varCondRes)[index])
-  
-  expand_grid(subjects, scenarios) %>% 
-    dplyr::mutate(Vi = map2_dbl(subjects, scenarios, ~{
-                        ind <- df %>% 
-                          dplyr::mutate(index = 1:n()) %>% 
-                          filter(subject==.x,
-                                 scenario==.y) %>% 
-                          pull(index)
-                        mi <- length(ind)
-                        # standardised marginal residual
-                        Ei <- solve(expm::sqrtm(varMargRes[ind, ind])) %*% resm[ind]
-                        v1 <- (diag(mi)- Ei %*% t(Ei))
-                        sqrt(sum(diag(v1 %*% t(v1)))) / mi
-                      }),
-         index = 1:n(),
-         .n = i
-         )
+  tibble::tibble(.n, reslc_lin)
 })
 ```
 
@@ -3013,7 +2227,7 @@ v32.lin.sim.unit <- purrr::map_dfr(1:19, function(i){
 ##### Detecting outlying observations
 
 ```{r v32n-plot21, fig.height=6}
-lineup(true = lin.fitted, samples = v32.lin.sim.fitted, pos = 15) %>% 
+lineup(true = v3.lin.fitted, samples = v32.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
@@ -3021,7 +2235,7 @@ lineup(true = lin.fitted, samples = v32.lin.sim.fitted, pos = 15) %>%
 ```
 
 ```{r v32n-plot4, fig.height=6}
-lineup(true = lin.fitted, samples = v32.lin.sim.fitted, pos = 15) %>% 
+lineup(true = v3.lin.fitted, samples = v32.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -3035,7 +2249,7 @@ lineup(true = lin.fitted, samples = v32.lin.sim.fitted, pos = 15) %>%
 ##### Checking normality
 
 ```{r v31n-plot6, fig.height=6}
-lineup(true = lin.fitted, samples = v32.lin.sim.fitted, pos = 11) %>% 
+lineup(true = v3.lin.fitted, samples = v32.lin.sim.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -3046,7 +2260,7 @@ lineup(true = lin.fitted, samples = v32.lin.sim.fitted, pos = 11) %>%
 ```
 
 ```{r v32n-plot6-lcr, fig.height=6}
-lineup(true = lin.lcr, samples = v32.lin.sim.lcr, pos = 11) %>% 
+lineup(true = v3.lin.lcr, samples = v32.lin.sim.lcr, pos = 11) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -3059,7 +2273,7 @@ lineup(true = lin.lcr, samples = v32.lin.sim.lcr, pos = 11) %>%
 ## 3rd replication
 
 ```{r}
-v33.sim <- lin.sim(v3.mod, repc3, seed = 9263)
+v33.sim <- lin.sim(v3.lin.mod, v3.lin, seed = 9263)
 ```
 
 ```{r fittednull-v32}
@@ -3177,7 +2391,7 @@ v33.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
 ##### Detecting outlying observations
 
 ```{r v32n-plot21, fig.height=6}
-lineup(true = lin.fitted, samples = v33.lin.sim.fitted, pos = 2) %>% 
+lineup(true = v3.lin.fitted, samples = v33.lin.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
@@ -3185,7 +2399,7 @@ lineup(true = lin.fitted, samples = v33.lin.sim.fitted, pos = 2) %>%
 ```
 
 ```{r v32n-plot4, fig.height=6}
-lineup(true = lin.fitted, samples = v33.lin.sim.fitted, pos = 2) %>% 
+lineup(true = v3.lin.fitted, samples = v33.lin.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -3199,7 +2413,7 @@ lineup(true = lin.fitted, samples = v33.lin.sim.fitted, pos = 2) %>%
 ##### Checking normality
 
 ```{r v31n-plot6, fig.height=6}
-lineup(true = lin.fitted, samples = v33.lin.sim.fitted, pos = 6) %>% 
+lineup(true = v3.lin.fitted, samples = v33.lin.sim.fitted, pos = 6) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -3210,7 +2424,7 @@ lineup(true = lin.fitted, samples = v33.lin.sim.fitted, pos = 6) %>%
 ```
 
 ```{r v32n-plot6-lcr, fig.height=6}
-lineup(true = lin.lcr, samples = v33.lin.sim.lcr, pos = 6) %>% 
+lineup(true = v3.lin.lcr, samples = v33.lin.sim.lcr, pos = 6) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -3223,7 +2437,7 @@ lineup(true = lin.lcr, samples = v33.lin.sim.lcr, pos = 6) %>%
 ## 4th replication
 
 ```{r}
-v34.sim <- lin.sim(v3.mod, repc3, seed = 6234)
+v34.sim <- lin.sim(v3.lin.mod, v3.lin, seed = 1508)
 ```
 
 ```{r fittednull-v34}
@@ -3341,7 +2555,7 @@ v34.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
 ##### Detecting outlying observations
 
 ```{r v32n-plot21, fig.height=6}
-lineup(true = lin.fitted, samples = v34.lin.sim.fitted, pos = 2) %>% 
+lineup(true = v3.lin.fitted, samples = v34.lin.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
@@ -3349,7 +2563,7 @@ lineup(true = lin.fitted, samples = v34.lin.sim.fitted, pos = 2) %>%
 ```
 
 ```{r v32n-plot4, fig.height=6}
-lineup(true = lin.fitted, samples = v34.lin.sim.fitted, pos = 2) %>% 
+lineup(true = v3.lin.fitted, samples = v34.lin.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -3363,7 +2577,7 @@ lineup(true = lin.fitted, samples = v34.lin.sim.fitted, pos = 2) %>%
 ##### Checking normality
 
 ```{r v31n-plot6, fig.height=6}
-lineup(true = lin.fitted, samples = v34.lin.sim.fitted, pos = 6) %>% 
+lineup(true = v3.lin.fitted, samples = v34.lin.sim.fitted, pos = 6) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -3374,7 +2588,7 @@ lineup(true = lin.fitted, samples = v34.lin.sim.fitted, pos = 6) %>%
 ```
 
 ```{r v32n-plot6-lcr, fig.height=6}
-lineup(true = lin.lcr, samples = v34.lin.sim.lcr, pos = 6) %>% 
+lineup(true = v3.lin.lcr, samples = v34.lin.sim.lcr, pos = 6) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
