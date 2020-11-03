@@ -386,6 +386,66 @@ ggplot(lin.unit, aes(sample = Mi)) +
 
 ## Version 1 - "best" model
 
+```{r v1data}
+set.seed(1234)
+
+N <- nrow(df)
+nscenario <- length(unique(df$scenario))
+nsubject <- length(unique(df$subject))
+
+vc <- as.data.frame(VarCorr(fit))
+
+R <- vc$vcov[vc$grp == "Residual"] * diag(N)
+G1 <- vc$vcov[vc$grp=="scenario"] * diag(nscenario)
+G2 <- vc$vcov[vc$grp=="subject"] * diag(nsubject)
+G <- Matrix::bdiag(G1, G2)
+
+n <- getME(fit, "n")
+q <- getME(fit, "q")
+
+# normal error
+e <- mvrnorm(n = 1, mu = rep(0,n), Sigma = R)
+
+# normal random effects
+b <- mvrnorm(n = 1, mu = rep(0,q), Sigma = G)
+
+y <- as.vector(getME(fit, "X") %*% fixef(fit) + getME(fit, "Z") %*% b + e)
+
+v1.lin <- tibble(df[,-5], y)
+```
+
+```{r v1mod}
+v1.lin.mod <- lmer(y ~ attitude + gender + 
+              (1|subject) + (1|scenario),
+            data = v1.lin)
+```
+
+```{r v1-extract}
+v1.lin.fitted <- lin.extract.fitted.mod(v1.lin.mod, v1.lin)
+v1.lin.lcr <- lin.extract.lcr.mod(v1.lin.mod, v1.lin)
+```
+
+# Data plots
+
+```{r v1-plots}
+ggplot(v1.lin.fitted, aes(index, resm_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(v1.lin.fitted, aes(index, resc_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(v1.lin.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+ggplot(v1.lin.lcr, aes(sample = reslc_lin)) + geom_qq() + geom_qq_line(color = "red")
+```
+
+- The marginal residual seems to be scaled down as the outliers on the M4 subject and also one outlier in F3 subject.
+- The conditional residual seems to be normal and fewer outliers.
+- The conditional residual does not follow a normal distribution as there is a huge jump at the top.
+- The least confounded residual does not follow a normal distribution as well, since there is a jump at the middle and a heavy tail.
+
+
+
+
+
+
+
+
 ### 1st replication
 
 ```{r v11-sim}
