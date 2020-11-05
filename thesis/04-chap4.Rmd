@@ -1,0 +1,48 @@
+---
+chapter: 4
+knit: "bookdown::render_book"
+---
+
+
+# Methodology
+
+In this paper, we use the two-level continouse-response linear mixed model (LMM) whose errors are uncorrelated fitting either by maximum likelihood or restricted maximum likelihood. 
+<!-- The model is introduced in Sector 2. -->
+
+@hilden1995multilevel introduced a linear transformation of the conditional residuals which is called least confounded conditional residuals in order to minimise the fraction of confounding. Therefore, the ability to check for normality of the conditional errors increses.
+Ho
+
+
+
+## Results
+
+## Data sets
+
+Our aim is to detect the residual plots of linear mixed model. There are three data sets that we used in this thesis. They are reaction times in a sleep deprivation study data set in the `R` package `lme4` [@]; Mathematics achievement scores data set in `R` package `nlme` [@]; and Linguistic data set [@]. The linguistic data set contains dependent varaiables which are categorial. For the sleepstudy data, it includes all the numerical variables. Besides, the mathachieve data has the combination of numerical and categorial variables.
+
+### Reaction times in a sleep deprivation study
+
+In order to better understand the importance of sleep time, Gregory (2003) did a test on 180 observations. On day 0, the subjects had the normal amount of sleep. But for the rest of nine nights, 3 hours of sleep time is restricted to them. The output, Reaction, shows the average reaction time per day for each subject.
+
+### Mathematics achievement scores study
+
+The `MathAchieve` data frame contains 7185 students from 160 different schools. While `MathAchSchool` data frame includes the information about school. We combine these two data sets by the School ID. However, we only consider the male students who are not the member of a minority racial group. The student-level outcome is MathAch and the student-level covariate is SES. And school-level has two covariates, which are MEANSES and Sector. Sector is a dummy variable which denotes the levels whether it is Public or Catholic. In this case, we code the Sector as 0 and 1. SES and MEANSES are centered at mean 0.
+
+### Linguistic study
+
+The data contains `r nrow(df)` observations on the voice pitch (or frequency) from `r length(unique(df$subject))` subjects (3 females and 3 males) under `r length(unique(df$scenario))` scenarios with 2 attitudes (informal or polite). There is one missing value for subject `M4` for scenario 6 with polite attitude.
+
+## Experiment setup
+
+In this paper, we use the
+
+As @singer2017graphical mentioned, we do the plots to diagnostic for presence of outlying observation for marginal distribution and conditional residual. As well as, the plots to test the normality of conditional residual by detecting the standardised conditional residual versus the least confounded residual. 
+
+WHAT IS OUR OBJECTS???
+
+After we found the "best" model from the raw data, we generate three different scenarios:
+1. Generate from the best model
+2. Add slight noises
+3. Introduce extreme noises
+
+We use the boostrap method
