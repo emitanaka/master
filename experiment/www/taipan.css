@@ -4,7 +4,7 @@
 img {
   max-width: 100%;
 }
-#out_img_overlay {
+out_img_overlay {
 position:absolute;
 top:0;
 left:0;

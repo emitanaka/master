@@ -9,7 +9,7 @@ questions <- surveyQuestions(
   demographics =
     div(
       # Name
-      textInput("Name", "Please provide your name:", 
+      textInput("name", "Please provide your name:", 
                 placeholder = "Name"),
       p("You will be shown a series of 20 displays.
         This survey should not take more than 10 minutes of your time,
