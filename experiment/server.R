@@ -4,6 +4,24 @@ library(googlesheets4)
 library(purrr)
 questions <- readRDS("data/questions.Rds")
 
+first <- sample(1:nrow(t$sketch),1)
+second <- sample(1:nrow(t$sketch[-1,-first]),1)
+third <- sample(1:nrow(t$sketch[-1,-first][-1, -second]),1)
+if (t$sketch[-1,-first][1, second] 
+    != t$sketch[1,first]) t$sketch[-1,-first][1, second]
+if (!(t$sketch[-1,-first][-1, -second][1,] 
+      %in% c(t$sketch[1,first], t$sketch[-1,-first][1, second])
+) == rep(TRUE, nrow(t$sketch[-1,-first][-1, -second])))
+{t$sketch[-1,-first][-1, -second][1, third]}
+
+t$sketch[-1,-first][-1, -second][-1, -third]
+
+book <- as_tibble(t$book)
+book[book$row == 4 & book$variates == t$sketch[-1,-first][-1, -second][-1, -third],]$plots
+book[book$row == 3 & book$variates == t$sketch[-1,-first][-1, -second][1, third],]$plots
+book[book$row == 2 & book$variates == t$sketch[-1,-first][1, second],]$plots
+book[book$row == 1 & book$variates == t$sketch[1,first],]$plots
+
 
 getInputID <- function(input){
   if(!inherits(input, "shiny.tag")){
@@ -42,7 +60,8 @@ shinyServer(
     identifier <- create_unique_id()
     
     # load survey image
-    image.list <- list.files(paste0("www/images"), full.names = T)
+    image.list <- list.files(paste0("www/images/autism/Version", 1:4, sep = ""), full.names = T)
+    #image.list <- list.files(paste0("www/images"), full.names = T)
     image.list <- sample(image.list, length(image.list))
     
     v <- reactiveValues(
