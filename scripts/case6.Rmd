@@ -935,7 +935,7 @@ We added the error term as student t distributed.
 ```{r}
 set.seed(5692)
 ## t distribution
-e  <- rt(n = n, ncp = sig.e, df = 10)
+e  <- rt(n = n, ncp = sig.e, df = 15)
 y <- as.vector(getME(autism.mod, "X") %*% fixef(autism.mod) + getME(autism.mod, "Z") %*% bvec + e)
 
 autism.repc2 <- tibble(autism[,-4], y)
@@ -1066,31 +1066,59 @@ autism.v21n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v21n.fitted, pos = 5) %>%
-  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a21.1 <- lineup(true = a.v2.fitted, samples = autism.v21n.fitted, pos = 5) %>%
+  ggplot(aes(interaction(gender, race), resm_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5) +
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v21_M_5.png", 
+  plot = a21.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v21n.fitted, pos = 5) %>%
-  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a21.2 <- lineup(true = a.v2.fitted, samples = autism.v21n.fitted, pos = 5) %>%
+  ggplot(aes(interaction(gender, race), resc_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5)+
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v21_C_5.png", 
+  plot = a21.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### Normality checking
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v21n.fitted, pos = 8) %>% 
+a21.3 <- lineup(true = a.v2.fitted, samples = autism.v21n.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5)+ 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v21_CN_8.png",
+       plot = a21.3, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v2.lcr, samples = autism.v21n.lcr, pos = 8) %>% 
+a21.4 <- lineup(true = a.v2.lcr, samples = autism.v21n.lcr, pos = 8) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v21_LN_8.png",
+       plot = a21.4, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ## 2st replication
@@ -1200,31 +1228,59 @@ autism.v22n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v22n.fitted, pos = 5) %>%
-  ggplot(aes(index, resm_std)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a22.1 <- lineup(true = a.v2.fitted, samples = autism.v22n.fitted, pos = 5) %>%
+  ggplot(aes(interaction(gender, race), resm_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5)+
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v22_M_5.png", 
+  plot = a22.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v22n.fitted, pos = 5) %>%
-  ggplot(aes(index, resc_std)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a22.2 <- lineup(true = a.v2.fitted, samples = autism.v22n.fitted, pos = 5) %>%
+  ggplot(aes(interaction(gender, race), resc_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5)+
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v22_C_5.png", 
+  plot = a22.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### Normality checking
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v22n.fitted, pos = 8) %>% 
+a22.3 <- lineup(true = a.v2.fitted, samples = autism.v22n.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v22_CN_8.png",
+       plot = a22.3, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v2.lcr, samples = autism.v22n.lcr, pos = 8) %>% 
+a22.4 <- lineup(true = a.v2.lcr, samples = autism.v22n.lcr, pos = 8) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5)+ 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v22_LN_8.png",
+       plot = a22.4, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ## 3rd replication
@@ -1334,31 +1390,59 @@ autism.v23n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v23n.fitted, pos = 15) %>%
-  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a23.1 <- lineup(true = a.v2.fitted, samples = autism.v23n.fitted, pos = 15) %>%
+  ggplot(aes(interaction(gender, race), resm_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5)+
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v23_M_15.png", 
+  plot = a23.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v23n.fitted, pos = 15) %>%
-  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a23.2 <- lineup(true = a.v2.fitted, samples = autism.v23n.fitted, pos = 15) %>%
+  ggplot(aes(interaction(gender, race), resc_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5)+
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v23_C_15.png", 
+  plot = a23.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### Normality checking
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v23n.fitted, pos = 20) %>% 
+a23.3 <- lineup(true = a.v2.fitted, samples = autism.v23n.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v23_CN_20.png",
+       plot = a23.3, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v2.lcr, samples = autism.v23n.lcr, pos = 20) %>% 
+a23.4 <- lineup(true = a.v2.lcr, samples = autism.v23n.lcr, pos = 20) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v23_LN_20.png",
+       plot = a23.4, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ## 4th replication
@@ -1409,7 +1493,7 @@ autism.v24n.fitted <- purrr::map_dfr(1:19, function(i){
 })
 ```
 
-```{r v22n.lcr}
+```{r v24n.lcr}
 autism.v24n.lcr <- purrr::map_dfr(1:19, function(i){
   df <- autism.v24.sim %>% filter(.n == i)
   m <- lmer(y ~ age2 + sicdegp + race + bestest2 + (age2 - 1|childid), data = df)
@@ -1466,31 +1550,59 @@ autism.v24n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v24n.fitted, pos = 15) %>%
-  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a24.1 <- lineup(true = a.v2.fitted, samples = autism.v24n.fitted, pos = 15) %>%
+  ggplot(aes(interaction(gender, race), resm_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5) +
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v24_M_15.png", 
+  plot = a24.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v24n.fitted, pos = 15) %>%
-  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a24.2 <- lineup(true = a.v2.fitted, samples = autism.v24n.fitted, pos = 15) %>%
+  ggplot(aes(interaction(gender, race), resc_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5)+
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v24_C_15.png", 
+  plot = a24.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### Normality checking
 
 ```{r}
-lineup(true = a.v2.fitted, samples = autism.v24n.fitted, pos = 20) %>% 
+a24.3 <- lineup(true = a.v2.fitted, samples = autism.v24n.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5)+ 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v24_CN_20.png",
+       plot = a24.3, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v2.lcr, samples = autism.v24n.lcr, pos = 20) %>% 
+a24.4 <- lineup(true = a.v2.lcr, samples = autism.v24n.lcr, pos = 20) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5)+ 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v24_LN_20.png",
+       plot = a24.4, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 - The data plot of least confounded residual is hard to be identified.
@@ -1641,20 +1753,29 @@ autism.v31n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v31n.fitted, pos = 15) %>%
+a31.1 <- lineup(true = a.v3.fitted, samples = autism.v31n.fitted, pos = 15) %>%
   ggplot(aes(interaction(gender, race), resm_std)) + geom_boxplot() +
   facet_wrap(~.sample, ncol = 5) +
   ylab(NULL) + xlab(NULL) + 
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v31_M_15.png", 
+  plot = a31.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v31n.fitted, pos = 15) %>%
+a31.2 <- lineup(true = a.v3.fitted, samples = autism.v31n.fitted, pos = 15) %>%
   ggplot(aes(interaction(gender, race), resc_std)) + geom_boxplot() +
-  facet_wrap(~.sample, ncol = 5) + ylab(NULL) + xlab(NULL) + 
+  facet_wrap(~.sample, ncol = 5) +
+  ylab(NULL) + xlab(NULL) + 
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v31_C_15.png", 
+  plot = a31.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 - Outlying observations can be detected on both conditional and marginal residuals
@@ -1662,19 +1783,33 @@ lineup(true = a.v3.fitted, samples = autism.v31n.fitted, pos = 15) %>%
 ### Normality checking
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v31n.fitted, pos = 11) %>% 
+a31.3 <- lineup(true = a.v3.fitted, samples = autism.v31n.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v31_CN_11.png",
+       plot = a31.3, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 - The data plot can be identified immediately.
 
 ```{r}
-lineup(true = a.v3.lcr, samples = autism.v31n.lcr, pos = 11) %>% 
+a31.4 <- lineup(true = a.v3.lcr, samples = autism.v31n.lcr, pos = 11) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v31_LN_11.png",
+       plot = a31.4, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 - The least confounded residual for the data plot can be detected as well as the outlier on the lower bottom.
@@ -1786,31 +1921,59 @@ autism.v32n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v32n.fitted, pos = 15) %>%
-  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a32.1 <- lineup(true = a.v3.fitted, samples = autism.v32n.fitted, pos = 15) %>%
+  ggplot(aes(interaction(gender, race), resm_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5)+
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v32_M_15.png", 
+  plot = a32.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v32n.fitted, pos = 15) %>%
-  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a32.2 <- lineup(true = a.v3.fitted, samples = autism.v32n.fitted, pos = 15) %>%
+  ggplot(aes(interaction(gender, race), resc_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5) +
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v32_C_15.png", 
+  plot = a32.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### Normality checking
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v32n.fitted, pos = 11) %>% 
+a32.3 <- lineup(true = a.v3.fitted, samples = autism.v32n.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v32_CN_11.png",
+       plot = a32.3, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v3.lcr, samples = autism.v32n.lcr, pos = 11) %>% 
+a32.4 <- lineup(true = a.v3.lcr, samples = autism.v32n.lcr, pos = 11) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v32_LN_11.png",
+       plot = a32.4, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ## 3rd replication
@@ -1920,31 +2083,59 @@ autism.v33n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v33n.fitted, pos = 2) %>%
-  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a33.1 <- lineup(true = a.v3.fitted, samples = autism.v33n.fitted, pos = 2) %>%
+  ggplot(aes(interaction(gender, race), resm_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5) +
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v33_M_2.png", 
+  plot = a33.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v33n.fitted, pos = 2) %>%
-  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a33.2 <- lineup(true = a.v3.fitted, samples = autism.v33n.fitted, pos = 2) %>%
+  ggplot(aes(interaction(gender, race), resc_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5) +
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v33_C_2.png", 
+  plot = a33.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### Normality checking
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v33n.fitted, pos = 6) %>% 
+a33.3 <- lineup(true = a.v3.fitted, samples = autism.v33n.fitted, pos = 6) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v33_CN_6.png",
+       plot = a33.3, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v3.lcr, samples = autism.v33n.lcr, pos = 6) %>% 
+a33.4 <- lineup(true = a.v3.lcr, samples = autism.v33n.lcr, pos = 6) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v33_LN_6.png",
+       plot = a33.4, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ## 4th replication
@@ -2054,31 +2245,59 @@ autism.v34n.lcr <- purrr::map_dfr(1:19, function(i){
 ### Outlying observations
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v34n.fitted, pos = 2) %>%
-  ggplot(aes(index, resm_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a34.1 <- lineup(true = a.v3.fitted, samples = autism.v34n.fitted, pos = 2) %>%
+  ggplot(aes(interaction(gender, race), resm_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5) +
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v34_M_2.png", 
+  plot = a34.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v34n.fitted, pos = 2) %>%
-  ggplot(aes(index, resc_std, color = gender, shape = race)) + geom_point() +
-  facet_wrap(~.sample, ncol = 5)
+a34.2 <- lineup(true = a.v3.fitted, samples = autism.v34n.fitted, pos = 2) %>%
+  ggplot(aes(interaction(gender, race), resc_std)) + geom_boxplot() +
+  facet_wrap(~.sample, ncol = 5) +
+  ylab(NULL) + xlab(NULL) + 
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank())
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v34_C_2.png", 
+  plot = a34.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### Normality checking
 
 ```{r}
-lineup(true = a.v3.fitted, samples = autism.v34n.fitted, pos = 6) %>% 
+a34.3 <- lineup(true = a.v3.fitted, samples = autism.v34n.fitted, pos = 6) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v34_CN_6.png",
+       plot = a34.3, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = a.v3.lcr, samples = autism.v34n.lcr, pos = 6) %>% 
+a34.4 <- lineup(true = a.v3.lcr, samples = autism.v34n.lcr, pos = 6) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() +
   geom_qq_line(color = "red") +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  ylab(NULL) + xlab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/aut_v34_LN_6.png",
+       plot = a34.4, device = "png", dpi = 300, height = 12, width = 12)
 ```
 
 
