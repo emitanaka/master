@@ -546,7 +546,7 @@ s12.1 <- lineup(true = v1.sl.fitted, samples = v12.sl.sim.fitted, pos = 7) %>%
   ggplot(aes(index, resm_std, color = Subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -562,7 +562,7 @@ s12.2 <- lineup(true = v1.sl.fitted, samples = v12.sl.sim.fitted, pos = 7) %>%
   ggplot(aes(index, resc_std, color = Subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -573,10 +573,10 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
   height = 12, width = 12)
 ```
 
-```{r v12n-plo6, fig.height=6}
+```{r v12n-plo6}
 s12.3 <- lineup(true = v1.sl.fitted, samples = v12.sl.sim.fitted, pos = 9) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -590,7 +590,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v12n-plo6-lcr, fig.height=6}
 s12.4 <- lineup(true = v1.sl.lcr, samples = v12.sl.simlcr, pos = 9) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -711,7 +711,7 @@ v13.sl.simlcr <- purrr::map_dfr(1:19, function(i){
 ```{r v13n-plo2, fig.height=6}
 s13.1 <- lineup(true = v1.sl.fitted, samples = v13.sl.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -725,7 +725,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v13n-plo4, fig.height=6}
 s13.2 <- lineup(true = v1.sl.fitted, samples = v13.sl.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -739,7 +739,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v13n-plo6, fig.height=6}
 s13.3 <- lineup(true = v1.sl.fitted, samples = v13.sl.sim.fitted, pos = 4) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -754,7 +754,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v13n-plo6-lcr, fig.height=6}
 s13.4 <- lineup(true = v1.sl.lcr, samples = v13.sl.simlcr, pos = 4) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -875,7 +875,7 @@ v14.sl.simlcr <- purrr::map_dfr(1:19, function(i){
 ```{r v14n-plo2, fig.height=6}
 s14.1 <- lineup(true = v1.sl.fitted, samples = v14.sl.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -890,7 +890,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v14n-plo4, fig.height=6}
 s14.2 <- lineup(true = v1.sl.fitted, samples = v14.sl.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -904,7 +904,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v14n-plo6, fig.height=6}
 s14.3 <- lineup(true = v1.sl.fitted, samples = v14.sl.sim.fitted, pos = 4) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -919,7 +919,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v14n-plo6-lcr, fig.height=6}
 s14.4 <- lineup(true = v1.sl.lcr, samples = v14.sl.simlcr, pos = 4) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1113,7 +1113,7 @@ v21.sl.simlcr <- purrr::map_dfr(1:19, function(i){
 s21.1 <- lineup(true = v2.sl.fitted, samples = v21.sl.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + 
   geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1128,7 +1128,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 s21.2 <- lineup(true = v2.sl.fitted, samples = v21.sl.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + 
   geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1142,7 +1142,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v21n-plo6, fig.height=6}
 s21.3 <- lineup(true = v2.sl.fitted, samples = v21.sl.sim.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1156,7 +1156,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v21n-plo6-lcr, fig.height=6}
 s21.4 <- lineup(true = v2.sl.lcr, samples = v21.sl.simlcr, pos = 8) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1276,7 +1276,7 @@ v22.sl.simlcr <- purrr::map_dfr(1:19, function(i){
 ```{r v22n-plo2, fig.height=6}
 s22.1 <- lineup(true = v2.sl.fitted, samples = v22.sl.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1290,7 +1290,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v22n-plo4, fig.height=6}
 s22.2 <- lineup(true = v2.sl.fitted, samples = v22.sl.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1304,7 +1304,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v22n-plo6, fig.height=6}
 s22.3 <- lineup(true = v2.sl.fitted, samples = v22.sl.sim.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1318,7 +1318,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v22n-plo6-lcr, fig.height=6}
 s22.4 <- lineup(true = v2.sl.lcr, samples = v22.sl.simlcr, pos = 8) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) + xlab(NULL) + ylab(NULL) +
+  facet_wrap(~.sample, ncol = 5) + xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none", aspect.ratio = 1)
@@ -1438,7 +1438,7 @@ v23.sl.simlcr <- purrr::map_dfr(1:19, function(i){
 ```{r v23n-plo2, fig.height=6}
 s23.1 <- lineup(true = v2.sl.fitted, samples = v23.sl.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1452,7 +1452,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v23n-plo4, fig.height=6}
 s23.2 <- lineup(true = v2.sl.fitted, samples = v23.sl.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + 
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1466,7 +1466,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v23n-plo6, fig.height=6}
 s23.3 <- lineup(true = v2.sl.fitted, samples = v23.sl.sim.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) + xlab(NULL) + ylab(NULL) +
+  facet_wrap(~.sample, ncol = 5) + xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none", aspect.ratio = 1)
@@ -1479,7 +1479,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v23n-plo6-lcr, fig.height=6}
 s23.4 <- lineup(true = v2.sl.lcr, samples = v23.sl.simlcr, pos = 20) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1600,7 +1600,7 @@ v24.sl.simlcr <- purrr::map_dfr(1:19, function(i){
 ```{r v24n-plo2, fig.height=6}
 s24.1 <- lineup(true = v2.sl.fitted, samples = v24.sl.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + xlab(NULL) + ylab(NULL) +
+  facet_wrap(~.sample, ncol = 5) + xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
@@ -1613,7 +1613,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v24n-plo4, fig.height=6}
 s24.2 <- lineup(true = v2.sl.fitted, samples = v24.sl.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + 
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1627,7 +1627,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v24n-plo6, fig.height=6}
 s24.3 <- lineup(true = v2.sl.fitted, samples = v24.sl.sim.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1642,7 +1642,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v24n-plo6-lcr, fig.height=6}
 s24.4 <- lineup(true = v2.sl.lcr, samples = v24.sl.simlcr, pos = 20) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1799,7 +1799,7 @@ v31.sl.simlcr <- purrr::map_dfr(1:19, function(i){
 ```{r v31n-plo2, fig.height=6}
 s31.1 <- lineup(true = v3.sl.fitted, samples = v31.sl.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + 
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1813,7 +1813,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v31n-plo4, fig.height=6}
 s31.2 <- lineup(true = v3.sl.fitted, samples = v31.sl.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + 
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1827,7 +1827,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v31n-plo6, fig.height=6}
 s31.3 <- lineup(true = v3.sl.fitted, samples = v31.sl.sim.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1841,7 +1841,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v31n-plo6-lcr, fig.height=6}
 s31.4 <- lineup(true = v3.sl.lcr, samples = v31.sl.simlcr, pos = 11) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1963,7 +1963,7 @@ v32.sl.simlcr <- purrr::map_dfr(1:19, function(i){
 ```{r v32n-plo2, fig.height=6}
 s32.1 <- lineup(true = v3.sl.fitted, samples = v32.sl.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1977,7 +1977,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v32n-plo4, fig.height=6}
 s32.2 <- lineup(true = v3.sl.fitted, samples = v32.sl.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -1992,7 +1992,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v32n-plo6, fig.height=6}
 s32.3 <- lineup(true = v3.sl.fitted, samples = v32.sl.sim.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -2007,7 +2007,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v32n-plo6-lcr, fig.height=6}
 s32.4 <- lineup(true = v3.sl.lcr, samples = v32.sl.simlcr, pos = 11) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -2130,7 +2130,7 @@ s33.1 <- lineup(true = v3.sl.fitted, samples = v33.sl.sim.fitted, pos = 2) %>%
   ggplot(aes(index, resm_std, color = Subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -2145,7 +2145,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v33n-plo4, fig.height=6}
 s33.2 <- lineup(true = v3.sl.fitted, samples = v33.sl.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -2161,7 +2161,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v33n-plo6, fig.height=6}
 s33.3 <- lineup(true = v3.sl.fitted, samples = v33.sl.sim.fitted, pos = 6) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -2177,7 +2177,7 @@ true plot is identified, the conditional residual does not follow a normal distr
 ```{r v33n-plo6-lcr, fig.height=6}
 s33.4 <- lineup(true = v3.sl.lcr, samples = v33.sl.simlcr, pos = 6) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -2300,7 +2300,7 @@ v34.sl.simlcr <- purrr::map_dfr(1:19, function(i){
 ```{r v34n-plo2, fig.height=6}
 s34.1 <- lineup(true = v3.sl.fitted, samples = v34.sl.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -2315,7 +2315,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v34n-plo4, fig.height=6}
 s34.2 <- lineup(true = v3.sl.fitted, samples = v34.sl.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -2330,7 +2330,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v34n-plo6, fig.height=6}
 s34.3 <- lineup(true = v3.sl.fitted, samples = v34.sl.sim.fitted, pos = 6) %>% 
   ggplot(aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) +
+  facet_wrap(~.sample, ncol = 5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
@@ -2345,7 +2345,7 @@ ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/
 ```{r v34n-plo6-lcr, fig.height=6}
 s34.4 <- lineup(true = v3.sl.lcr, samples = v34.sl.simlcr, pos = 6) %>% 
   ggplot(aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red") +
-  facet_wrap(~.sample, nrow = 5) + 
+  facet_wrap(~.sample, ncol = 5) + 
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
