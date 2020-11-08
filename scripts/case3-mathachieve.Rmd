@@ -29,92 +29,78 @@ The variables that we are going to use:
 - Sector
 - MEANSES
 
+From the `MathAchieve` data set,
+
+- school-level variable contains
++ School
++ MEANSES
+- student-level variable contains
++ Minority
++ Sex
++ MathAch
+
 ```{r}
 data("MathAchieve")
+MathAchieve
+names(gsummary(MathAchieve,
+               from = ~School, # School specific
+               inv = T))
 summary(MathAchieve)
 ```
-```{r}
-df <- MathAchieve %>% 
-  filter(Minority == "No", Sex == "Female")
-head(df)
-length(unique(df$School))
-```
+
+As the school size is not same, we'd like to have a look at the size for each school.
 
 ```{r}
-data("MathAchSchool")
-head(MathAchSchool)
-```
+sch_size <- MathAchieve %>% group_by(School) %>% summarise(n = n(), .groups = "keep")
+sch_size_mean <- mean(sch_size$n)
 
-```{r}
-attach(df)
-mses <- tapply(SES, School, mean)
-detach(df)
+d1 <- sch_size %>% filter(n > sch_size_mean)
+#d1[d1$School == 1224,]
+d <- tibble(MathAchieve %>% filter(School %in% d1$School))
+#length(unique(d$School)) # 90 schools
+#str(d) # 4838
+#d %>% group_by(School) %>% summarise(n = n())
 ```
 
 
 ```{r}
-Bryk <- as.data.frame(df[,c("School", "SES", "MathAch")])
-Bryk$meanses <- mses[as.character(Bryk$School)]
-Bryk$cses <- Bryk$SES - Bryk$meanses
-sector <- MathAchSchool$Sector
-names(sector) <- row.names(MathAchSchool)
-Bryk$Sector <- sector[as.character(Bryk$School)]
-Bryk <- Bryk %>% group_by(School) %>% dplyr::mutate(size = n())
-dat <- Bryk %>% filter(size>min(Bryk$size))
-length(unique(dat$School))
-dat <- dat %>% mutate(Sector = ifelse(Sector == "Public", 0, 1))
-colnames(dat)[3] <- c("y")
+ggplot(d, aes(SES, MathAch)) + geom_point() + facet_wrap_paginate(~School, nrow = 5, ncol = 5, page = 4) + geom_smooth(method = "lm", se = F)
 ```
 
-```{r}
-testrandom <- plyr::ddply(dat, .(School), function(x) {
-  m <- lm(y ~ SES + Sector, data = x)
-  data.frame(x, fitted = fitted(m))	
-})
-
-ggplot(testrandom, aes(SES+Sector, fitted, group = School)) + geom_line()
-```
 
 
 ```{r}
-# random intercept and random slope
-ma.mod1 <- lmer(y ~ SES + Sector + (SES|School), data = dat)
-# independent random effects
-ma.mod2 <- lmer(y ~ SES*cses + Sector*cses + (cses -1 |School) + (1|School), data = dat)
-#summary(slmod1)
-#summary(slmod2)
-
-set.seed(987654321)
-ma.mod2.sims  <- simulate(ma.mod2, nsim = 19)
-ma.mod2.refit <- lapply(ma.mod2.sims, refit, object = ma.mod2)
-ma.mod2.sim.ranef <- lapply(ma.mod2.refit, function(x) ranef(x)[[1]])
-ma.mod2.sim.ranef <- do.call("rbind", ma.mod2.sim.ranef)
-ma.mod2.sim.ranef$.n <- rownames(ma.mod2.sim.ranef)
-ma.mod2.sim.ranef$.n <- as.numeric(str_extract(ma.mod2.sim.ranef$.n, "\\d+"))
-true.ma.mod1.ranef <- ranef(ma.mod1)$School
-ma_df <- nullabor:::add_true(ma.mod2.sim.ranef, true.ma.mod1.ranef, pos = 9)
-ggplot(data = ma_df, aes(x = `(Intercept)`, y = cses)) + 
-  geom_point(alpha = 0.4) +
-  geom_smooth(method = "lm", se = FALSE, alpha = 0.4) +
-  facet_wrap( ~ .sample, ncol=5) + 
-  xlab(NULL) + 
-  ylab(NULL)
+ggplot(d, aes(Sex, MathAch)) + geom_boxplot()
 ```
 
-Hence, the `mod1` should be used.
+- Males' math score is greater than females'
+
+```{r}
+ggplot(d, aes(Minority, MathAch)) + geom_boxplot()
+```
+
+- No minority tends to have higher scores
+
+```{r}
+colnames(d)[5] <- c("y")
+ma.mod <- lmer(y ~ Minority + SES + Sex + (SES|School), data = d)
+
+all(getME(ma.mod, "X") == model.matrix(~Minority + SES + Sex, data = d))
+all(getME(ma.mod, "Z") == dim(model.matrix(~-1 + School, data = d)))
+```
 
 ```{r fitfn}
 extract.fitted.mod <- function(mod, data){
-  N <- nrow(data)
+  N <- getME(mod, "n")
   schools <- unique(data$School)
   nschools <- length(schools)
 
-  y <- data$y
+  y <- getME(mod, "y")
   X <- getME(mod, "X")
   beta <- fixef(mod)
   Z <- getME(mod, "Z")
   u <- c(ranef(mod)$School[,1], ranef(mod)$School[,2])
-  q <- length(u)
+  q <- getME(mod, "q")
 
   vc <- as.data.frame(VarCorr(mod))
   R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
@@ -149,10 +135,11 @@ extract.fitted.mod <- function(mod, data){
 ```
 
 ```{r}
-ma.fitted <- extract.fitted.mod(ma.mod1, dat)
+ma.fitted <- extract.fitted.mod(ma.mod, d)
 ```
 
 ```{r}
+ggplot(ma.fitted, aes(index, resm_std)) + geom_point()
 ggplot(ma.fitted, aes(index, resc_std)) + geom_point()
 ggplot(ma.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line()
 ```

@@ -7,18 +7,18 @@ source("questions.R")
 sidebar <- dashboardSidebar(
   hr(),
   sidebarMenu(
-    id="tab",
+    id="tabs",
     menuItem("About you", tabName = "About_you", icon = icon("id-card")),
     menuItem("Questions", tabName = "Questions", icon = icon("images")),
     menuItem("Thank you", tabName = "Thank_you", icon = icon("smile-wink"))
   ),
   hr(),
   conditionalPanel(
-    condition = "input.tab == 'Questions'",
+    condition = "input.tabs == 'Questions'",
     fluidRow(
       column(width = 1),
       column(width = 12,
-             h4("Questions"),
+             h4("Questions:"),
              hr(),
              questions$scene,
              div(

@@ -2290,7 +2290,7 @@ l31.4 <- lineup(true = v3.lin.lcr, samples = v31.lin.sim.lcr, pos = 11) %>%
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
 
 ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v31_4.png", 
   plot = l31.4, device = "png", dpi = 300,

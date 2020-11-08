@@ -15,6 +15,7 @@ library(tidyr)
 library(purrr)
 library(nullabor)
 library(ggforce)
+library(nlme)
 knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE#,
@@ -29,9 +30,10 @@ There are 945 observations with 231 subjects that contains patients' age and the
 data("Blackmore")
 head(Blackmore)
 skimr::skim(Blackmore)
-Blackmore <- Blackmore[!Blackmore$exercise == 0,]
+#Blackmore <- Blackmore[!Blackmore$exercise == 0,]
 Blackmore$log.exercise <- log(Blackmore$exercise + 5/60, 2)
 Blackmore$age <- as.integer(Blackmore$age)
+length(unique(Blackmore$subject))
 ```
 
 There are 93 unqiue subjects in the control group. And there are 359 observations in the control group.
@@ -44,10 +46,12 @@ length(unique(control$subject))
 control.id<- unique(control$subject)
 ```
 
+
 ```{r age-log.exercise}
 ggplot(Blackmore, aes(age, log.exercise, color = group)) + 
   geom_point() + 
-  facet_wrap_paginate(~ subject, nrow = 4, ncol = 4, page = 13)
+  facet_wrap_paginate(~ subject, nrow = 5, ncol = 5, page = 8) + 
+  geom_smooth(method = "lm", se = F)
 ```
 
 
@@ -55,62 +59,77 @@ ggplot(Blackmore, aes(age, log.exercise, color = group)) +
 ggplot(Blackmore, aes(group, log.exercise)) + geom_boxplot() + geom_beeswarm()
 ```
 
+
 From the plot we can see that the intercept and slope for different subjects are different.
 
-## Model 1 without zero values in exercise
+## Model 1
 
 ```{r}
-fit <- lmer(log.exercise ~ age*group + (age|subject), data = Blackmore)
+fit <- lmer(log.exercise ~ age*group  + (age + I(age^2)|subject), data = Blackmore)
 
 summary(fit)
 ```
 
 ```{r}
-N <- nrow(Blackmore)
-subjects <- unique(Blackmore$subject)
-
-y <- Blackmore$log.exercise
-X <- model.matrix(~ age*group, data = Blackmore)
-beta <- fixef(fit)
-Z <- model.matrix(~ -1 + subject + subject:age, data = Blackmore)
-u <- c(ranef(fit)$subject[,1], ranef(fit)$subject[,2])
-q <- length(u)
-
-vc <- as.data.frame(VarCorr(fit))
-R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
-G1 <- vc$vcov[vc$grp == 'subject'][1] * diag(q/2)
-G2 <- vc$vcov[vc$grp == 'subject'][2] * diag(q/2)
-#G3 <- vc$vcov[vc$grp == 'subject'][3] * diag(q/3)
-G <- Matrix::bdiag(G1, G2)
-G[lower.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
-G[upper.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
-
-#G[232:462, 1:231] <- vc$vcov[vc$grp == 'subject'][4]
-#G[1:231, 232:462] <- vc$vcov[vc$grp == 'subject'][4]
-#G[463:693, 1:231] <- vc$vcov[vc$grp == 'subject'][5]
-#G[1:231, 463:693] <- vc$vcov[vc$grp == 'subject'][5]
-#G[463:693, 232:462] <- vc$vcov[vc$grp == 'subject'][6]
-#G[232:462, 463:693] <- vc$vcov[vc$grp == 'subject'][6]
-
-Sigma <- Z %*% G %*% t(Z) + R 
-Sigma_inv <- solve(Sigma)
-
-P <- Sigma_inv - Sigma_inv %*% X %*% vcov(fit) %*% t(X) %*% Sigma_inv
-
-varMargRes <- Sigma - X %*% vcov(fit) %*% t(X) 
-varCondRes <- R %*% P %*% R  
-varU <- G - G %*% t(Z) %*% P %*% Z %*% G
-
-fit_bl <- Blackmore %>% 
-  mutate(fitted = as.vector(X %*% beta),
-         resm = y - fitted,
-         resc = as.vector(y - fitted - Z %*% u),
-         index = 1:n()) %>% 
-  rowwise() %>% 
-  mutate(resm_std = resm/sqrt(diag(varMargRes)[index]),
-         resc_std = resc/sqrt(diag(varCondRes)[index])) %>% 
-  ungroup()
+all(getME(fit, "X") == model.matrix(~ age*group, data = Blackmore))
+all(getME(fit, "Z") == model.matrix(~ -1 + subject:age + subject, data = Blackmore))
+all(getME(fit, "y") == Blackmore$log.exercise)
 ```
+
+
+```{r}
+bl.extract.fitted.mod <- function(mod, data){
+  N <- getME(mod, "n")
+  subjects <- unique(data$subject)
+  
+  y <- getME(mod, "y")
+  X <- model.matrix(~ age*group, data = Blackmore)
+  beta <- fixef(fit)
+  Z <- model.matrix(~ -1 + subject + subject:age, data = Blackmore)
+  u <- c(ranef(mod)$subject[,1], ranef(mod)$subject[,2])
+  q <- getME(mod, "q")
+  
+  vc <- as.data.frame(VarCorr(fit))
+  R <- vc$vcov[vc$grp == 'Residual'] * diag(N)
+  G1 <- vc$vcov[vc$grp == 'subject'][1] * diag(q/2)
+  G2 <- vc$vcov[vc$grp == 'subject'][2] * diag(q/2)
+  #G3 <- vc$vcov[vc$grp == 'subject'][3] * diag(q/3)
+  G <- Matrix::bdiag(G1, G2)
+  G[lower.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+  G[upper.tri(G)] <- vc$vcov[vc$grp == 'subject'][3]
+  
+  #G[232:462, 1:231] <- vc$vcov[vc$grp == 'subject'][4]
+  #G[1:231, 232:462] <- vc$vcov[vc$grp == 'subject'][4]
+  #G[463:693, 1:231] <- vc$vcov[vc$grp == 'subject'][5]
+  #G[1:231, 463:693] <- vc$vcov[vc$grp == 'subject'][5]
+  #G[463:693, 232:462] <- vc$vcov[vc$grp == 'subject'][6]
+  #G[232:462, 463:693] <- vc$vcov[vc$grp == 'subject'][6]
+  
+  Sigma <- Z %*% G %*% t(Z) + R 
+  Sigma_inv <- solve(Sigma)
+  
+  P <- Sigma_inv - Sigma_inv %*% X %*% vcov(fit) %*% t(X) %*% Sigma_inv
+  
+  varMargRes <- Sigma - X %*% vcov(mod) %*% t(X) 
+  varCondRes <- R %*% P %*% R  
+  varU <- G - G %*% t(Z) %*% P %*% Z %*% G
+  
+  fit_bl <- data %>% 
+    mutate(fitted = as.vector(X %*% beta),
+           resm = y - fitted,
+           resc = as.vector(y - fitted - Z %*% u),
+           index = 1:n()) %>% 
+    rowwise() %>% 
+    mutate(resm_std = resm/sqrt(diag(varMargRes)[index]),
+           resc_std = resc/sqrt(diag(varCondRes)[index])) %>% 
+    ungroup()
+}
+```
+
+```{r}
+bl.extract.fitted.mod(fit, Blackmore)
+```
+
 
 ### Plot 1
 ```{r}
