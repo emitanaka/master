@@ -14,7 +14,7 @@ library(ggbeeswarm)
 library(colorspace)
 library(dplyr)
 library(nullabor)
-library(mvtnorm)
+library(MASS)
 knitr::opts_chunk$set(
   message = FALSE,
   warning = FALSE#,
@@ -388,7 +388,7 @@ ggplot(lin.unit, aes(sample = Mi)) +
 ## *Version 1 - "best" model
 
 ```{r v1data}
-set.seed(1234)
+set.seed(3526)
 
 N <- nrow(df)
 nscenario <- length(unique(df$scenario))
@@ -570,15 +570,27 @@ v11.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
 lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(interaction(attitude, gender), resm_std)) +
   geom_boxplot() +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ```
 
 ```{r v11n-plot21}
-lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 7) %>% 
+l11.1 <- lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v11_1.png", 
+  plot = l11.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v11n-plot22}
@@ -591,7 +603,7 @@ lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 7) %>%
 
 
 ```{r v11n-plot4}
-lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 7) %>% 
+l11.2 <- lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -600,6 +612,10 @@ lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 7) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v11_2.png", 
+  plot = l11.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v11n-plot5}
@@ -611,18 +627,22 @@ lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v11n-plot6}
-lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>% 
+l11.3 <- lineup(true = v1.lin.fitted, samples = v11.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v11_3.png", 
+  plot = l11.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r}
-lineup(true = v1.lin.lcr, samples = v11.lin.sim.lcr, pos = 9) %>% 
+l11.4 <- lineup(true = v1.lin.lcr, samples = v11.lin.sim.lcr, pos = 9) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -630,6 +650,10 @@ lineup(true = v1.lin.lcr, samples = v11.lin.sim.lcr, pos = 9) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v11_4.png", 
+  plot = l11.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 
@@ -760,16 +784,24 @@ lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>%
 ```
 
 ```{r v12n-plot2}
-lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>% 
+l12.1 <- lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v12_1.png", 
+  plot = l12.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 
 ```{r v12n-plot4}
-lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>% 
+l12.2 <- lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -778,6 +810,10 @@ lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 7) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v12_2.png", 
+  plot = l12.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v12n-plot5}
@@ -789,18 +825,22 @@ lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v12n-plot6}
-lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 9) %>% 
+l12.3 <- lineup(true = v1.lin.fitted, samples = v12.lin.sim.fitted, pos = 9) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v12_3.png", 
+  plot = l12.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v12n-plot-lcr}
-lineup(true = v1.lin.lcr, samples = v12.lin.sim.lcr, pos = 9) %>% 
+l12.4 <- lineup(true = v1.lin.lcr, samples = v12.lin.sim.lcr, pos = 9) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -808,6 +848,10 @@ lineup(true = v1.lin.lcr, samples = v12.lin.sim.lcr, pos = 9) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v12_4.png", 
+  plot = l12.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### 3st replication
@@ -937,16 +981,24 @@ lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v13n-plot21}
-lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 13) %>% 
+l13.1 <- lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v13_1.png", 
+  plot = l13.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 
 ```{r v13n-plot4}
-lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 13) %>% 
+l13.2 <- lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -955,6 +1007,10 @@ lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 13) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v13_2.png", 
+  plot = l13.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v13n-plot5}
@@ -966,25 +1022,33 @@ lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v13n-plot6}
-lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 4) %>% 
+l13.3 <- lineup(true = v1.lin.fitted, samples = v13.lin.sim.fitted, pos = 4) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v13_3.png", 
+  plot = l13.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v13n-plot-lcr}
-lineup(true = v1.lin.lcr, samples = v13.lin.sim.lcr, pos = 4) %>% 
+l13.4 <- lineup(true = v1.lin.lcr, samples = v13.lin.sim.lcr, pos = 4) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v13_4.png", 
+  plot = l13.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### 4th replication
@@ -1114,15 +1178,23 @@ lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v14n-plot21}
-lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 13) %>% 
+l14.1 <- lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v14_1.png", 
+  plot = l14.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v14n-plot4}
-lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 13) %>% 
+l14.2 <- lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 13) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -1131,6 +1203,10 @@ lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 13) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v14_2.png", 
+  plot = l14.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 - the conditional residual plot is less able to be identified than the marginal residiual
@@ -1144,25 +1220,33 @@ lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 9) %>%
 ```
 
 ```{r v14n-plot6}
-lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 4) %>% 
+l14.3 <- lineup(true = v1.lin.fitted, samples = v14.lin.sim.fitted, pos = 4) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v14_3.png", 
+  plot = l14.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v14n-plot-lcr}
-lineup(true = v1.lin.lcr, samples = v14.lin.sim.lcr, pos = 4) %>% 
+l14.4 <- lineup(true = v1.lin.lcr, samples = v14.lin.sim.lcr, pos = 4) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v14_4.png", 
+  plot = l14.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 - Overall, it maybe the case that the least confounded residual is easier to be identified compared to standardised conditional residual based on version 1.
@@ -1333,16 +1417,24 @@ lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 9) %>%
 ##### Outlying observations
 
 ```{r v21n-plot21}
-lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 5) %>% 
+l21.1 <- lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v21_1.png", 
+  plot = l21.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 
 ```{r v21n-plot4}
-lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 5) %>% 
+l21.2 <- lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -1351,30 +1443,42 @@ lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 5) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v21_2.png", 
+  plot = l21.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ##### Checking normality
 
 ```{r v21n-plot6}
-lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 8) %>% 
+l21.3 <- lineup(true = v2.lin.fitted, samples = v21.lin.sim.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v21_3.png", 
+  plot = l21.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v21n-plot6-lcr}
-lineup(true = v2.lin.lcr, samples = v21.lin.sim.lcr, pos = 8) %>% 
+l21.4 <- lineup(true = v2.lin.lcr, samples = v21.lin.sim.lcr, pos = 8) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v21_4.png", 
+  plot = l21.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### 2nd replication
@@ -1504,15 +1608,23 @@ lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 9) %>%
 ##### Outlying observations
 
 ```{r v22n-plot22}
-lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 5) %>% 
+l22.1 <- lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v22_1.png", 
+  plot = l22.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v22n-plot4}
-lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 5) %>% 
+l22.2 <- lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 5) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -1521,30 +1633,42 @@ lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 5) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v22_2.png", 
+  plot = l22.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ##### Checking normality
 
 ```{r v21n-plot6}
-lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 8) %>% 
+l22.3 <- lineup(true = v2.lin.fitted, samples = v22.lin.sim.fitted, pos = 8) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v22_3.png", 
+  plot = l22.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v21n-plot6-lcr}
-lineup(true = v2.lin.lcr, samples = v22.lin.sim.lcr, pos = 8) %>% 
+l22.4 <- lineup(true = v2.lin.lcr, samples = v22.lin.sim.lcr, pos = 8) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v22_4.png", 
+  plot = l22.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### 3rd replication
@@ -1675,41 +1799,65 @@ lineup(true = v2.lin.fitted, samples = v23.lin.sim.fitted, pos = 9) %>%
 ##### Presence of outlying observations
 
 ```{r v23n-plot21}
-lineup(true = v2.lin.fitted, samples = v23.lin.sim.fitted, pos = 15) %>% 
+l23.1 <- lineup(true = v2.lin.fitted, samples = v23.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v23_1.png", 
+  plot = l23.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v23n-plot}
-lineup(true = v2.lin.fitted, samples = v23.lin.sim.fitted, pos = 15) %>% 
+l23.2 <- lineup(true = v2.lin.fitted, samples = v23.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = subject)) + geom_point() + 
   geom_hline(yintercept = 0) + 
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v23_2.png", 
+  plot = l23.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 ##### Checking normality
 
 ```{r v23n-plot6}
-lineup(true = v2.lin.fitted, samples = v23.lin.sim.fitted, pos = 20) %>% 
+l23.3 <- lineup(true = v2.lin.fitted, samples = v23.lin.sim.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v23_3.png", 
+  plot = l23.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v21n-plot6-lcr}
-lineup(true = v2.lin.lcr, samples = v23.lin.sim.lcr, pos = 20) %>% 
+l23.4 <- lineup(true = v2.lin.lcr, samples = v23.lin.sim.lcr, pos = 20) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v23_4.png", 
+  plot = l23.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ### 4th replication
@@ -1839,42 +1987,66 @@ lineup(true = v2.lin.fitted, samples = v24.lin.sim.fitted, pos = 9) %>%
 
 ##### Presence of outlying observations
 ```{r v21n-plot21}
-lineup(true = v2.lin.fitted, samples = v24.lin.sim.fitted, pos = 15) %>% 
+l24.1 <- lineup(true = v2.lin.fitted, samples = v24.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v24_1.png", 
+  plot = l24.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v24n-plot}
-lineup(true = v2.lin.fitted, samples = v24.lin.sim.fitted, pos = 15) %>% 
+l24.2 <- lineup(true = v2.lin.fitted, samples = v24.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = subject)) + geom_point() + 
   geom_hline(yintercept = 0) + 
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v24_2.png", 
+  plot = l24.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ##### Checking normality
 
 ```{r v24n-plot6}
-lineup(true = v2.lin.fitted, samples = v24.lin.sim.fitted, pos = 20) %>% 
+l24.3 <- lineup(true = v2.lin.fitted, samples = v24.lin.sim.fitted, pos = 20) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v24_3.png", 
+  plot = l24.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v24n-plot6-lcr}
-lineup(true = v2.lin.lcr, samples = v24.lin.sim.lcr, pos = 20) %>% 
+l24.4 <- lineup(true = v2.lin.lcr, samples = v24.lin.sim.lcr, pos = 20) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v24_4.png", 
+  plot = l24.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ## Version 3
@@ -2062,15 +2234,23 @@ v31.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
 ##### Detecting outlying observations
 
 ```{r v31n-plot21, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v31.lin.sim.fitted, pos = 15) %>% 
+l31.1 <- lineup(true = v3.lin.fitted, samples = v31.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v31_1.png", 
+  plot = l31.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v31n-plot4, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v31.lin.sim.fitted, pos = 15) %>% 
+l31.2 <- lineup(true = v3.lin.fitted, samples = v31.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -2079,23 +2259,31 @@ lineup(true = v3.lin.fitted, samples = v31.lin.sim.fitted, pos = 15) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v31_2.png", 
+  plot = l31.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ##### Checking normality
 
 ```{r v31n-plot6, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v31.lin.sim.fitted, pos = 11) %>% 
+l31.3 <- lineup(true = v3.lin.fitted, samples = v31.lin.sim.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v31_3.png", 
+  plot = l31.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v32n-plot6-lcr, fig.height=6}
-lineup(true = v3.lin.lcr, samples = v31.lin.sim.lcr, pos = 11) %>% 
+l31.4 <- lineup(true = v3.lin.lcr, samples = v31.lin.sim.lcr, pos = 11) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
@@ -2103,6 +2291,10 @@ lineup(true = v3.lin.lcr, samples = v31.lin.sim.lcr, pos = 11) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v31_4.png", 
+  plot = l31.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ## 2nd replication
@@ -2227,15 +2419,23 @@ v32.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
 ##### Detecting outlying observations
 
 ```{r v32n-plot21, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v32.lin.sim.fitted, pos = 15) %>% 
+l32.1 <- lineup(true = v3.lin.fitted, samples = v32.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v32_1.png", 
+  plot = l32.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v32n-plot4, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v32.lin.sim.fitted, pos = 15) %>% 
+l32.2 <- lineup(true = v3.lin.fitted, samples = v32.lin.sim.fitted, pos = 15) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -2244,30 +2444,42 @@ lineup(true = v3.lin.fitted, samples = v32.lin.sim.fitted, pos = 15) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v32_2.png", 
+  plot = l32.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ##### Checking normality
 
 ```{r v31n-plot6, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v32.lin.sim.fitted, pos = 11) %>% 
+l32.3 <- lineup(true = v3.lin.fitted, samples = v32.lin.sim.fitted, pos = 11) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v32_3.png", 
+  plot = l32.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v32n-plot6-lcr, fig.height=6}
-lineup(true = v3.lin.lcr, samples = v32.lin.sim.lcr, pos = 11) %>% 
+l32.4 <- lineup(true = v3.lin.lcr, samples = v32.lin.sim.lcr, pos = 11) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v32_4.png", 
+  plot = l32.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ## 3rd replication
@@ -2390,16 +2602,24 @@ v33.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
 
 ##### Detecting outlying observations
 
-```{r v32n-plot21, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v33.lin.sim.fitted, pos = 2) %>% 
+```{r v33n-plot21, fig.height=6}
+l33.1 <- lineup(true = v3.lin.fitted, samples = v33.lin.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v33_1.png", 
+  plot = l33.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v32n-plot4, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v33.lin.sim.fitted, pos = 2) %>% 
+l33.2 <- lineup(true = v3.lin.fitted, samples = v33.lin.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -2408,30 +2628,42 @@ lineup(true = v3.lin.fitted, samples = v33.lin.sim.fitted, pos = 2) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v33_2.png", 
+  plot = l33.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ##### Checking normality
 
 ```{r v31n-plot6, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v33.lin.sim.fitted, pos = 6) %>% 
+l33.3 <- lineup(true = v3.lin.fitted, samples = v33.lin.sim.fitted, pos = 6) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v33_3.png", 
+  plot = l33.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v32n-plot6-lcr, fig.height=6}
-lineup(true = v3.lin.lcr, samples = v33.lin.sim.lcr, pos = 6) %>% 
+l33.4 <- lineup(true = v3.lin.lcr, samples = v33.lin.sim.lcr, pos = 6) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v33_4.png", 
+  plot = l33.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ## 4th replication
@@ -2555,15 +2787,23 @@ v34.lin.sim.lcr <- purrr::map_dfr(1:19, function(i){
 ##### Detecting outlying observations
 
 ```{r v32n-plot21, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v34.lin.sim.fitted, pos = 2) %>% 
+l34.1 <- lineup(true = v3.lin.fitted, samples = v34.lin.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resm_std, color = subject)) +
   geom_point() +
   geom_hline(yintercept = 0) +
-  facet_wrap(~.sample, ncol = 5)
+  facet_wrap(~.sample, ncol = 5) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v34_1.png", 
+  plot = l34.1, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v32n-plot4, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v34.lin.sim.fitted, pos = 2) %>% 
+l34.2 <- lineup(true = v3.lin.fitted, samples = v34.lin.sim.fitted, pos = 2) %>% 
   ggplot(aes(index, resc_std, color = subject)) + 
   geom_point() + 
   geom_hline(yintercept = 0) +
@@ -2572,30 +2812,42 @@ lineup(true = v3.lin.fitted, samples = v34.lin.sim.fitted, pos = 2) %>%
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
         legend.position="none")
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v34_2.png", 
+  plot = l34.2, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ##### Checking normality
 
 ```{r v31n-plot6, fig.height=6}
-lineup(true = v3.lin.fitted, samples = v34.lin.sim.fitted, pos = 6) %>% 
+l34.3 <- lineup(true = v3.lin.fitted, samples = v34.lin.sim.fitted, pos = 6) %>% 
   ggplot(aes(sample = resc_std)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v34_3.png", 
+  plot = l34.3, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 
 ```{r v32n-plot6-lcr, fig.height=6}
-lineup(true = v3.lin.lcr, samples = v34.lin.sim.lcr, pos = 6) %>% 
+l34.4 <- lineup(true = v3.lin.lcr, samples = v34.lin.sim.lcr, pos = 6) %>% 
   ggplot(aes(sample = reslc_lin)) + 
   geom_qq() + geom_qq_line(color = "red") +
   facet_wrap( ~ .sample, ncol=5) +
   xlab(NULL) + ylab(NULL) +
   theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
         axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
-        legend.position="none")
+        legend.position="none", aspect.ratio = 1)
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/figures/lineups/lin_v34_4.png", 
+  plot = l34.4, device = "png", dpi = 300,
+  height = 12, width = 12)
 ```
 ```
 
