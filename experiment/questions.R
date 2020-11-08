@@ -18,8 +18,6 @@ questions <- surveyQuestions(
       tags$b("By selecting the consent button below, you are indicating that you:"),
       p("-	Have read and understood the information document regarding this research project."),
       p("-	Have had any questions answered to your satisfaction."),
-      p("-	Understand that if you have any additional questions you can contact the research team."),
-      p("-	Understand that you are free to withdraw without comment or penalty."),
       radioButtons(inputId = "consent", label = "Do you consent to your responses being collected?", 
                    choices = c("Yes, I consent to my responses being used for research purposes and allow them to be published online in a de-identified form." = "Consented",
                                "No, I do not consent to my responses being used for research purposes and allow them to be published online in a de-identified form." = "No Consent"),
@@ -55,13 +53,12 @@ questions <- surveyQuestions(
                                  "55+" = "55+",
                                  "Other" =  "Other"), 
                   selected = NA),
-      # Question 4, Australia
-      selectInput("australia",
-                  "Have you lived in Australia?",
+      # Question 4, Econometrics
+      selectInput("econometrics",
+                  "Have you studied any subjects for Econometrics or Statistics?",
                   choices = list("Choose one" = NA, 
                                  "Yes"   = "Yes",
-                                 "No"    = "No", 
-                                 "Other" = "Other"), 
+                                 "No"    = "No"), 
                   selected = NA) #,
       # # Question 5, email
       # textInput("email", "You will be able to see the results and analysis online at: https://github.com/srkobakian/experiment. Provide a contact email address if you would like to be sent the results of the survey.", 
@@ -99,10 +96,10 @@ questions <- surveyQuestions(
                    "What makes your chosen map different?:",
                    choices = list(
                      "None of these reasons" = 0,
-                     "Clusters of colour" = "clusters",
-                     "Colour trend across the areas" = "trend",
-                     "Big differences between neighbouring areas" = "hotspots",
-                     "All areas have similar colours" = "consistent"), selected = 0),
+                     "Outliers" = "outliers",
+                     "Trend " = "trend",
+                     "Asymmetry" = "asymmetry",
+                     "Consistent" = "consistent"), selected = 0),
       # Question 3, certainty around their choice
       sliderInput("certainty", "How certain are you that the chosen map is different? 
                                   1 = Very uncertain, 3 = Neutral, 5 = Very certain",
