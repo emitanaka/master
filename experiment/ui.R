@@ -33,7 +33,7 @@ sidebar <- dashboardSidebar(
 shinyUI(
   dashboardPage(
     dashboardHeader(
-      title = "reading maps",
+      title = "reading plots",
       tags$li(class = "dropdown", actionLink("btn_export", span(icon("save"), "Submit Survey")))
   ),  
     sidebar,
