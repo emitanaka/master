@@ -1,9 +1,11 @@
 library(shiny)
 library(shinydashboard)
 library(googlesheets4)
+library(rsconnect)
 library(purrr)
 library(agricolae) # used for Latin Square Design
 questions <- readRDS("data/questions.Rds")
+
 
 getInputID <- function(input){
   if(!inherits(input, "shiny.tag")){

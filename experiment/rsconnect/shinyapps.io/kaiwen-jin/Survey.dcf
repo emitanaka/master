@@ -1,0 +1,12 @@
+name: Survey
+title: Survey
+username:
+account: kaiwen-jin
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 3199307
+bundleId: 3840448
+url: https://kaiwen-jin.shinyapps.io/Survey/
+when: 1604975505.25903
+asMultiple: FALSE
+asStatic: FALSE
