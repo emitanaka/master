@@ -25,8 +25,14 @@ shinyServer(
     # check connection to google sheet
     
     sheet <- tryCatch({
-      gs4_auth(email = "kjin7@student.monash.edu", 
-               scopes = "https://www.googleapis.com/auth/spreadsheets")
+      
+      sheets_auth(
+        cache = ".secrets",
+        email = "kjin7@student.monash.edu",
+        token = "data/authentication.rds"
+      )
+      #gs4_auth(email = "kjin7@student.monash.edu", 
+               #scopes = "https://www.googleapis.com/auth/spreadsheets")
       sheet <- gs4_get("1JcmIB5dOi7qkArfGawTkOIVFyKMOU-xxHZRuV_7Kzlw")
     }, error = function(e){
       message("Access has not been granted, please try again in 5 minutes.")
