@@ -1,4 +1,3 @@
-
 surveyQuestions <- function(demographics, scene){
   structure(
     list(demographics = demographics, scene = scene),
@@ -92,14 +91,14 @@ questions <- surveyQuestions(
                                  "20" = 20
                   ), selected = 0),
       # Question 2, reason for their choice
-      radioButtons("reason",
-                   "What makes your chosen map different?:",
-                   choices = list(
-                     "None of these reasons" = 0,
-                     "Outliers" = "outliers",
-                     "Trend " = "trend",
-                     "Asymmetry" = "asymmetry",
-                     "Consistent" = "consistent"), selected = 0),
+      #radioButtons("reason",
+                   #"What makes your chosen map different?:",
+                  # choices = list(
+                  #   "None of these reasons" = 0,
+                   #  "Outliers" = "outliers",
+                   #  "Trend " = "trend",
+                   #  "Asymmetry" = "asymmetry",
+                   #  "Consistent" = "consistent"), selected = 0),
       # Question 3, certainty around their choice
       sliderInput("certainty", "How certain are you that the chosen map is different? 
                                   1 = Very uncertain, 3 = Neutral, 5 = Very certain",

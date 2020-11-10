@@ -1,6 +1,7 @@
 library(shiny)
 library(shinydashboard)
 library(googlesheets4)
+library(googledrive)
 library(rsconnect)
 library(purrr)
 library(agricolae) # used for Latin Square Design
@@ -24,7 +25,8 @@ shinyServer(
     # check connection to google sheet
     
     sheet <- tryCatch({
-      gs4_auth("data/authentication.rds")
+      gs4_auth(email = "kjin7@student.monash.edu", 
+               scopes = "https://www.googleapis.com/auth/spreadsheets")
       sheet <- gs4_get("1JcmIB5dOi7qkArfGawTkOIVFyKMOU-xxHZRuV_7Kzlw")
     }, error = function(e){
       message("Access has not been granted, please try again in 5 minutes.")
@@ -117,7 +119,7 @@ shinyServer(
     current_img <- reactive({
       image_list[v$imageNum]
     })
-  
+    
     output$out_img <- renderImage({
       list(src = current_img(), id = "taipan_current_img")
     }, deleteFile = F)
@@ -218,7 +220,7 @@ shinyServer(
       box(
         div(
           p("Thank you for your participation!"),
-          p("Please submit your completed survey.")
+          p("Now you can close the page.")
         ),
         width = 12,
         background = "orange"
@@ -266,8 +268,6 @@ shinyServer(
         v$submitted <-  T
       }
     })
-  
+    
   }
 )
-
-# Run app ---

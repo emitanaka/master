@@ -5,8 +5,9 @@ account: kaiwen-jin
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 3199307
-bundleId: 3840448
+bundleId: 3841686
 url: https://kaiwen-jin.shinyapps.io/Survey/
-when: 1604975505.25903
+when: 1604992544.15155
 asMultiple: FALSE
 asStatic: FALSE
+ignoredFiles: ex.R|Experimental design diagram.png|.secrets/cd26ed5dc626f11802a652e81d02762e_kjin7@student.monash.edu
