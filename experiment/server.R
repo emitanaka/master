@@ -26,7 +26,7 @@ shinyServer(
     
     sheet <- tryCatch({
       
-      sheets_auth(
+      gs4_auth(
         cache = ".secrets",
         email = "kjin7@student.monash.edu",
         token = "data/authentication.rds"
