@@ -25,19 +25,36 @@ library(xaringanthemer)
 style_mono_accent(base_color = "#43418A")
 ```
 
----
-class: center, middle
-
-# xaringan
-
-### /ʃæ.'riŋ.ɡæn/
-
----
+background-image: url(hypothesis_test.png)
+background-size: contain
 class: inverse, center, middle
 
-# General motivation
-
 ---
+## Data
+
+--
+- Linguistic study case
+  - The data contains 84 observations on the voice pitch (or frequency) from 6 subjects (3 females and 3 males) under 7 scenarios with 2 attitudes (informal or polite).
+
+--
+- Sleep deprivation study case
+  - Average reaction time per day for subjects restricted to 3 hours of sleep per night for 10 days.
+  - It contains 180 observations with 3 variables
+      + Reaction
+      + Days
+      + Subject
+--
+- Autism study case
+  - 155 children between the ages of 2 and 13 who were diagnosed with either autism spectrum disorder or non-spectrum developmental delays at age 2.
+      - `childid`: Child ID
+      - `sicdegp`: Sequenced Inventory of Communication Development group (an assessment of expressive language development) with levels low, mod, and high
+      - `age2`: Age (in years) centred around age 2 (age at diagnosis)
+      - `vsae`: Vineland Socialization Age Equivalent
+      - `gender`: Child's gender, female and male
+      - `race`: Child's race, white and non-white
+      - `bestest2`: Diagnosis at age 2, autism and pdd
+---
+
 class: inverse, center, middle
 
 # Approach and Method
