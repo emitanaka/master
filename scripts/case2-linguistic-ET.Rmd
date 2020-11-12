@@ -429,7 +429,11 @@ v1.lin.lcr <- lin.extract.lcr.mod(v1.lin.mod, v1.lin)
 # Data plots
 
 ```{r v1-plots}
-ggplot(v1.lin.fitted, aes(index, resm_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
+ggplot(v1.lin.fitted, aes(index, resm_std, color = subject)) + geom_point() + geom_hline(yintercept = 0) +
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ggplot(v1.lin.fitted, aes(index, resc_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
 ggplot(v1.lin.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
 ggplot(v1.lin.lcr, aes(sample = reslc_lin)) + geom_qq() + geom_qq_line(color = "red")
@@ -1277,8 +1281,11 @@ v2.lin.lcr <- lin.extract.lcr.mod(v2.lin.mod, v2.lin)
 # Data plots
 
 ```{r v2-plots}
-ggplot(v2.lin.fitted, aes(index, resm_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
-ggplot(v2.lin.fitted, aes(index, resc_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
+lin21 <- ggplot(v2.lin.fitted, aes(index, resm_std, color = subject)) + geom_point() + geom_hline(yintercept = 0) + 
+  xlab(NULL) + ylab(NULL) +
+  theme(axis.text.y = element_blank(), axis.text.x = element_blank(),
+        axis.ticks.x = element_blank(), axis.ticks.y = element_blank(), 
+        legend.position="none")
 ggplot(v2.lin.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
 ggplot(v2.lin.lcr, aes(sample = reslc_lin)) + geom_qq() + geom_qq_line(color = "red")
 ```

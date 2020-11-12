@@ -22,18 +22,8 @@ options(htmltools.dir.version = FALSE)
 
 ```{r xaringan-themer, include=FALSE, warning=FALSE}
 library(xaringanthemer)
-style_duo_accent(
-  primary_color = "#1381B0",
-  secondary_color = "#FF961C",
-  inverse_header_color = "#FFFFFF"
-)
+style_mono_accent(base_color = "#43418A")
 ```
-
-background-image: url(https://upload.wikimedia.org/wikipedia/commons/b/be/Sharingan_triple.svg)
-
-???
-
-Image credit: [Wikimedia Commons](https://commons.wikimedia.org/wiki/File:Sharingan_triple.svg)
 
 ---
 class: center, middle
@@ -45,9 +35,21 @@ class: center, middle
 ---
 class: inverse, center, middle
 
-# Get Started
+# General motivation
 
 ---
+class: inverse, center, middle
+
+# Approach and Method
+
+---
+
+class: inverse, center, middle
+
+# Results
+
+---
+
 
 # Hello World
 
