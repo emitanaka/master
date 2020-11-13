@@ -266,7 +266,9 @@ v1.lcr <- autism.extract.lcr.mod(a.v1.mod, v1.autism)
 # Data plots
 
 ```{r}
-ggplot(v1.fitted, aes(index, resm_std, color = gender, shape = race)) + geom_point() + geom_hline(yintercept = 0)
+sl_mr <- ggplot(v1.fitted, aes(index, resm_std, color = gender, shape = race)) + geom_point(alpha = 0.8) + geom_hline(yintercept = 0) + xlab("Observation Index") + ylab("Stadardised Marginal Residuals") +theme()
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/second_presentation/plots/sl_mr.png", plot = sl_mr, device = "png", dpi = 300)
 ggplot(v1.fitted, aes(index, resc_std, color = gender, shape = race)) + geom_point() + geom_hline(yintercept = 0)
 ggplot(v1.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") 
 ggplot(v1.lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line()
@@ -1636,7 +1638,8 @@ a.v3.lcr <- autism.extract.lcr.mod(a.v3.mod, autism.repc3)
 ```{r}
 ggplot(a.v3.fitted, aes(index, resm_std, color = gender, shape = race)) + geom_point()
 
-ggplot(a.v3.fitted, aes(index, resc_std, color = gender, shape = race)) + geom_point()
+aut_dp2 <- ggplot(a.v3.fitted, aes(interaction(gender, race), resc_std)) + geom_boxplot() + ylab("Standardised conditional residuals") + theme()
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/second_presentation/aut_dp2.png", plot = aut_dp2, device = "png", dpi = 300)
 
 ggplot(a.v3.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
 

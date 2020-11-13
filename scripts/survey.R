@@ -185,7 +185,7 @@ survey_df[survey_df$plot_name == "slp_v34_2.png",]$responses # 1 // 9
 survey_df[survey_df$plot_name == "aut_v31_3.png",]$responses # 4 # all c
 survey_df[survey_df$plot_name == "aut_v32_3.png",]$responses # 4 # all C
 survey_df[survey_df$plot_name == "aut_v33_3.png",]$responses # 2
-survey_df[survey_df$plot_name == "aut_v34_3.png",]$responses # 0 // 9
+survey_df[survey_df$plot_name == "aut_v34_3.png",]$responses # 0 // 10
 
 survey_df[survey_df$plot_name == "lin_v31_3.png",]$responses # 0
 survey_df[survey_df$plot_name == "lin_v32_3.png",]$responses # 0
@@ -213,5 +213,5 @@ survey_df[survey_df$plot_name == "slp_v32_4.png",]$responses # 2
 survey_df[survey_df$plot_name == "slp_v33_4.png",]$responses # 1 
 survey_df[survey_df$plot_name == "slp_v34_4.png",]$responses # 2 // 7
 
-For Version 3, 25/74
+#For Version 3, 25/74
 

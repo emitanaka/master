@@ -2111,8 +2111,12 @@ v3.lin.lcr <- lin.extract.lcr.mod(v3.lin.mod, v3.lin)
 
 ```{r}
 ggplot(v3.lin.fitted, aes(index, resm_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
-ggplot(v3.lin.fitted, aes(index, resc_std, color = subject)) + geom_point() + geom_hline(yintercept = 0)
-ggplot(v3.lin.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
+
+lin_dp2 <- ggplot(v3.lin.fitted, aes(index, resc_std, color = subject)) + geom_point() + geom_hline(yintercept = 0) + ylab("Standardised conditional residuals") + xlab("Observations index")+ theme()
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/second_presentation/lin_dp2.png", plot = lin_dp2, device = "png", dpi = 300)
+
+lin_dp3 <- ggplot(v3.lin.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red") + xlab(NULL) + ylab(NULL) + theme()
+
 ggplot(v3.lin.lcr, aes(sample = reslc_lin)) + geom_qq() + geom_qq_line(color = "red")
 ```
 

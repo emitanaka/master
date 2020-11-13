@@ -24,7 +24,7 @@ summary(sleepstudy)
 ```
 
 ```{r}
-ggplot(sleepstudy, aes(Days, Reaction)) + geom_point() + facet_wrap(~Subject) + geom_smooth(method = "lm", se = FALSE)
+ggplot(sleepstudy, aes(Days, y)) + geom_point() + facet_wrap(~Subject) + geom_smooth(method = "lm", se = FALSE) + ylab("Reaction")
 
 ggplot(sleepstudy, aes(Subject, Reaction)) + geom_boxplot()
 ```
@@ -1679,7 +1679,10 @@ v3.sl.lcr <- sl.extract.lcr(v3.sl.mod, v3.sl)
 
 ```{r}
 ggplot(v3.sl.fitted, aes(index, resm_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) + geom_text(data = v3.sl.fitted %>% filter(resm_std>3), aes(label = index), nudge_x = 0.35, nudge_y = 0.35, size = 2)
-ggplot(v3.sl.fitted, aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) + geom_text(data = v3.sl.fitted %>% filter(abs(resc_std)>3), aes(label = index), nudge_x = 0.35, nudge_y = 0.35, size = 2)
+slp_dp2 <- ggplot(v3.sl.fitted, aes(index, resc_std, color = Subject)) + geom_point() + geom_hline(yintercept = 0) + geom_text(data = v3.sl.fitted %>% filter(abs(resc_std)>3), aes(label = index), nudge_x = 0.35, nudge_y = 0.35, size = 2) + ylab("Standardised conditional residuals") + theme()
+
+ggsave(filename = "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/second_presentation/slp_dp2.png", plot = slp_dp2, device = "png", dpi = 300)
+
 ggplot(v3.sl.fitted, aes(sample = resc_std)) + geom_qq() + geom_qq_line(color = "red")
 ggplot(v3.sl.lcr, aes(sample = resmcp)) + geom_qq() + geom_qq_line(color = "red")
 ```
