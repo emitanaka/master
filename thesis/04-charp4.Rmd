@@ -6,43 +6,83 @@ knit: "bookdown::render_book"
 
 # Methodology
 
-In this paper, we use the two-level continouse-response linear mixed model (LMM) whose errors are uncorrelated fitting either by maximum likelihood or restricted maximum likelihood. 
-<!-- The model is introduced in Sector 2. -->
+In this paper, we use the two-level continuous-response linear mixed model (LMM) whose errors are uncorrelated fitting either by maximum likelihood or restricted maximum likelihood. 
+<!-- The model should introduced in Sector 2. -->
 
-@hilden1995multilevel introduced a linear transformation of the conditional residuals which is called least confounded conditional residuals in order to minimise the fraction of confounding. Therefore, the ability to check for normality of the conditional errors increses.
-Ho
+_Exploration data analysis_ is an important tool before we fit the linear mixed model. We can see if there is any interesting founding between response variable and explanatory variables corresponding to each subject. While, it is helpful when we try to fit the model.
+
+@hilden1995multilevel introduced a linear transformation of the conditional residuals which is called least confounded conditional residuals in order to minimise the fraction of confounding. Therefore, the ability to check for normality of the conditional errors increases.
+
+## Diagnostics
+
+### Presence of outlying observations
+
+### Nomarlity of residuals
+
+# Results
+
+# Data sets
+
+Our aim is to detect the residual plots of linear mixed model. There are three data sets that we used in this thesis. They are reaction times in a sleep deprivation study data set in the `R` package `lme4` [@lme4]; Autism study data set in `R` package `HLMdiag` [@HLMdiag]; and Linguistic data set [@winter2013linear]. The linguistic data set contains dependent variables which are categorical. For the sleep study data, it includes all the numerical variables. Besides, the autism data is the combination of numerical and categorical variables.
+
+## Reaction times in a sleep deprivation study
+
+In order to better understand the importance of sleep time, Gregory (2003) did a test on 18 observers. On day 0, the subjects had the normal amount of sleep. But for the rest of nine nights, 3 hours of sleep time is restricted to them. The output of 180 records, Reaction, shows the average reaction time per day for each subject.
+
+## Autism study
+<!-- will be replaced with other data set since it takes too much time -->
+A prospective longitudinal study following 155 children between the ages of 2 and 13 who were diagnosed with either autism spectrum disorder or non-spectrum developmental delays at age 2 has been carried out by @anderson2009patterns.
+
+## Linguistic study
+
+The data contains 84 observations on the voice pitch (or frequency) from 6 subjects (3 females and 3 males) under 7 scenarios with 2 attitudes (informal or polite).
+
+# Experiment setup
+
+Each observer see 12 images by random of 3 different data with 2 different plot types among 144 lineups in total.
+
+As mentioned, there are three main data sets that are used in this paper. 
+We firstly plot the observed plot for the real data set to detect the feature. However, the audience are not known what the exactly real data looks like. Three scenarios for each data set are generated with four replications.
+
+<!-- WHY INTRODUCING 3 DIFFERENT SCENARIOS??? -->
+
+<!-- aim for 3 different cases is that: case 1 is hard to be distinguished, case 2 can be identified, case 3 is easily identified.-->
+
+After we found the "best" model from the raw data, we generate three different scenarios:
+
+1. *Generated from the "best" model*: 
+Linear mixed model is generated as $y = X\beta +Zb + e$ where random effect ($b$) and error term ($e$) follow a normal distribution with mean 0 and variance $G$ and $R$ respectively. Fixed effect can be obtained from the model. Hence, a new response variable is generated.
+
+2. *Added slight noises*:
+
+  i) For sleep study case, within-unit correlated error terms
+  ii) For linguistic case, we alter 4 reaction time value for each table corresponding to the gender and attitude (female with polite attitude, female with informal attitude, male with polite attitude, male with informal attitude) by adding 20% of the  mean value of the reaction time with respective to each table.
+  iii) For autism case, we introduced an error term with student t distribution.
+
+3. *Introduce extreme noises*:
+We randomly added extreme values to response variable for each data.
 
 
+For each replication, we use the parametric bootstrap to generate the plots for the null hypotheses. 
 
-## Results
+1. We generate the vector of random effects from $N(0, \hat G)$ for each group, that is, generate $b^*_i \sim N(0, \hat G)$ for $i = 1, 2, ..., n$
+2. Vector of conditional residuals is generated from $N(0, \hat R)$ for each group, that is, generate $e^*_i \sim N(0, \hat R)$ for $i = 1, 2, ..., n$
+3. Generate a bootstrap sample $y^*_i$ from $y_i = X_i \hat \beta + Z_i b^*_i + e^*_i$ for each group $i = 1, 2, ...,n$
+4. Refit the model to the bootstrap sample.
+5. Repeat steps from 1 to 4 by 19 times.
 
-## Data sets
+We would like to ask the audience that "Are you able to find any outlying observations? Which plot is most different?" for the marginal residual and conditional residual versus observation index.
+"Are they following a normal distribution? Which plot is most different one?" will be asked for the rest two plots.
 
-Our aim is to detect the residual plots of linear mixed model. There are three data sets that we used in this thesis. They are reaction times in a sleep deprivation study data set in the `R` package `lme4` [@]; Mathematics achievement scores data set in `R` package `nlme` [@]; and Linguistic data set [@]. The linguistic data set contains dependent varaiables which are categorial. For the sleepstudy data, it includes all the numerical variables. Besides, the mathachieve data has the combination of numerical and categorial variables.
-
-### Reaction times in a sleep deprivation study
-
-In order to better understand the importance of sleep time, Gregory (2003) did a test on 180 observations. On day 0, the subjects had the normal amount of sleep. But for the rest of nine nights, 3 hours of sleep time is restricted to them. The output, Reaction, shows the average reaction time per day for each subject.
-
-### Mathematics achievement scores study
-
-The `MathAchieve` data frame contains 7185 students from 160 different schools. While `MathAchSchool` data frame includes the information about school. We combine these two data sets by the School ID. However, we only consider the male students who are not the member of a minority racial group. The student-level outcome is MathAch and the student-level covariate is SES. And school-level has two covariates, which are MEANSES and Sector. Sector is a dummy variable which denotes the levels whether it is Public or Catholic. In this case, we code the Sector as 0 and 1. SES and MEANSES are centered at mean 0.
-
-### Linguistic study
-
-The data contains `r nrow(df)` observations on the voice pitch (or frequency) from `r length(unique(df$subject))` subjects (3 females and 3 males) under `r length(unique(df$scenario))` scenarios with 2 attitudes (informal or polite). There is one missing value for subject `M4` for scenario 6 with polite attitude.
-
-## Experiment setup
-
-In this paper, we use the
 
 As @singer2017graphical mentioned, we do the plots to diagnostic for presence of outlying observation for marginal distribution and conditional residual. As well as, the plots to test the normality of conditional residual by detecting the standardised conditional residual versus the least confounded residual. 
 
 WHAT IS OUR OBJECTS???
 
-After we found the "best" model from the raw data, we generate three different scenarios:
-1. Generate from the best model
-2. Add slight noises
-3. Introduce extreme noises
+# Discussions
 
-We use the boostrap method
+There are three data sets with three different version with four replications for each version that is 144 lineups in total. If sample size is small, the result will become unreliable since some images may have few or even no responses.
+
+On this survey, we did not test the visual ability of the observers. It will make the result bias since some observer may good at the plot reading. However, some of them may not. In order to make the images clear to read, we size the plots as big as possible and put the questions on the sub panel side. The observers may loss the patient because they need to scroll up and down the page to see the whole picture of the lineups, make the comparison and choose their responses by repeating the process for 12 times. Also, some viewers will miss the information about the last 4 panels of lineup if they are not carefully reading the maps although there may some important information are listed in the last panel of lineup. Moreover, it is not clear for participants to see the text that "Please click the SUBMIT button at the top of the window" at the last image in the small box. In addition, observers need to cross the whole page to click the SUBMIT button which is at the top right corner whereas the questions are listed at the bottom left. 
+
+
