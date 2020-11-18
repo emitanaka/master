@@ -67,11 +67,8 @@ The mixed model equations (MME), which first proposed by @henderson1973sire, is 
     \end{pmatrix}
 \end{align*}
 
-<<<<<<< HEAD
 By proof the above result, we write the coefficient matrix as:
-=======
-By improving the above result, we write the coefficient matrix as:
->>>>>>> 97b6a2288bec0f6a1e45d9f9920cc3d67a4af3ae
+
 \begin{align*}
     \mathbf{C} = \begin{bmatrix} \mathbf{C}_{XX} & \mathbf{C}_{XZ} \\ \mathbf{C}_{ZX} & \mathbf{C}_{ZZ}\end{bmatrix}
 \end{align*}
@@ -113,6 +110,6 @@ Similar to simple linear model, residuals are significant to diagnostics of line
 $$\boldsymbol{\hat{\xi}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}$$
 A conditional residual is the difference between observed data and predicted value of the observation,
 $$\mathbf{\hat{e}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}} - \mathbf{Z}\hat{\mathbf{b}}$$
-A random effects residual is to predict the random effects, $\mathbf{Z}\hat{\mathbf{b}}$.
+A random effects residual is the difference between the prediced responses and the population average, $\mathbf{Z}\hat{\mathbf{b}}$.
 
 
