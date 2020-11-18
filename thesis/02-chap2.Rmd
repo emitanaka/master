@@ -5,14 +5,12 @@ knit: "bookdown::render_book"
 
 # Linear Mixed Model
 
-- what is a linear mixed model
-
 Linear mixed model is useful on dealing with the dependency structure with the data which is in groups.
 
 The linear mixed model may be expressed as
 $$\underset{(m_i \times 1)}{\mathbf{y}_i} = \underset{(m_i \times p)}{\mathbf{X}_i} \underset{(p\times 1)}{\boldsymbol{\beta}} + \underset{(m_i \times q)}{\mathbf{Z}_i}\underset{(q \times 1)}{\mathbf{b}_i} + \underset{(m_i \times 1)}{\mathbf{e}_i}$$
 
-where there are $i = 1, 2, \ldots, n$ nonoverlapping groups. $\boldsymbol \beta$ is a vector of $p$ fixed effects governing the global mean structure, $\mathbf{b}_i$ is a vector of $q$ random effects describing the between-group covariance structure and $\mathbf e$ is an vector of random errors.
+where there are $i = 1, 2, \ldots, n$ nonoverlapping groups. $\mathbf{y}_i$ is a $(m_i \times 1)$ vector of observed data, $\mathbf{X}_i$ is a $(m_i \times p)$ fixed-effects design or regressor matrix, $\mathbf{Z}$ is a $(m_i \times q)$ known specification matrix corresponding to the random effects, $\mathbf{b}_i$ is a $(q \times 1)$ vector of random effects describing the between-group covariance structure, $\boldsymbol \beta$ is a $(p \times 1)$vector of fixed effects governing the global mean structure, and $\mathbf e$ is an $(m_i \times 1)$ vector of random errors. The distributional assumptions are as follows: $\mathbf{b}_i$ is normal with mean $\mathbf{0}$ and variance $\mathbf{G}$; $\mathbf{e}_i$ is normal with mean $\mathbf{0}$ and variance $\mathbf{R}$; the random components $\mathbf{b}_i$ and $\mathbf{e}_i$ are independent.
 
 We can rewrite the model as
 $$\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \mathbf{Zb}+\mathbf{e}$$
@@ -23,7 +21,7 @@ The key assumption of LMMs is that the residual errors and random effects are no
    \begin{bmatrix}
       \mathbf{b} \\ \mathbf{e}
    \end{bmatrix}
-   \sim \mathcal{N_{M+N}}\left(\begin{bmatrix}\mathbf{0_M} \\ \mathbf{0_N} \end{bmatrix}, \begin{bmatrix} \mathbf{\Gamma} & \mathbf{0_{M\times N}} \\ \mathbf{0_{M \times N}} & \mathbf{R} \end{bmatrix}\right)
+   \sim \mathcal{N}_{M+N}\left(\begin{bmatrix}\mathbf{0_M} \\ \mathbf{0_N} \end{bmatrix}, \begin{bmatrix} \mathbf{\Gamma} & \mathbf{0_{M\times N}} \\ \mathbf{0_{M \times N}} & \mathbf{R} \end{bmatrix}\right)
 \end{align*}
 where $\mathbf N = \sum_{i=1}^n m_i$ and $\mathbf M = nq$.
 
@@ -42,6 +40,8 @@ The joint density function of $\mathbf{y}$ and $\mathbf{b}$ is defined as
    &= const \times \exp\left(-\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})-\frac{1}{2}\mathbf{b}^\top \mathbf{\Gamma}^{-1} \mathbf{b}\right)
 \end{align*}
 
+The parameters $\mathbf{b}$ and ${\boldsymbol{\beta}}$ can be estimated by maximising this function. Taking the first derivative and equating the derivatives to zero, the result is shown below.
+
 \begin{align*}
     \frac{\partial f(\mathbf{y}, \boldsymbol{b})}{\partial \mathbf{\beta}} &\propto \frac{(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb}) + \mathbf{b}^\top \mathbf{\Gamma}^{-1} \mathbf{b}}{\partial \boldsymbol{\beta}} \\
     &\propto \frac{-\mathbf{y}^\top \mathbf{R}^{-1}\mathbf{X}\boldsymbol{\beta} - \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Zb} + \mathbf{b}^\top \mathbf{Z}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta}}{\partial \boldsymbol{\beta}} \\
@@ -56,6 +56,7 @@ The joint density function of $\mathbf{y}$ and $\mathbf{b}$ is defined as
     &\Rightarrow \mathbf{Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta} + \mathbf{Z^\top R}^{-1}\mathbf{Zb} + \mathbf{\Gamma}^{-1}\mathbf{b} = \mathbf{Z^\top R}^{-1}\mathbf{y}
 \end{align*}
 
+The mixed model equations (MME), which first proposed by @henderson1973sire, is listed as:
 \begin{align*}
     \begin{pmatrix} \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X} & \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z} \\ \mathbf{Z^\top R}^{-1}\mathbf{X} & \mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} 
     \end{pmatrix}
@@ -66,7 +67,7 @@ The joint density function of $\mathbf{y}$ and $\mathbf{b}$ is defined as
     \end{pmatrix}
 \end{align*}
 
-Write the coefficient matrix as:
+By proof the above result, we write the coefficient matrix as:
 \begin{align*}
     \mathbf{C} = \begin{bmatrix} \mathbf{C}_{XX} & \mathbf{C}_{XZ} \\ \mathbf{C}_{ZX} & \mathbf{C}_{ZZ}\end{bmatrix}
 \end{align*}
@@ -103,3 +104,11 @@ Then, using the
     &= \mathbf{\Gamma}\mathbf{Z^\top}\mathbf{\Omega}^{-1} \mathbf{Q}\mathbf{y}
 \end{align*}
 where $$\mathbf{Q} = \mathbf{\Omega}^{-1} - \mathbf{\Omega}^{-1}\mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1}$$
+
+Similar to simple linear model, residuals are significant to diagnostics of linear mixed model. There are three different types of residuals based on @singer2017graphical, that is, marginal residuals $\boldsymbol{\hat{\xi}}$, conditional residuals $\mathbf{\hat{e}}$ and random effect residuals $\mathbf{Z\hat{b}}$. A marginal residual is the difference between the observed data and the estimated marginal mean,
+$$\boldsymbol{\hat{\xi}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}$$
+A conditional residual is the difference between observed data and predicted value of the observation,
+$$\mathbf{\hat{e}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}} - \mathbf{Z}\hat{\mathbf{b}}$$
+A random effects residual is to predict the random effects, $\mathbf{Z}\hat{\mathbf{b}}$.
+
+
