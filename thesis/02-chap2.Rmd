@@ -67,7 +67,11 @@ The mixed model equations (MME), which first proposed by @henderson1973sire, is 
     \end{pmatrix}
 \end{align*}
 
+<<<<<<< HEAD
 By proof the above result, we write the coefficient matrix as:
+=======
+By improving the above result, we write the coefficient matrix as:
+>>>>>>> 97b6a2288bec0f6a1e45d9f9920cc3d67a4af3ae
 \begin{align*}
     \mathbf{C} = \begin{bmatrix} \mathbf{C}_{XX} & \mathbf{C}_{XZ} \\ \mathbf{C}_{ZX} & \mathbf{C}_{ZZ}\end{bmatrix}
 \end{align*}
