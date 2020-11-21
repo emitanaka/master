@@ -21,15 +21,15 @@ The key assumption of LMMs is that the residual errors and random effects are no
    \begin{bmatrix}
       \mathbf{b} \\ \mathbf{e}
    \end{bmatrix}
-   \sim \mathcal{N}_{M+N}\left(\begin{bmatrix}\mathbf{0_M} \\ \mathbf{0_N} \end{bmatrix}, \begin{bmatrix} \mathbf{\Gamma} & \mathbf{0_{M\times N}} \\ \mathbf{0_{M \times N}} & \mathbf{R} \end{bmatrix}\right)
+   \sim \mathcal{N}_{M+N}\left(\begin{bmatrix}\mathbf{0_M} \\ \mathbf{0_N} \end{bmatrix}, \begin{bmatrix} \boldsymbol{\Gamma} & \mathbf{0_{M\times N}} \\ \mathbf{0_{M \times N}} & \mathbf{R} \end{bmatrix}\right)
 \end{align*}
 where $\mathbf N = \sum_{i=1}^n m_i$ and $\mathbf M = nq$.
 
 Based on the model, the marginal distribution of $\mathbf{y}$ is
 \begin{align*}
-   \mathbf{y} \sim \mathcal{N}(\mathbf{X} \boldsymbol{\beta}, \mathbf{\Omega})
+   \mathbf{y} \sim \mathcal{N}(\mathbf{X} \boldsymbol{\beta}, \boldsymbol{\Omega})
 \end{align*}
-with $\mathbb E(\mathbf y) = \boldsymbol{X\beta}$ and $\mathbb V(\mathbf y) = \mathbf{\Omega} = \mathbf{Z\Gamma Z}^\top + \mathbf{R}$, and the conditional distribution of $\mathbf{y}$ given $\mathbf{b}$ is given by
+with $\mathbb E(\mathbf y) = \boldsymbol{X\beta}$ and $\mathbb V(\mathbf y) = \boldsymbol{\Omega} = \boldsymbol{Z\Gamma Z}^\top + \mathbf{R}$, and the conditional distribution of $\mathbf{y}$ given $\mathbf{b}$ is given by
 \begin{align*}
    \mathbf{y}|\mathbf{b} \sim \mathcal{N}(\mathbf{X} \boldsymbol{\beta} + \mathbf{Zb},\mathbf{R})
 \end{align*}
@@ -37,28 +37,28 @@ with $\mathbb E(\mathbf y) = \boldsymbol{X\beta}$ and $\mathbb V(\mathbf y) = \m
 The joint density function of $\mathbf{y}$ and $\mathbf{b}$ is defined as
 \begin{align*}
    f(\mathbf{y}, \mathbf{b}) &= g(\mathbf{y}|\mathbf{b})h(\mathbf{b}) \\
-   &= const \times \exp\left(-\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})-\frac{1}{2}\mathbf{b}^\top \mathbf{\Gamma}^{-1} \mathbf{b}\right)
+   &= const \times \exp\left(-\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})-\frac{1}{2}\mathbf{b}^\top \boldsymbol{\Gamma}^{-1} \mathbf{b}\right)
 \end{align*}
 
 The parameters $\mathbf{b}$ and ${\boldsymbol{\beta}}$ can be estimated by maximising this function. Taking the first derivative and equating the derivatives to zero, the result is shown below.
 
 \begin{align*}
-    \frac{\partial f(\mathbf{y}, \boldsymbol{b})}{\partial \mathbf{\beta}} &\propto \frac{(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb}) + \mathbf{b}^\top \mathbf{\Gamma}^{-1} \mathbf{b}}{\partial \boldsymbol{\beta}} \\
+    \frac{\partial f(\mathbf{y}, \boldsymbol{b})}{\partial \boldsymbol{\beta}} &\propto \frac{(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb}) + \mathbf{b}^\top \boldsymbol{\Gamma}^{-1} \mathbf{b}}{\partial \boldsymbol{\beta}} \\
     &\propto \frac{-\mathbf{y}^\top \mathbf{R}^{-1}\mathbf{X}\boldsymbol{\beta} - \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Zb} + \mathbf{b}^\top \mathbf{Z}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta}}{\partial \boldsymbol{\beta}} \\
     &= -2 \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} + 2\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta} + 2\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Zb} = 0 \\
     &\Rightarrow \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X}\boldsymbol{\beta} + \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Zb} = \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y}
 \end{align*}
 
 \begin{align*}
-    \frac{\partial f(\mathbf{y}, \boldsymbol{b})}{\partial \mathbf{b}} &\propto \frac{(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb}) + \mathbf{b}^\top \mathbf{\Gamma}^{-1} \mathbf{b}}{\partial \mathbf{b}} \\
-    &\propto \frac{-\mathbf{y}^\top \mathbf{R}^{-1}\mathbf{Zb} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1}\mathbf{Zb} -\mathbf{b^\top Z^\top R}^{-1}\mathbf{y} + \mathbf{b^\top Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta}+ \mathbf{b^\top Z^\top R}^{-1}\mathbf{Zb} + \mathbf{b^\top}\mathbf{\Gamma}^{-1}\mathbf{b}}{\partial \mathbf{b}} \\
-    &= -2\mathbf{Z^\top R}^{-1}\mathbf{y} + 2\mathbf{Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta} + 2\mathbf{Z^\top R}^{-1}\mathbf{Zb} + 2\mathbf{\Gamma}^{-1}\mathbf{b} = 0\\
-    &\Rightarrow \mathbf{Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta} + \mathbf{Z^\top R}^{-1}\mathbf{Zb} + \mathbf{\Gamma}^{-1}\mathbf{b} = \mathbf{Z^\top R}^{-1}\mathbf{y}
+    \frac{\partial f(\mathbf{y}, \boldsymbol{b})}{\partial \mathbf{b}} &\propto \frac{(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb}) + \mathbf{b}^\top \boldsymbol{\Gamma}^{-1} \mathbf{b}}{\partial \mathbf{b}} \\
+    &\propto \frac{-\mathbf{y}^\top \mathbf{R}^{-1}\mathbf{Zb} + \boldsymbol{\beta}^\top \mathbf{X}^\top \mathbf{R}^{-1}\mathbf{Zb} -\mathbf{b^\top Z^\top R}^{-1}\mathbf{y} + \mathbf{b^\top Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta}+ \mathbf{b^\top Z^\top R}^{-1}\mathbf{Zb} + \mathbf{b^\top}\boldsymbol{\Gamma}^{-1}\mathbf{b}}{\partial \mathbf{b}} \\
+    &= -2\mathbf{Z^\top R}^{-1}\mathbf{y} + 2\mathbf{Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta} + 2\mathbf{Z^\top R}^{-1}\mathbf{Zb} + 2\boldsymbol{\Gamma}^{-1}\mathbf{b} = 0\\
+    &\Rightarrow \mathbf{Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta} + \mathbf{Z^\top R}^{-1}\mathbf{Zb} + \boldsymbol{\Gamma}^{-1}\mathbf{b} = \mathbf{Z^\top R}^{-1}\mathbf{y}
 \end{align*}
 
 The mixed model equations (MME), which first proposed by @henderson1973sire, is listed as:
 \begin{align*}
-    \begin{pmatrix} \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X} & \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z} \\ \mathbf{Z^\top R}^{-1}\mathbf{X} & \mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} 
+    \begin{pmatrix} \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X} & \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z} \\ \mathbf{Z^\top R}^{-1}\mathbf{X} & \mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} 
     \end{pmatrix}
     \begin{pmatrix} \boldsymbol{\beta} \\ \mathbf{b} \end{pmatrix}
     =
@@ -84,32 +84,30 @@ $$(\mathbf{C}_{XX} - \mathbf{C}_{XZ}\mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX})\boldsym
 where
 \begin{align*}
     & \mathbf{C}_{XX} - \mathbf{C}_{XZ}\mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX}\\
-    &=  \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X} - \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}\mathbf{X} \\
-    &=\mathbf{X}^\top (\mathbf{R}^{-1} - \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1})\mathbf{X} \\
-    &= \mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X}
+    &=  \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X} - \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}\mathbf{X} \\
+    &=\mathbf{X}^\top (\mathbf{R}^{-1} - \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1})\mathbf{X} \\
+    &= \mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X}
 \end{align*}
 Then,
 \begin{align*}
-    \boldsymbol{\beta} &= (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1}(\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} -  \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}\mathbf{y}) \\
-    &= (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1}\mathbf{X}^\top(\mathbf{R}^{-1} - \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1})\mathbf{y} \\
-    &= (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y}
+    \boldsymbol{\beta} &= (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1}(\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} -  \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}\mathbf{y}) \\
+    &= (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1}\mathbf{X}^\top(\mathbf{R}^{-1} - \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1})\mathbf{y} \\
+    &= (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y}
 \end{align*}
 
 Then, using the 
 \begin{align*}
-    \mathbf{b} &= \mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy} - \mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX} (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y} \\
-    &= \mathbf{C}_{ZZ}^{-1}(\mathbf{c}_{Zy} - \mathbf{C}_{ZX} (\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y}) \\
-    &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}(\mathbf{Z^\top R}^{-1}\mathbf{y} - \mathbf{Z^\top R}^{-1}\mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} \mathbf{y}) \\
-    &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\mathbf{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} )\mathbf{y} \\
-    &= \mathbf{\Gamma}\mathbf{Z^\top}\mathbf{\Omega}^{-1}(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1} )\mathbf{y} \\
-    &= \mathbf{\Gamma}\mathbf{Z^\top}\mathbf{\Omega}^{-1} \mathbf{Q}\mathbf{y}
+    \mathbf{b} &= \mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy} - \mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX} (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y} \\
+    &= \mathbf{C}_{ZZ}^{-1}(\mathbf{c}_{Zy} - \mathbf{C}_{ZX} (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y}) \\
+    &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}(\mathbf{Z^\top R}^{-1}\mathbf{y} - \mathbf{Z^\top R}^{-1}\mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y}) \\
+    &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} )\mathbf{y} \\
+    &= \boldsymbol{\Gamma}\mathbf{Z^\top}\boldsymbol{\Omega}^{-1}(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} )\mathbf{y} \\
+    &= \boldsymbol{\Gamma}\mathbf{Z^\top}\boldsymbol{\Omega}^{-1} \mathbf{Q}\mathbf{y}
 \end{align*}
-where $$\mathbf{Q} = \mathbf{\Omega}^{-1} - \mathbf{\Omega}^{-1}\mathbf{X}(\mathbf{X}^\top \mathbf{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \mathbf{\Omega}^{-1}$$
+where $$\mathbf{Q} = \boldsymbol{\Omega}^{-1} - \boldsymbol{\Omega}^{-1}\mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1}$$
 
 Similar to simple linear model, residuals are significant to diagnostics of linear mixed model. There are three different types of residuals based on @singer2017graphical, that is, marginal residuals $\boldsymbol{\hat{\xi}}$, conditional residuals $\mathbf{\hat{e}}$ and random effect residuals $\mathbf{Z\hat{b}}$. A marginal residual is the difference between the observed data and the estimated marginal mean,
 $$\boldsymbol{\hat{\xi}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}$$
 A conditional residual is the difference between observed data and predicted value of the observation,
 $$\mathbf{\hat{e}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}} - \mathbf{Z}\hat{\mathbf{b}}$$
-A random effects residual is the difference between the prediced responses and the population average, $\mathbf{Z}\hat{\mathbf{b}}$.
-
-
+A random effects residual is the difference between the predicted responses and the population average, $\mathbf{Z}\hat{\mathbf{b}}$.

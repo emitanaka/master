@@ -2,82 +2,123 @@
 chapter: 4
 knit: "bookdown::render_book"
 ---
-
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, cache=TRUE)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(png)
+```
 
 # Methodology
 
-In this paper, we use the two-level continuous-response linear mixed model (LMM) whose errors are uncorrelated fitting either by maximum likelihood or restricted maximum likelihood. 
+In this section, we introduce three different data sets that represents three different data types (Numerical, Categorical and Mixed). The process of how we generate lineup based on three distinguishable residuals for each data set is going to be explained. As well as the experiment set up of the survey that we published will be illustrated. we use the two-level continuous-response linear mixed model (LMM) whose errors are uncorrelated fitting either by maximum likelihood or restricted maximum likelihood. 
 <!-- The model should introduced in Sector 2. -->
+$$\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \mathbf{Zb}+\mathbf{e}$$
 
-_Exploration data analysis_ is an important tool before we fit the linear mixed model. We can see if there is any interesting founding between response variable and explanatory variables corresponding to each subject. While, it is helpful when we try to fit the model.
+<!-- Our object is to find which residual (marginal versus conditional) is better in detecting the presence of outlying observation and which residual (conditional versus confounded) is better in checking the normality assumption. 
 
-@hilden1995multilevel introduced a linear transformation of the conditional residuals which is called least confounded conditional residuals in order to minimise the fraction of confounding. Therefore, the ability to check for normality of the conditional errors increases.
+since our aim is to detect the residual diagnostics of linear mixed model.
+-->
 
-## Diagnostics
+## Data sets
 
-### Presence of outlying observations
+Firstly, there are three data sets that we used in this thesis. They are reaction times in a sleep deprivation study data set in the `R` package `lme4` [@lme4]; Autism study data set in `R` package `HLMdiag` [@HLMdiag]; and Linguistic data set [@winter2013linear]. The linguistic data set contains dependent variables which are categorical. For the sleep study data, it includes all the numerical variables. Besides, the autism data is the combination of numerical and categorical variables.
 
-### Nomarlity of residuals
-
-# Results
-
-# Data sets
-
-Our aim is to detect the residual plots of linear mixed model. There are three data sets that we used in this thesis. They are reaction times in a sleep deprivation study data set in the `R` package `lme4` [@lme4]; Autism study data set in `R` package `HLMdiag` [@HLMdiag]; and Linguistic data set [@winter2013linear]. The linguistic data set contains dependent variables which are categorical. For the sleep study data, it includes all the numerical variables. Besides, the autism data is the combination of numerical and categorical variables.
-
-## Reaction times in a sleep deprivation study
+### Reaction times in a sleep deprivation study
 
 In order to better understand the importance of sleep time, Gregory (2003) did a test on 18 observers. On day 0, the subjects had the normal amount of sleep. But for the rest of nine nights, 3 hours of sleep time is restricted to them. The output of 180 records, Reaction, shows the average reaction time per day for each subject.
 
-## Autism study
+### Autism study
 <!-- will be replaced with other data set since it takes too much time -->
 A prospective longitudinal study following 155 children between the ages of 2 and 13 who were diagnosed with either autism spectrum disorder or non-spectrum developmental delays at age 2 has been carried out by @anderson2009patterns.
 
-## Linguistic study
+### Linguistic study
 
 The data contains 84 observations on the voice pitch (or frequency) from 6 subjects (3 females and 3 males) under 7 scenarios with 2 attitudes (informal or polite).
 
-# Experiment setup
+## EDA
 
-Each observer see 12 images by random of 3 different data with 2 different plot types among 144 lineups in total.
+_Exploration data analysis_ is a critical tool before fitting the model as this method can help us to identity the features of the raw data. In the sleep deprivation study data, we use the plot comparing the response and explanatory variable of interest using linear smoothers for each group. Fig. \@ref(fig:sleep-eda) illustrates the random intercept and random slope in reaction time versus days from day 0 to day 9 corresponding to different subjects. Hence, we treat the explanatory variable as the designed matrix of fixed effect and the subjects as the designed matrix of random effect. To test the dependency of random effects, based on the method provided by @loy2017model, a scatter plot of predicted random effects with overlaid regression lines. The null plots are simulated from the model whose random effects are not correlated and the data plot is made using the predicted random effects from original model fit to the observed data. While the regression lines show the amount of correlation between random effects. Based on the result, it is hard to distinguish the data plot from null plots although it has a little correlation between random effects. Therefore, there is no need for the correlated random effect, that is the random slope and random intercept are independent.
+```{r sleep-eda, fig.height=8, fig.width=8, fig.cap="Exploration Data Analysis example in the sleep study case. It shows the random intercept and random slope with different subjects."}
+ggdraw() + draw_plot(rasterGrob(readPNG("figures/sleep_eda.png")))
+```
 
-As mentioned, there are three main data sets that are used in this paper. 
-We firstly plot the observed plot for the real data set to detect the feature. However, the audience are not known what the exactly real data looks like. Three scenarios for each data set are generated with four replications.
 
-<!-- WHY INTRODUCING 3 DIFFERENT SCENARIOS??? -->
+## Residuals Diagnostics
+
+Residuals are used to examine model assumptions and to detect outliers and potentially influential data points.
+As @singer2017graphical listed 8 uses of residuals for diagnostic purposes, we concentrate on three residuals with two diagnostic purposes in this thesis: (1) checking presence of outlying observations based on marginal residual as well as conditional residual, and (2) detecting normality of conditional error according to conditional residual and confounded residual.
+We applied the method that @singer2017graphical stated to obtain these residuals and then acquire the residual plots.
+
+Given the true variance of marginal residual that $\mathbb{V}(\boldsymbol{\hat{\xi}}_i) = \boldsymbol{\Omega}_i - \mathbf{X}_i (\mathbf{X}_i^\top \boldsymbol{\Omega}_i^{-1}\mathbf{X}_i)^{-1}\mathbf{X}_i^\top$, the standardised marginal residuals can be generated as $\boldsymbol{\hat{\xi}}^*_{ij} = \boldsymbol{\hat{\xi}}_{ij}/[diag_j(\mathbb{\hat{V}}(\boldsymbol{\hat{\xi}}_i))]^{1/2}$, where $diag_j(\mathbb{\hat{V}}(\boldsymbol{\hat{\xi}}_i))$ is the $j$-th element of the main diagonal of $\mathbb{V}(\boldsymbol{\hat{\xi}}_i)$. 
+
+With true variance of conditional residual, $\mathbb{V}(\mathbf{\hat{e}}) = \mathbf{R}[\boldsymbol{\Omega}^{-1} - \boldsymbol{\Omega}^{-1}\mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1}\mathbf{X}^\top \boldsymbol{\Omega}^{-1}]\mathbf{R} = \mathbf{RQR}$, @singer2017graphical suggested using the standardised conditional residuals, $\mathbf{\hat{e}}_{ij}^* = \mathbf{\hat{e}}_{ij}/diag_{ij}(\mathbf{\hat{R} \hat{Q} \hat{R}})$, where $diag_{ij}(\mathbf{\hat{R} \hat{Q} \hat{R}})$ representing the main diagonal element of $\mathbf{RQR}$ corresponding to the $j$-th observation of the $i$-th unit.
+
+To detect outlying observations, we draw the element of the standardised marginal or conditional residuals versus the observation indices recommended by @singer2017graphical.
+Moreover, we use the boxplot for $\boldsymbol{\hat{\xi}}^*_{ij}$ or $\mathbf{\hat{e}}_{ij}^*$ versus the explanatory variables for the autism data set since the data size is big.
+
+@hilden1995multilevel introduced a linear transformation of the conditional residuals which is called least confounded conditional residuals $c_k^\top \mathbf{\hat{e}}^*$ in order to minimise the fraction of confounding. They thought the ability to check for normality of the conditional errors increases. Hence, we employ QQ plot of the standardised conditional residuals and standardised least confounded conditional residuals to check for normality.
+
+## Experiment setup
+
+On the basis of the data set that we have, three different versions are generated for each data type with four replicates:
+
+<!-- Each data set are generated by three different versions with four replications. It constitutes 12 data plots in each data set with 2 different plot types, one for detecting outlying observations and another for checking normality. After fitting to the 'best' model from the raw data, we generate three different scenarios: -->
 
 <!-- aim for 3 different cases is that: case 1 is hard to be distinguished, case 2 can be identified, case 3 is easily identified.-->
 
-After we found the "best" model from the raw data, we generate three different scenarios:
-
 1. *Generated from the "best" model*: 
-Linear mixed model is generated as $y = X\beta +Zb + e$ where random effect ($b$) and error term ($e$) follow a normal distribution with mean 0 and variance $G$ and $R$ respectively. Fixed effect can be obtained from the model. Hence, a new response variable is generated.
+  
+  The estimated random effect and error term are following a normal distribution with mean $\mathbf{0}$ and variance $\hat{\boldsymbol{\Gamma}}$ and $\hat{\mathbf{R}}$ respectively from the "best" model as well as the estimated fixed effect. The sample can be generated through $\mathbf{y}^* \sim \mathcal(\mathbf{X}\hat{\boldsymbol{\beta}}, \hat{\boldsymbol{\Omega}})$ where $\hat{\boldsymbol{\Omega}} = \mathbf{Z}\hat{\boldsymbol{\Gamma}}\mathbf{Z}' + \hat{\mathbf{R}}$.
+  <!-- Linear mixed model is generated as $y = X\beta +Zb + e$ where random effect ($b$) and error term ($e$) follow a normal distribution with mean 0 and variance $G$ and $R$ respectively. Fixed effect can be obtained from the model. Hence, a new response variable is generated. -->
 
 2. *Added slight noises*:
 
-  i) For sleep study case, within-unit correlated error terms
-  ii) For linguistic case, we alter 4 reaction time value for each table corresponding to the gender and attitude (female with polite attitude, female with informal attitude, male with polite attitude, male with informal attitude) by adding 20% of the  mean value of the reaction time with respective to each table.
-  iii) For autism case, we introduced an error term with student t distribution.
+  i) For sleep study case, within-unit correlated error terms have been introduced. For each subject, the error terms are correlated by value 25 which is round the standard deviation of the error term.
+  ii) For linguistic case, we treat the error term under the $t$-distribution with $\nu = 1$ degree of freedom.
+  iii) For autism case, we also treat the error term under the $t$-distribution with $\nu = 15$ degree of freedom at a random choice.
 
 3. *Introduce extreme noises*:
-We randomly added extreme values to response variable for each data.
 
+  We randomly added some extreme values to response variable for particular subjects in each data set.
+  
+  i) For sleep study case, we randomly add 20% of mean value to 2 response values of each subject.
+  ii) For linguistic case, we firstly create four tables with respect to the category of gender and attitude, that is female with polite attitude, female with informal attitude, male with polite attitude, and male with informal attitude. Then we alter 4 reaction time value in each table by adding 20% of mean value for the overall reaction time.
+  iii) For autism case, we add 20% of the total median response values to roughly 20% of observations at random.
 
-For each replication, we use the parametric bootstrap to generate the plots for the null hypotheses. 
+Therefore, 12 data sets are generated with corresponding 12 data plots constituting the residual plots for detecting the presence of outlying and checking the normality of conditional error.
 
-1. We generate the vector of random effects from $N(0, \hat G)$ for each group, that is, generate $b^*_i \sim N(0, \hat G)$ for $i = 1, 2, ..., n$
-2. Vector of conditional residuals is generated from $N(0, \hat R)$ for each group, that is, generate $e^*_i \sim N(0, \hat R)$ for $i = 1, 2, ..., n$
-3. Generate a bootstrap sample $y^*_i$ from $y_i = X_i \hat \beta + Z_i b^*_i + e^*_i$ for each group $i = 1, 2, ...,n$
+<!--12 data plots are formed within each data type, where half of them are to check the normality and the others are to explore the outlying observations.-->
+
+## Generating lineups
+
+We use the parametric bootstrap method which is illustrated below to generate the null data. The null data are created based on 3 different versions for each rather than the raw data set.
+
+1. We generate the vector of random effects from $\mathcal{N}(\mathbf{0}, \hat{\mathbf{G}})$ for each group, that is, generate $\mathbf{b}^*_i \sim \mathcal{N}(\mathbf{0}, \hat{\mathbf{G}})$ for $i = 1, 2, ..., n$
+2. Vector of conditional residuals is generated from $\mathcal{N}(\mathbf{0}, \hat{\mathbf{R}})$ for each group, that is, generate $\mathbf{e}^*_i \sim \mathcal{N}(\mathbf{0}, \hat{\mathbf{R}})$ for $i = 1, 2, ..., n$
+3. Generate a bootstrap sample $\mathbf{y}^*_i$ from $\mathbf{y}_i = \mathbf{X}_i \hat{\boldsymbol{\beta}} + \mathbf{Z}_i \mathbf{b}^*_i + \mathbf{e}^*_i$ for each group $i = 1, 2, ...,n$
 4. Refit the model to the bootstrap sample.
 5. Repeat steps from 1 to 4 by 19 times.
 
-We would like to ask the audience that "Are you able to find any outlying observations? Which plot is most different?" for the marginal residual and conditional residual versus observation index.
-"Are they following a normal distribution? Which plot is most different one?" will be asked for the rest two plots.
+From the null data, the null plots are produced which is consistent with the null hypothesis. Afterwards, we insert the data plot among 19 null plots to form the lineup protocol using the `nullabor` package from @nullabor. We design the position of each data plot. According to Fig. \@ref(fig:design), based on the "best" model, the data plots which point the presence of outlying observations of both marginal or conditional residuals are at the position 7 in the lineup for the first two replicates. Then, for replicates 3 and 4, the position of data plot is 13. The data plot which refers to check the normality of conditional error for either standardised conditional residual or least confounded conditional residual is in panel 9 of 20 plots as the basis of the first two replicates of first version. The position for next two replicates are in 4.
+
+```{r design, fig.height= 4,fig.width=8, fig.cap="Experimental design diagram",results='asis'}
+ggdraw() + draw_plot(rasterGrob(readPNG(("figures/diagram.png"))))
+```
+
+<!-- we use the experiment design -->
+
+## Survey through Shiny app
+
+Using the Latin Squared Design method, we choose 12 lineups at random  among 144 lineups from 3 different data types with four diverse replicates for 2 different plot types but without restricting the versions. We use the `taipan` package (@taipan) to build our survey questions which include the demographic of audience and their responses. Their name, gender, age range, education level and whether they have studied econometrics or statistics are recorded. In the next tab, they are asked to choose the most different map at their decision and how certainty they are to choose that map. There is a process hit for them as the number of lineup they have been seen. They iterate the process by 12 times by answering the same question but looking at different lineups. If they answered less than 12 plots before submitting, there will be a hit popped up to reminder them to complete the survey before they leave. After they click the submit button, the final tab is shown up as the thank you page. All the responses made by each individual are securely stored into the google sheet based on the link through `googlesheets4` package (@googlesheets4) with authenticating. Besides, we also achieve the unique identifier for them in case they double submitted. It is also useful when participant does not leave their names. The plot name with data type, version, replicates and plot type is also recorded which will be used in the further analysis. The time period that the participant takes are displayed as the reference.
 
 
-As @singer2017graphical mentioned, we do the plots to diagnostic for presence of outlying observation for marginal distribution and conditional residual. As well as, the plots to test the normality of conditional residual by detecting the standardised conditional residual versus the least confounded residual. 
 
-WHAT IS OUR OBJECTS???
+
+# Results
+
+plotting conditional residual against predictors or against observation indices performed reasonably well as methods for diagnosing violations of linear mixed model assumptions.
 
 # Discussions
 
@@ -85,4 +126,5 @@ There are three data sets with three different version with four replications fo
 
 On this survey, we did not test the visual ability of the observers. It will make the result bias since some observer may good at the plot reading. However, some of them may not. In order to make the images clear to read, we size the plots as big as possible and put the questions on the sub panel side. The observers may loss the patient because they need to scroll up and down the page to see the whole picture of the lineups, make the comparison and choose their responses by repeating the process for 12 times. Also, some viewers will miss the information about the last 4 panels of lineup if they are not carefully reading the maps although there may some important information are listed in the last panel of lineup. Moreover, it is not clear for participants to see the text that "Please click the SUBMIT button at the top of the window" at the last image in the small box. In addition, observers need to cross the whole page to click the SUBMIT button which is at the top right corner whereas the questions are listed at the bottom left. 
 
+Position of the data plot may also matters.
 
