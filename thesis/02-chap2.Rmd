@@ -60,14 +60,15 @@ The mixed model equations (MME), which first proposed by @henderson1973sire, is 
 \begin{align*}
     \begin{pmatrix} \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X} & \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z} \\ \mathbf{Z^\top R}^{-1}\mathbf{X} & \mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} 
     \end{pmatrix}
-    \begin{pmatrix} \boldsymbol{\beta} \\ \mathbf{b} \end{pmatrix}
+    \begin{pmatrix} \hat{\boldsymbol{\beta}} \\ \hat{\boldsymbol{b}} \end{pmatrix}
     =
     \begin{pmatrix}
     \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} \\ \mathbf{Z^\top R}^{-1}\mathbf{y}
     \end{pmatrix}
 \end{align*}
+And $\hat{\boldsymbol{\beta}}$ and $\hat{\boldsymbol{b}}$ refer to as "mixed model solutions".
 
-By proof the above result, we write the coefficient matrix as:
+Based on the method provided by @smith1999multiplicative, we write the coefficient matrix as:
 
 \begin{align*}
     \mathbf{C} = \begin{bmatrix} \mathbf{C}_{XX} & \mathbf{C}_{XZ} \\ \mathbf{C}_{ZX} & \mathbf{C}_{ZZ}\end{bmatrix}
@@ -88,16 +89,16 @@ where
     &=\mathbf{X}^\top (\mathbf{R}^{-1} - \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1})\mathbf{X} \\
     &= \mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X}
 \end{align*}
-Then,
+Then the best linear unbiased estimators (BLUE) of the fixed effects $\boldsymbol{\beta}$,
 \begin{align*}
-    \boldsymbol{\beta} &= (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1}(\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} -  \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}\mathbf{y}) \\
+    \hat{\boldsymbol{\beta}} &= (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1}(\mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} -  \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}\mathbf{y}) \\
     &= (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1}\mathbf{X}^\top(\mathbf{R}^{-1} - \mathbf{R}^{-1} \mathbf{Z}(\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1})\mathbf{y} \\
     &= (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y}
 \end{align*}
 
-Then, using the 
+Next, the best linear unbiased predictors (BLUP) of the random effects $\mathbf{b}$,
 \begin{align*}
-    \mathbf{b} &= \mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy} - \mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX} (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y} \\
+    \hat{\mathbf{b}} &= \mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy} - \mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX} (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y} \\
     &= \mathbf{C}_{ZZ}^{-1}(\mathbf{c}_{Zy} - \mathbf{C}_{ZX} (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y}) \\
     &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}(\mathbf{Z^\top R}^{-1}\mathbf{y} - \mathbf{Z^\top R}^{-1}\mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y}) \\
     &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} )\mathbf{y} \\
@@ -106,8 +107,6 @@ Then, using the
 \end{align*}
 where $$\mathbf{Q} = \boldsymbol{\Omega}^{-1} - \boldsymbol{\Omega}^{-1}\mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1}$$
 
-Similar to simple linear model, residuals are significant to diagnostics of linear mixed model. There are three different types of residuals based on @singer2017graphical, that is, marginal residuals $\boldsymbol{\hat{\xi}}$, conditional residuals $\mathbf{\hat{e}}$ and random effect residuals $\mathbf{Z\hat{b}}$. A marginal residual is the difference between the observed data and the estimated marginal mean,
-$$\boldsymbol{\hat{\xi}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}$$
-A conditional residual is the difference between observed data and predicted value of the observation,
-$$\mathbf{\hat{e}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}} - \mathbf{Z}\hat{\mathbf{b}}$$
-A random effects residual is the difference between the predicted responses and the population average, $\mathbf{Z}\hat{\mathbf{b}}$.
+@robinson1991blup gives an excellent introduction to the estimation of random effects and discusses its various fields of application.
+
+
