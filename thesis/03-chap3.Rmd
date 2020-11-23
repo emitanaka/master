@@ -5,37 +5,46 @@ knit: "bookdown::render_book"
 
 # Literature review
 
-what is a linear mixed model?
-why the visual inference is important?
+what is a linear mixed model? what are the residuals?
+*why the visual inference is important?*
 what are we going to diagnostic?
 how can we diagnostic?
 why we should use this diagnostic?
 how does it works? where it will be used?
 why the lmm is useful?
 
+<!--ET: here consider making headers informative, interweaving various literature in a narrative -->
+## Residuals
 
-ET: here consider making headers informative, interweaving various literature in a narrative
-
-
-## Singer
-
-@singer2017graphical introduced three types of residuals for linear mixed models to do the residual analysis, which are marginal residuals ($\hat\xi = y - X \hat\beta$), conditional residuals ($\hat e = y - X\hat \beta -Z\hat b$) and random effect residual ($Z\hat b$).
-@singer2017graphical summarised the areas of application for each type of residual defined by LMMs such as detecting the linearity of effects, assessing the normality and homoscedasticity of errors, and also checking outliers and influential observations.
+After introducing the linear mixed model, there are several literatures explain the residuals applied in the model.
+Similar to simple linear model, residuals are significant to diagnostics of linear mixed model. There are three various types of residuals based on @singer2017graphical, that is, marginal residuals $\boldsymbol{\hat{\xi}}$, conditional residuals $\mathbf{\hat{e}}$ and random effect residuals $\mathbf{Z\hat{b}}$. A marginal residual is the difference between the observed data and the estimated marginal mean,
+$$\boldsymbol{\hat{\xi}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}$$
+A conditional residual is the difference between observed data and predicted value of the observation,
+$$\mathbf{\hat{e}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}} - \mathbf{Z}\hat{\mathbf{b}}$$
+A random effects residual is the difference between the predicted responses and the population average, $\mathbf{Z}\hat{\mathbf{b}}$.
+@singer2017graphical summarised the areas of application for each type of residual defined by LMMs such as detecting the linearity of effects, assessing the normality and homoscedasticity of errors, checking outliers and accessing the covariances sturcture for individual subjects. While for detecting the normality of residual errors and normality of random effects, a useful tool called quantile-quantile (QQ) plots (@pinheiro2006mixed) have been used.
 Marginal residuals are useful in checking the linearity of effects fixed, outlying observations and the covariance structure of $\boldsymbol\Omega_i$, while the conditional residuals can be used to detect the outlying observations, homoscedasticity and normality of the conditional errors. Moreover, the random effects can be applied to examine the outlying subjects and the normality of the random effects (@singer2017graphical). 
-According to @hilden1995multilevel, a residual is confounded when it is dependent on the other types of errors. Sine the conditional and random effects residual may be correlated, then the conditional residual may not be adequate to check the normality of conditional errors. @hilden1995multilevel proposed a linear transformation of the conditional residuals to get the ($n-q$) least confounded conditional residuals ($c^\top_k \hat e$). However, the linearly transformed residuals do not correspond to individual observations anymore. Besides, they may amplify the super-normality effect, which tends to look more normal than the underlying effects actually are [@schutzenmeister2012residual]. @schutzenmeister2012residual prefer to use the studentization for conditional residuals. 
 
+According to @hilden1995multilevel, a residual is confounded when it is dependent on the other types of errors. Sine the conditional and random effects residual are not pure, which means that they are not independent with other, then the conditional residual may not be adequate to check the normality of conditional errors. @hilden1995multilevel proposed a linear transformation of the conditional residuals to get the ($n-q$) least confounded conditional residuals ($c^\top_k \hat e$). However, the linearly transformed residuals do not correspond to individual observations anymore. Besides, they may amplify the super-normality effect, which tends to look more normal than the underlying effects actually are [@schutzenmeister2012residual]. @schutzenmeister2012residual prefer to use the studentization for conditional residuals. 
+
+In @singer2017graphical's paper, they not only consider the residual analysis, they also explore the global influence analysis, such that, leverage analysis, case deletion analysis and local influence analysis based on details in @beckman1987diagnostics, @banerjee1997influence, @christensen1992case, @lesaffre1998local, among others.
+
+In @loy2017model's literature, rather than three different types of residuals, they only introduced two fundamental types of residuals of LMM: 1)level-1 (observation-level) residuals ($\hat{\mathbf{e}} = \mathbf{y} - \boldsymbol{X\hat\beta}- \mathbf{Z\hat b}$) which is also called the conditional residual that is consistent with Singer, Rocha, and Nobre, and 2) level-2 (group-level) residuals, the predicted random effects ($\mathbf{\hat b}$). 
+Although both @singer2017graphical and @loy2017model use the conditional residuals to check the homogeneity of residual variance, @singer2017graphical used the standardised conditional residual versus the fitted value to detect the homoscedasticity of the conditional errors, whereas @loy2017model checked the relationship between conditional residual and one of the model's covariate. They also check the homogeneity of conditional residual variance between groups by comparing the conditional residual and grouping variable.
+@loy2017model tested the linearity of conditional residual by plotting the explanatory variable versus the conditional errors. However, the linearity diagnostic only occurred in the fixed effect as @singer2017graphical mentioned by plotting the standardised marginal residuals against the fitted value.
+Moreover, the distributional assessment of the random effect for @loy2017model is based on the Q-Q plot where the random effects follow a $t_3$ distribution. Whereas, plotting the $\chi^2_q$ QQ-plot for the Mahalannobis's distance between $\hat b_i$ and $\mathbb{E} (\mathbf{b_i}) = 0$ is the way to check the normality of the random effects ($\mathbf{b}_i$) denoted by @singer2017graphical.
+Rather than residual analysis, @loy2017model introduce the model selection. They also used the residuals to detect the significance of a fixed effect by plotting a residual quantity from the model without the variable of interest with the values of that variable. They also detected if the model needs the random effect, if the random effects include both random intercept and random slope, and whether the random effects need to be correlated.
 
 ## Adam Loy
 
 People always use classical statistic inference such as p-value or the test statistics. But these methods only tell that there is a problem with the model. However, graphical diagnostic can not only tell the problem but also can tell the cause of the problem. 
 Visual inference is parallel with the classical statistical inference. As we all knew, the classical statistical inference makes up of 1) formulating the null and alternative hypotheses, 2) calculating the test statistic from the observed data, 3) comparing the test statistic based on a null distribution, and 4) making a decision for any rejections. However, for visual inference, the true data plot is treated as a test statistic [@loy2017model; @buja2009statistical; @majumder2013validation; @chowdhury2018measuring]. While, the plots that drawn from data generated consistently with the null hypothesis are named as null plots. Picking the plot of the data from the null plots represents a rejection of that null hypothesis based on the viewer's cognition to distinguish between the cases under the null hypotheses from scenarios under the alternative hypotheses [@loy2017model; @buja2009statistical].
 
-@loy2017model introduced two type of residuals of LMMs for model checking: 1)level-1 residuals ($\hat{\mathbf{e}} = \mathbf{y} - \boldsymbol{X\hat\beta}- \mathbf{Z\hat b}$) which is the conditional residual refered by @singer2017graphical, and 2) level-2 residuals ($\mathbf{\hat b}$).
-@loy2017model did the model selection analysis based on the fixed effects and random effects through the lineup protocols. They used the residuals to detect the siginicance of a fixed effect by ploting a residual quantity from thr model without the variable of interest with the values of that variable. They also detected if the model needs the random effect, if the random effects include both random intercept and random slope, and whether the random effects need to be correlated.
+
+@loy2017model did the model selection analysis based on the fixed effects and random effects through the lineup protocols. 
 Residual plots with lineups to check the assumprions of homogeneous residual variance, linearity, and normality of the random effects has been introduced by @loy2017model.
 
-@singer2017graphical used the standardised conditional residual versus the fitted value to detect the homoscedasticity of the conditional errors, but @loy2017model checked the relationship between conditional residual and one of the model's covariate. They also check the homogeneity of conditional residual variance between groups by comparing the conditional residual and grouping variable. @loy2017model tested the linearity of conditional residual by plotting the explanatory variable versus the conditional errors. However, the linearity diagnostic only occurred in the fixed effect as @singer2017graphical mentioned by plotting the standardised marginal residuals against the fitted value.
-Moreover, the distributional assessment of the random effect for @loy2017model is based on the Q-Q plot of the predicted random slopes after refitting the model. Whereas, plotting the $\chi^2_q$ QQ-plot for the Mahalannobis's distance between $\hat b_i$ and $\mathbb{E} (\mathbf{b_i}) = 0$ is the way to check the normality of the random effects ($\mathbf{b}_i$) denoted by @singer2017graphical.
+
 
 
 ### lineup protocol
@@ -85,3 +94,6 @@ They outline the similarity between quantitative testing and visual discovery. U
 The concept of "null distribution of plots" is introduced. This is treated as the test statistics for null distributions. Sampling from the null hypothesis with a finite number R for example, the null datasets $\mathbf{y}^{*1}, \mathbf{y}^{*2},...,\mathbf{y}^{*R}$ are generated and the null plots can be drawn. There are three different ways to compute the null datasets, (i) conditioning, (ii) parametric bootstrap sampling, (iii) posterior inference.
 
 They introduced two protocols, the Rorschach and lineup, which are used for the process of visual discovery. The Rorschach is taken as the cognitive experimentation. To measure a data analyst's tendency to overinterpret plots in which there is no or only obvious structure is the goal. Although it can be bias based on the analysts' knowledge, the aim of this training is to improve the awareness of the features when they detect. For the lineup, they asked the viewer to identify the most different plot among the 19 null plots by randomly inserting the plot of real data. Also, it can be made to choose the rank of the difference level of the plots. Based on the examples that they give and also refer to the survey design (Dawes 2000), the wording of the instruction might help the viewers to make the decisions.
+
+<!-- There is a literature that argues the importance of the legend in the lineups for observers to make their decisions. -->
+
