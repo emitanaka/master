@@ -40,7 +40,8 @@ The data contains 84 observations on the voice pitch (or frequency) from 6 subje
 ## EDA
 
 _Exploration data analysis_ is a critical tool before fitting the model as this method can help us to identity the features of the raw data. In the sleep deprivation study data, we use the plot comparing the response and explanatory variable of interest using linear smoothers for each group. Fig. \@ref(fig:sleep-eda) illustrates the random intercept and random slope in reaction time versus days from day 0 to day 9 corresponding to different subjects. Hence, we treat the explanatory variable as the designed matrix of fixed effect and the subjects as the designed matrix of random effect. To test the dependency of random effects, based on the method provided by @loy2017model, a scatter plot of predicted random effects with overlaid regression lines. The null plots are simulated from the model whose random effects are not correlated and the data plot is made using the predicted random effects from original model fit to the observed data. While the regression lines show the amount of correlation between random effects. Based on the result, it is hard to distinguish the data plot from null plots although it has a little correlation between random effects. Therefore, there is no need for the correlated random effect, that is the random slope and random intercept are independent.
-```{r sleep-eda, fig.height=8, fig.width=8, fig.cap="Exploration Data Analysis example in the sleep study case. It shows the random intercept and random slope with different subjects."}
+
+```{r sleep-eda, fig.height=6, fig.width=6, fig.cap="Exploration Data Analysis example in the sleep study case. It shows the random intercept and random slope with different subjects."}
 ggdraw() + draw_plot(rasterGrob(readPNG("figures/sleep_eda.png")))
 ```
 
@@ -58,7 +59,7 @@ With true variance of conditional residual, $\mathbb{V}(\mathbf{\hat{e}}) = \mat
 To detect outlying observations, we draw the element of the standardised marginal or conditional residuals versus the observation indices recommended by @singer2017graphical.
 Moreover, we use the boxplot for $\boldsymbol{\hat{\xi}}^*_{ij}$ or $\mathbf{\hat{e}}_{ij}^*$ versus the explanatory variables for the autism data set since the data size is big.
 
-@hilden1995multilevel introduced a linear transformation of the conditional residuals which is called least confounded conditional residuals $c_k^\top \mathbf{\hat{e}}^*$ in order to minimise the fraction of confounding. They thought the ability to check for normality of the conditional errors increases. Hence, we employ QQ plot of the standardised conditional residuals and standardised least confounded conditional residuals to check for normality.
+@hilden1995multilevel introduced a linear transformation of the conditional residuals which is called least confounded conditional residuals $c_k^\top \mathbf{\hat{e}}^*$ in order to minimise the fraction of confounding. They thought the ability to check for normality of the conditional errors increases. Hence, we employ QQ plot of the standardised conditional residuals and standardised least confounded conditional residuals to check for normality. Whereas @pinheiro2006mixed considers QQ plot of $\hat{\mathbf{e}}/\hat{\sigma}$ for checking the normality of the conditional error, we stick with the method of generating the standardised condtional reisudals with Singer, Rocha, and Nobre.
 
 ## Experiment setup
 
@@ -103,7 +104,7 @@ We use the parametric bootstrap method which is illustrated below to generate th
 
 From the null data, the null plots are produced which is consistent with the null hypothesis. Afterwards, we insert the data plot among 19 null plots to form the lineup protocol using the `nullabor` package from @nullabor. We design the position of each data plot. According to Fig. \@ref(fig:design), based on the "best" model, the data plots which point the presence of outlying observations of both marginal or conditional residuals are at the position 7 in the lineup for the first two replicates. Then, for replicates 3 and 4, the position of data plot is 13. The data plot which refers to check the normality of conditional error for either standardised conditional residual or least confounded conditional residual is in panel 9 of 20 plots as the basis of the first two replicates of first version. The position for next two replicates are in 4.
 
-```{r design, fig.height= 4,fig.width=8, fig.cap="Experimental design diagram",results='asis'}
+```{r design, fig.height= 4,fig.width=6, fig.cap="Experimental design diagram",results='asis'}
 ggdraw() + draw_plot(rasterGrob(readPNG(("figures/diagram.png"))))
 ```
 
@@ -128,3 +129,6 @@ On this survey, we did not test the visual ability of the observers. It will mak
 
 Position of the data plot may also matters.
 
+If we can add the tolerance interval/area for QQ-plots and residual plots, it can gives us more benefits on the result since it's better in reflecting the null distribution for a specific diagnostic feature and improving objectivity for interpreting these plots.
+
+Since we colouring the residual plot by different subjects, then many observers are looking for the cluster pattern rather than the outlying observations. If we add one more sentence such as our project is focus on the residual analysis, it will have a better understanding for them to choose the plots.
