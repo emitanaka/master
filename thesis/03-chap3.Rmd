@@ -5,13 +5,13 @@ knit: "bookdown::render_book"
 
 # Literature review
 
-what is a linear mixed model? what are the residuals?
+<!--what is a linear mixed model? what are the residuals?
 *why the visual inference is important?*
 what are we going to diagnostic?
 how can we diagnostic?
 why we should use this diagnostic?
 how does it works? where it will be used?
-why the lmm is useful?
+why the lmm is useful?-->
 
 <!--ET: here consider making headers informative, interweaving various literature in a narrative -->
 ## Residuals
@@ -35,16 +35,35 @@ Although both @singer2017graphical and @loy2017model use the conditional residua
 Moreover, the distributional assessment of the random effect for @loy2017model is based on the Q-Q plot where the random effects follow a $t_3$ distribution. Whereas, plotting the $\chi^2_q$ QQ-plot for the Mahalannobis's distance between $\hat b_i$ and $\mathbb{E} (\mathbf{b_i}) = 0$ is the way to check the normality of the random effects ($\mathbf{b}_i$) denoted by @singer2017graphical.
 Rather than residual analysis, @loy2017model introduce the model selection. They also used the residuals to detect the significance of a fixed effect by plotting a residual quantity from the model without the variable of interest with the values of that variable. They also detected if the model needs the random effect, if the random effects include both random intercept and random slope, and whether the random effects need to be correlated.
 
-## Adam Loy
+## Conventional hypothesis vs Visual inference
 
-People always use classical statistic inference such as p-value or the test statistics. But these methods only tell that there is a problem with the model. However, graphical diagnostic can not only tell the problem but also can tell the cause of the problem. 
-Visual inference is parallel with the classical statistical inference. As we all knew, the classical statistical inference makes up of 1) formulating the null and alternative hypotheses, 2) calculating the test statistic from the observed data, 3) comparing the test statistic based on a null distribution, and 4) making a decision for any rejections. However, for visual inference, the true data plot is treated as a test statistic [@loy2017model; @buja2009statistical; @majumder2013validation; @chowdhury2018measuring]. While, the plots that drawn from data generated consistently with the null hypothesis are named as null plots. Picking the plot of the data from the null plots represents a rejection of that null hypothesis based on the viewer's cognition to distinguish between the cases under the null hypotheses from scenarios under the alternative hypotheses [@loy2017model; @buja2009statistical].
+People always use classical statistic inference such as p-value or the $t$-statistic. But these methods only tell that there is a problem with the model. However, graphical diagnostic can not only tell the problem but also can tell the cause of the problem. 
+@buja2009statistical outline the parallelism between quantitative testing and visual discovery and the steps for the visual inference. Both methods are started with the same set of hypotheses. As we all knew, the conventional statistical inference makes up of 1) formulating the null and alternative hypotheses, 2) calculating the test statistic from the observed data, 3) comparing the test statistic based on a null distribution, and 4) making a decision for any rejections.
+While, for visual inference, the test statistic is the plot of the data. And the plot of the data is compared with a set of plots of samples drawn from the null distribution. Accordingly, the null distribution of plots refers to the infinite collection of plots of null datasets sampled under the null hypothesis(@buja2009statistical, @majumder2013validation, @loy2017model). If the plot of data is distinguishable, that is selected as the most different, then the null hypothesis will be rejected. Meanwhile the visual discovery is based on the viewer's cognition when they see the plots. 
+@buja2009statistical states the crucial difference between conventional hypothesis test and visual inference: quantitative testing needs the explicit prior specification of the features; by contrast, the range of visual discoveries under the exploration data analysis and model diagnostic is not pre-specified explicitly. However, this will result in rejection that will be known. Furthermore, the important divergence between conventional and visual testing is that lineups will almost rely on the viewers' evaluation (@majumder2013validation). Since a graphical representation of the data is chosen to display the strength of the parameter of interest $\theta$ in visual inference, a definition of *visual statistic* has been carried out by @buja2009statistical. In details, the plots are drawn from the data generated consistently with the null hypothesis are called null plots which denoted as $T(y_0)$ and data plot, $T(y)$, maps the actual data to the plot. Meanwhile, there is a tool called power of a visual test is developed by @majumder2013validation, which is useful in comparing the performance of visual inference and conventional test.
+
+## Protocols
+
+@buja2009statistical introduces two protocols for the inferential use of null plots based on null datasets drawn from null hypothesis, that is 'the Rorschach' and lineup.
+The Rorschach is taken as the cognitive experimentation. To measure a data analyst's tendency to over interpret plots in which there is no or only obvious structure is the goal. Although it can be bias based on the analysts' knowledge, the aim of this training is to improve the awareness of the features when they detect. 
+For the lineup, they asked the viewer to identify the most different plot among 20 plots where the data plot is randomly allocated among the 19 null plots (@buja2009statistical, @majumder2013validation, @loy2017model). Therefore, there is a one in 20 chance that the data plot will be pointed out. 
+
+The steps are constructed by @loy2017model:
+
+1. *Create lineup data*: Assuming that the proposed models are correct, we use the parametric bootstrap to simulate new responses, refit the model to these simulated responses, and extract the residuals of interest from the proposed model. For each lineup, this process is used to obtain $m-1=19$ simulated null datasets.
+2. *Render lineups*: Draw small multiples of each of the null datasets and randomly insert the observed data among the nulls. Each plot is labelled by a number from 1 to $m$. These IDs are used for identification and later evaluation of results.
+3. *Evaluate lineups*: Present the lineups to independent observers, instructing them to identify the plot most different from the set and asking them what feature led to their choice. Theses choices came in the form of four suggestions (in checkboxes) and one text box for a free-form answer.
+4. *Evaluate the strength of evidence*: For a lineup of size $m=20$ that has been evaluated by $K$ independent observers, the number of evaluations of a lineup in which the observer identifies the data plot, $Y$, has a Visual distribution $V_{K,m, s =3}$ as defined by **Hofmann (2015)**
+
+Even if the observers has no idea of the distinguishable features, they can still select one based on their feelings. But at most case, the viewers select the response based on the identifying features compared to the rest (@buja2009statistical). @buja2009statistical also carries out the characteristic of lineup that it can be made to choose the rank of the difference level of the plots. If this protocol is repeated to multiple independent observers, the $p$-value will be realized by tabulating the number of independent investigators chosen the data plot among the 19 null plots. Afterwards, the definition of $p$-values of lineup is implemented by @buja2009statistical and @majumder2013validation. For $K$ independent investigators, let $X$ be the number of observers picking the test statistic from the lineup. Under the null hypothesis, $X$ is distributed as Binomial distribution $\text{Binom}_{K, 1/m}$ (for a lineup of size $m$). Hence, @majumder2013validation introduce the visual $p$-value of a lineup of a size $m$ evaluated by $K$ observers is given by
+$$P(X \geq x) = 1 - Binom_{K, 1/m}(x-1)$$
+with $x$ is the number of the observers pointing out the actual data plot and the reason for $(x-1)$ is that for binomial distribution, it only takes the integer values. Then with the significance level $\alpha$, the author indicates decision rule that we can reject the null if out of $K$ observers at least $\chi_\alpha$ correctly identify the data plot, otherwise, fail to reject the null. While the lineup size will affect the probability that the viewer correctly points the data plot out proved by @majumder2013validation, such that with larger $m$, the probability of correctly distinguishing the data plot decreases. However, we often choose the lineup size as 20.
+
+They always run the human subject experiment through @turk2012amazon. The demographic information of individuals will be asked, such as age, gender, education level etc. Furthermore, the time taken to responses for each observer is recorded and observers are asked to give the confidence level from 1 to 5 with weak to high (@majumder2013validation, @loy2017model). In order to test the ability of individuals, @majumder2013validation gives the easy lineup as the reference lineup. If they are able to identify the actual data plot, then the response for the reference lineup will be removed and all the following responses will be stored. If the answer for the reference lineup is wrong, then the all responses made by this observer will be removed.
+Based on the examples that they give and also refer to the survey design (@dawes2000impact), the wording of the instruction might help the viewers to make wiser decisions.
 
 
-@loy2017model did the model selection analysis based on the fixed effects and random effects through the lineup protocols. 
-Residual plots with lineups to check the assumprions of homogeneous residual variance, linearity, and normality of the random effects has been introduced by @loy2017model.
-
-
+<!--
 
 
 ### lineup protocol
@@ -54,7 +73,9 @@ One of the protocols, lineup, it randomly insert the plot of observed data among
 2. Render lineups: Draw samll multiples of each of the null datasets and randomly insert the observed data among the nulls. Each plot is labeled by a number from 1 to $m$. These IDs are used for identification and later evaluation of results.
 3. Evaluate lineups: Present the lineups to independent observers, instructing them to identify the plot most different from the set and asking them what feature led to their choice. Thses choices came in the form of four suggestions (in checkboxes) and one text box for a free-form answer.
 4. Evaluate the strength of evidence: For a lineup of size $m=20$ that has been evaluated by $K$ independent observers, the number of evaluations of a lineuo in which the observer identifies the data plot, $Y$, has a Visual distribution $V_{K,m, s =3} as defined by **Hofmann (2015)**
+
 #### p-value of protocol from the Majumder
+
 @majumder2013validation compute the $p$-value in the visual inference with the lineup: let $X$ be the random variable describing the number of independent observations, out of $N$, identifying the data plot. Then the $p$-value is the probability that at least $x$ observers chose the data plot, given the null hypothesis is true, if $X = x$ is the number of observers who chose the data plot from the lineup. Under the null hypothesis, the probability of choosing the true plot is $1/m$ where $m$ is the size of lineup, usually 20, and $X$ is distributed according to a distribution similar to a Binomial distribution $B_{N,1/m}$
 #### Experimental setup
 The visual inference also collect the information about the reason for the observers to make their decisions such as outlier, trend or asymmetry.
@@ -87,13 +108,6 @@ They created three different version and replicate each version by four times. E
 
 what is replication in the exprimental setup?
 
-## Statistical inference for graphics
+-->
 
-They outline the similarity between quantitative testing and visual discovery. Under the null hypothesis, the test statistics and rejection rules are computed for the quantitative testing. However, visual discovery is based on the viewer's cognition when they see the plots. Any discoveries are found, the null hypothesis may be rejected.  
-
-The concept of "null distribution of plots" is introduced. This is treated as the test statistics for null distributions. Sampling from the null hypothesis with a finite number R for example, the null datasets $\mathbf{y}^{*1}, \mathbf{y}^{*2},...,\mathbf{y}^{*R}$ are generated and the null plots can be drawn. There are three different ways to compute the null datasets, (i) conditioning, (ii) parametric bootstrap sampling, (iii) posterior inference.
-
-They introduced two protocols, the Rorschach and lineup, which are used for the process of visual discovery. The Rorschach is taken as the cognitive experimentation. To measure a data analyst's tendency to overinterpret plots in which there is no or only obvious structure is the goal. Although it can be bias based on the analysts' knowledge, the aim of this training is to improve the awareness of the features when they detect. For the lineup, they asked the viewer to identify the most different plot among the 19 null plots by randomly inserting the plot of real data. Also, it can be made to choose the rank of the difference level of the plots. Based on the examples that they give and also refer to the survey design (Dawes 2000), the wording of the instruction might help the viewers to make the decisions.
-
-<!-- There is a literature that argues the importance of the legend in the lineups for observers to make their decisions. -->
 
