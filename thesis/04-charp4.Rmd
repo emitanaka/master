@@ -8,6 +8,8 @@ library(cowplot)
 library(grid)
 library(gridExtra)
 library(png)
+library(knitr)
+library(kableExtra)
 ```
 
 # Methodology
@@ -115,6 +117,27 @@ ggdraw() + draw_plot(rasterGrob(readPNG(("figures/diagram.png"))))
 Using the Latin Squared Design method, we choose 12 lineups at random  among 144 lineups from 3 different data types with four diverse replicates for 2 different plot types but without restricting the versions. We use the `taipan` package (@taipan) to build our survey questions which include the demographic of audience and their responses. Their name, gender, age range, education level and whether they have studied econometrics or statistics are recorded. In the next tab, they are asked to choose the most different map at their decision and how certainty they are to choose that map. There is a process hit for them as the number of lineup they have been seen. They iterate the process by 12 times by answering the same question but looking at different lineups. If they answered less than 12 plots before submitting, there will be a hit popped up to reminder them to complete the survey before they leave. After they click the submit button, the final tab is shown up as the thank you page. All the responses made by each individual are securely stored into the google sheet based on the link through `googlesheets4` package (@googlesheets4) with authenticating. Besides, we also achieve the unique identifier for them in case they double submitted. It is also useful when participant does not leave their names. The plot name with data type, version, replicates and plot type is also recorded which will be used in the further analysis. The time period that the participant takes are displayed as the reference.
 
 # Results
+
+There are 54 individuals that attempt the survey. While, we removed two tests, people who are not sincerely doing the survey such that they responded all the lineups with the same choice or they just answered several questions. Therefore, we accepted the responses from 50 valid independent individuals with 600 observations.
+
+Among 50 independent observers, 72% of them are female and the rest are male. 
+All most half of the participants are aged at 18 to 24 years old and second big proportion is followed by the age range from 25 to 34. There are 18 viewers who achieved Bachelor degree while 20 of them had the Master degree and 8 got the Doctorate degree. Besides, 90% of them have studied econometrics or statistics before.
+
+Based on the responses we got, we calculated the correctness from all these 50 observers. Table \@ref(tab:table) presents the summary of all lineups in evaluation. Three different data types (categorical, numerical and mixed) are combined in the result. We included four different purposes of lineups, where first two are detecting the outlying observation and the last two are checking the normality of the conditional errors and three different versions respectively. The ratio shown in the table is the division of number of observers who identifies the actual data plot among the total number of those who participated in the same version and lineup. The visual $p$-value is calculated based on the method provided by @majumder2013validation.
+There are only few observers who are able to identify the actual data plot in the version 1 no matter what types of lineups. It is consistent with our expectations because the version 1 is simulated from the 'best' model which does not have any obvious features. 
+While, from the result, increase in the ratio for the version 2 compared with version 1 may indicates that for version 2, the data plot has some features compared with the null plots. 9 out of 48 observers chose the data plot in the QQ plot for assessing the normality of conditional errors based on the standardised conditional residual, which result in a visual $p$-value of 0.00055. This leads us to reject the null hypothesis indicating overall, the conditional error does not follow a normal distribution.
+The version 3 performed best among these three versions since it got the most proportion that observers were able to point out the data plot among 19 null plots. The $p$-value of lineup are significant which is shown from all the results shown in the version 3, that is we are able to reject the null hypotheses.
+By comparing the ratio, we find that the standardised conditional stand out in checking the outlying observations than the standardised marginal residuals does. As 21 out of 55 viewers are able to identify the actual data plot in the residual plot for conditional residual while there are only 12 out of 58 participants under the marginal residuals. The result shown is on our expectation, because the conditional residuals squeeze the points which shows less information about the pattern but with more outstanding outlying observations. However, using the QQ plot to explore the normality of conditional errors, the standardised conditional residuals perform better than the least confounded conditional residual, which is surprised.
+
+
+
+
+<!-- table need to be fixed.. ugly -->
+
+```{r table, echo=FALSE}
+results <- data.frame(lineups = c("Marginal residual plot", "Condtional residual plot", "QQ plot for conditional residual", "QQ plot for least confounded residual"), version1 = c('1/48', '0/42', '3/49', '2/44'), version2 = c('3/44', '4/53', '9/48 **', '5/49 .'), version3 = c('12/58 ***', '21/55 ***', '26/53 ***', '11/57 ***'))
+results %>% kable(caption = "Overview of all lineup evaluations") %>% kable_styling(full_width = TRUE, bootstrap_options = "basic") %>% footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$")
+```
 
 plotting conditional residual against predictors or against observation indices performed reasonably well as methods for diagnosing violations of linear mixed model assumptions.
 
