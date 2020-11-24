@@ -2,17 +2,29 @@
 chapter: 1
 knit: "bookdown::render_book"
 ---
+```{r setup_1, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, cache=TRUE)
+library(cowplot)
+library(grid)
+library(gridExtra)
+library(png)
+```
 
 # Introduction {#ch:intro}
 
-Visual inference on the residuals diagnostics of linear mixed models. 
+Statistical graphics play an important role in exploration data analysis, model checking and diagnostic. For the residual diagnostic, a single plot will be presented at usual case, such that if there is any outlying observations or whether the variance is homoscedasticity. The graphical diagnostics enable the analyst to explore not only the place that problem occurred but also the reason behind the issues. However, a single plot will be misleading particular for more complex model such as linear mixed model.
 
-Focus on
+Linear mixed model is an extension of the linear model, where it contains the repeated measures with various subjects. Although the diagnostics applied to linear model is suitable for the linear mixed model, it is in a more complex way. There are three different kinds of residuals in the linear mixed model and each residual has its own applications. However, we use two of these residuals in this project. They are marginal residuals and conditional residuals. While one more residual is used called confounded conditional residual which is the linear combination of the conditional residuals. Among diverse applications, we mainly focus on the residual analysis for residual plot and QQ plot, where residual plot is detecting the outlying observation for conditional residuals versus marginal residuals and assessing the normality of conditional errors with conditional residuals versus confounded conditional residuals is measured by QQ plot.
 
-- normality QQ plot for least confounded residual vs conditional residual for marginal residuals
-- conditional residual in marginal residual v.s conditional residual
+Although people is used to take a conventional hypothesis test to identify if the null distribution is robust such as $t$-statistic or $p$-value. The visual inference is another tool based on the application of lineup protocol which constitutes of usually, 19 null plots, and one data plot that randomly inserts among the null plots based on the experimental design setup that we created. These lineups are then presented to the independent observers for evaluation. Based on Fig. \@ref(fig:inference), both of conventional inference and visual inference start with setting the null hypothesis. However, the plot of the data is treated as the test statistic rather than a numerical method. And the decision is justified according to the responses made by the individuals. While a parametric bootstrap procedure is applied to simulate the data and get the lineup plots which is consistent with the null hypothesis. 
 
-This is where you introduce the main ideas of your thesis, and an overview of the context and background.
+```{r inference, fig.height= 4,fig.width=6, fig.cap="Comparison of visual inference with conventional inference"}
+ggdraw() + draw_plot(rasterGrob(readPNG(("figures/hypothesis_test.png"))))
+```
 
-Later chapters should be divided into coherent pieces describing your analysis. The final chapter should provide some concluding remarks, discussion, ideas for future research, and so on. Appendixes can contain additional material that don't fit into any chapters, but that you want to put on record. For example, additional tables, output, etc.
+Suppose there are $K$ observers that participated, the $p$-value for the lineup is shown up by @majumder2013validation. The probability that the data plot will be pointed out among the m plots where $m$ is the lineup size is $1/m$. That is, the $p$-value is the probability that at least $x$ observers chose the data plot, given that the null hypothesis is true. Under the null hypothesis, let $X$ be the number of the observers that identify the data plot among the $N$ total participators, $X$ is distributed as Binomial distribution $\text{B}_{N, 1/m}$. @majumder2013validation also introduces the power of the visual test to compared the robustness of visual inference with the conventional inference.
 
+The article is organized as follow. Chapter 2 introduce the linear mixed model with algebra. The brief review of the existing literature is illustrated in Chapter 3. Chapter 4 focus on the method we used to generate residual analysis based on three different data types as well as the survey that has been carried out. The results illustrated by the survey is presented in Chapter 5 and discussion and conclusion are in Chapter 6 and Chapter 7 respectively.
+
+<!--This is where you introduce the main ideas of your thesis, and an overview of the context and background.
+Later chapters should be divided into coherent pieces describing your analysis. The final chapter should provide some concluding remarks, discussion, ideas for future research, and so on. Appendixes can contain additional material that don't fit into any chapters, but that you want to put on record. For example, additional tables, output, etc.-->
