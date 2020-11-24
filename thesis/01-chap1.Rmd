@@ -3,26 +3,28 @@ chapter: 1
 knit: "bookdown::render_book"
 ---
 ```{r setup_1, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message=FALSE, cache=TRUE)
-library(cowplot)
-library(grid)
-library(gridExtra)
-library(png)
+knitr::opts_chunk$set(echo = FALSE, 
+                      message=FALSE, 
+                      cache=TRUE,
+                      fig.align = "center")
 ```
 
 # Introduction {#ch:intro}
 
-Statistical graphics play an important role in exploration data analysis, model checking and diagnostic. For the residual diagnostic, a single plot will be presented at usual case, such that if there is any outlying observations or whether the variance is homoscedasticity. The graphical diagnostics enable the analyst to explore not only the place that problem occurred but also the reason behind the issues. However, a single plot will be misleading particular for more complex model such as linear mixed model.
+Statistical graphics play an important role in exploratory data analysis, model checking and diagnostic. For residual diagnostics, a plot may be used to infer the appropriateness of the fitted model such as by searching for unusual patterns in the plot. Graphical diagnostics enable the analyst to not only find unexpected results but may also uncover the reason for the result. However, inferences from plots are made often without calibration and in an informal manner, unlike the treatment of hypothesis tests where a numerical test statistic is formulated and compared against certain thresholds (e.g. $p$-value, confidence intervals or Bayes factors). 
 
-Linear mixed model is an extension of the linear model, where it contains the repeated measures with various subjects. Although the diagnostics applied to linear model is suitable for the linear mixed model, it is in a more complex way. There are three different kinds of residuals in the linear mixed model and each residual has its own applications. However, we use two of these residuals in this project. They are marginal residuals and conditional residuals. While one more residual is used called confounded conditional residual which is the linear combination of the conditional residuals. Among diverse applications, we mainly focus on the residual analysis for residual plot and QQ plot, where residual plot is detecting the outlying observation for conditional residuals versus marginal residuals and assessing the normality of conditional errors with conditional residuals versus confounded conditional residuals is measured by QQ plot.
+In a conventional (frequentist) hypothesis test, we formulate a null and alternate hypothesis, a test statistic and test this test statistic under the null distribution. The visual inference is another tool based on the application of lineup protocol which constitutes of usually, 19 null plots, and one data plot that randomly inserts among the null plots based on the experimental design setup that we created. These lineups are then presented to a number of (possibly independent) observers for evaluation. Figure \@ref(fig:inference) illustrates the conventional and visual inference. The lineup protocol follows closely to that of a frequentist hypothesis test except the data plot is treated as the test statistic. 
 
-Although people is used to take a conventional hypothesis test to identify if the null distribution is robust such as $t$-statistic or $p$-value. The visual inference is another tool based on the application of lineup protocol which constitutes of usually, 19 null plots, and one data plot that randomly inserts among the null plots based on the experimental design setup that we created. These lineups are then presented to the independent observers for evaluation. Based on Fig. \@ref(fig:inference), both of conventional inference and visual inference start with setting the null hypothesis. However, the plot of the data is treated as the test statistic rather than a numerical method. And the decision is justified according to the responses made by the individuals. While a parametric bootstrap procedure is applied to simulate the data and get the lineup plots which is consistent with the null hypothesis. 
-
-```{r inference, fig.height= 4,fig.width=6, fig.cap="Comparison of visual inference with conventional inference"}
-ggdraw() + draw_plot(rasterGrob(readPNG(("figures/hypothesis_test.png"))))
+```{r inference, out.width="90%", fig.cap="Comparison of visual inference with conventional inference"}
+knitr::include_graphics("figures/hypothesis_test.png")
 ```
 
-Suppose there are $K$ observers that participated, the $p$-value for the lineup is shown up by @majumder2013validation. The probability that the data plot will be pointed out among the m plots where $m$ is the lineup size is $1/m$. That is, the $p$-value is the probability that at least $x$ observers chose the data plot, given that the null hypothesis is true. Under the null hypothesis, let $X$ be the number of the observers that identify the data plot among the $N$ total participators, $X$ is distributed as Binomial distribution $\text{B}_{N, 1/m}$. @majumder2013validation also introduces the power of the visual test to compared the robustness of visual inference with the conventional inference.
+Suppose there are $K$ independent observers that participated, the $p$-value for the lineup of size $m$ is calculated as follows [@majumder2013validation]. Consider the null hypothesis ($H_0$) that the data plot is not distinguishable from the null plots and the alternate hypothesis ($H_1$) that the data plot have some difference to the null plot. Assuming that observers have equal perceptive ability and that the positional placement of the plots have no effect then the 
+probability that an observer selects the data plot in a lineup of size $m$ is $1/m$ under $H_0$. If we let $X$ be the number of observers out of $K$ total observers who identified the data plot, then $X \sim B(K, 1/m)$ under $H_0$. Suppose $x$ is the observed number of people who identified the data plot, then the visual inference $p$-value is calculated as $P(X\geq x)$. @majumder2013validation also introduces the power of the visual test to compared the robustness of visual inference with the conventional inference.
+
+
+Linear mixed model is an extension of the linear model, where the model contains additional random effects aside from the error term. The mathematical form of the model is shown in Chapter \@ref(ch:lmm). The diagnostics of linear mixed models are further complicated than that of a linear model as there are considerations of multiple types of residuals. This thesis considers multiple forms of residuals that underlies the constructions of diagnostic plots. Namely, we consider marginal residual, conditional residual and least confounded residual (a linear combination of conditional residuals suggested to perform well) as numerical constructs for the residual plot, boxplot or quantile-quantile (Q-Q) plot. 
+
 
 The article is organized as follow. Chapter 2 introduce the linear mixed model with algebra. The brief review of the existing literature is illustrated in Chapter 3. Chapter 4 focus on the method we used to generate residual analysis based on three different data types as well as the survey that has been carried out. The results illustrated by the survey is presented in Chapter 5 and discussion and conclusion are in Chapter 6 and Chapter 7 respectively.
 
