@@ -10,6 +10,7 @@ library(gridExtra)
 library(png)
 library(knitr)
 library(kableExtra)
+library(tibble)
 ```
 
 # Methodology
@@ -128,18 +129,41 @@ There are only few observers who are able to identify the actual data plot in th
 While, from the result, increase in the ratio for the version 2 compared with version 1 may indicates that for version 2, the data plot has some features compared with the null plots. 9 out of 48 observers chose the data plot in the QQ plot for assessing the normality of conditional errors based on the standardised conditional residual, which result in a visual $p$-value of 0.00055. This leads us to reject the null hypothesis indicating overall, the conditional error does not follow a normal distribution.
 The version 3 performed best among these three versions since it got the most proportion that observers were able to point out the data plot among 19 null plots. The $p$-value of lineup are significant which is shown from all the results shown in the version 3, that is we are able to reject the null hypotheses.
 By comparing the ratio, we find that the standardised conditional stand out in checking the outlying observations than the standardised marginal residuals does. As 21 out of 55 viewers are able to identify the actual data plot in the residual plot for conditional residual while there are only 12 out of 58 participants under the marginal residuals. The result shown is on our expectation, because the conditional residuals squeeze the points which shows less information about the pattern but with more outstanding outlying observations. However, using the QQ plot to explore the normality of conditional errors, the standardised conditional residuals perform better than the least confounded conditional residual, which is surprised.
-
-
-
-
 <!-- table need to be fixed.. ugly -->
 
 ```{r table, echo=FALSE}
-results <- data.frame(lineups = c("Marginal residual plot", "Condtional residual plot", "QQ plot for conditional residual", "QQ plot for least confounded residual"), version1 = c('1/48', '0/42', '3/49', '2/44'), version2 = c('3/44', '4/53', '9/48 **', '5/49 .'), version3 = c('12/58 ***', '21/55 ***', '26/53 ***', '11/57 ***'))
+results <- data.frame(lineups = c("Marginal residual plot", "Condtional residual plot", "QQ plot for conditional residual", "QQ plot for confounded residual"), version1 = c('1/48', '0/42', '3/49', '2/44'), version2 = c('3/44', '4/53', '9/48 **', '5/49 .'), version3 = c('12/58 ***', '21/55 ***', '26/53 ***', '11/57 ***'))
 results %>% kable(caption = "Overview of all lineup evaluations") %>% kable_styling(full_width = TRUE, bootstrap_options = "basic") %>% footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$")
 ```
 
-plotting conditional residual against predictors or against observation indices performed reasonably well as methods for diagnosing violations of linear mixed model assumptions.
+Furthermore, we want to identify if the position of the data plot matters in Table \@ref(tab:position). We only consider the cases from version 2 and version 3 since they have more correct responses compared with version 1. The "1" means that the first two replicates, and "2" represents the last two replicates. Since the lineups are generated as 4 rows and 5 columns by label 1 to 20 from left to right. The residual plot in version 2, the data plot is located at 5 for first and second replicates while at 15 for the rest two replicates. For the version 2 in QQ plot, the data plot is allocated at 8 and 20 respectively. From the result, we can imply that if the data plot is at the corner, then it seems to be easier to be identified. Besides, if the data plot on the first row, it will be picked out quicker for example in the version 3. The data plot of the residual plots is in 15 and 2 respectively. And 11 and 6 are the two positions that apply in the QQ plot for version 3.
+<!-- this result may got less evidence.. -->
+
+```{r position}
+tribble(~Lineups, ~V2.1, ~V2.2, ~V3.1, ~V3.2,
+        "Marginal residual plot", "3/25", "0/19", "4/28 *", "8/30 ***",
+        "Condtional residual plot", "3/29", "1/24", "9/26 ***", "12/29 ***",
+        "QQ plot for conditional residual", "2/23", "7/25 ***", "15/29 ***", "11/24 ***",
+        "QQ plot for confounded residual", "2/29", "3/20 .", "4/30 .", "7/27 ***") %>%
+  kable(caption = "Summary table of position for lineup") %>%
+  footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$") %>% 
+  kable_styling(bootstrap_options = c("bordered", "striped", "hover"))
+```
+
+Based on version 3, the data type may also affect the results. As there are three data sets that have been used in this project, that is Autism case, Sleep study case, and Linguistic case. Each data set represents a particular data type, where linguistic case is the representative of categorical data type, numerical data type belongs to sleep study case and the rest, autism is the mixed data type. From the Table \@ref(tab:data-type), it shows that the mixed data type behaves well than the others, as the observers are able to recognize the data plot at the most proportion. Nevertheless, the categorical data types perform least as there are few people point out the actual data plot even in the version 3. In addition, among the mixed data type, it is better to use the standardised conditional residual to detect the outlying observations than based on the standardised marginal residual. Otherwise, the QQ plot applied in least confounded conditional residuals for conditional error model checking is harder to identify the data plot compared with standardised conditional residuals.
+
+```{r data-type}
+tribble(~"Lineups", ~"Categorical", ~"Numerical", ~"Mixed",
+        "Marginal residual plot", "2/19", "2/21", "8/18 ***",
+        "Condtional residual plot", "4/19 *", "3/19 .", "14/17 ***",
+        "QQ plot for conditional residual", "0/11", "12/21 ***", "14/21 ***",
+        "QQ plot for confounded residual", "1/14", "2/17 .", "8/26 ***") %>%
+  kable(caption = "Summary table of position for lineup") %>%
+  footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$") %>% 
+  kable_styling(bootstrap_options = c("bordered", "striped", "hover"))
+```
+<!-- certainty -->
+<!--plotting conditional residual against predictors or against observation indices performed reasonably well as methods for diagnosing violations of linear mixed model assumptions. -->
 
 # Discussions
 
