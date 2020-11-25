@@ -8,6 +8,9 @@ library(cowplot)
 library(grid)
 library(gridExtra)
 library(png)
+library(knitr)
+library(kableExtra)
+library(tibble)
 ```
 
 # Methodology
@@ -114,21 +117,65 @@ ggdraw() + draw_plot(rasterGrob(readPNG(("figures/diagram.png"))))
 
 Using the Latin Squared Design method, we choose 12 lineups at random  among 144 lineups from 3 different data types with four diverse replicates for 2 different plot types but without restricting the versions. We use the `taipan` package (@taipan) to build our survey questions which include the demographic of audience and their responses. Their name, gender, age range, education level and whether they have studied econometrics or statistics are recorded. In the next tab, they are asked to choose the most different map at their decision and how certainty they are to choose that map. There is a process hit for them as the number of lineup they have been seen. They iterate the process by 12 times by answering the same question but looking at different lineups. If they answered less than 12 plots before submitting, there will be a hit popped up to reminder them to complete the survey before they leave. After they click the submit button, the final tab is shown up as the thank you page. All the responses made by each individual are securely stored into the google sheet based on the link through `googlesheets4` package (@googlesheets4) with authenticating. Besides, we also achieve the unique identifier for them in case they double submitted. It is also useful when participant does not leave their names. The plot name with data type, version, replicates and plot type is also recorded which will be used in the further analysis. The time period that the participant takes are displayed as the reference.
 
-
-
-
 # Results
 
-plotting conditional residual against predictors or against observation indices performed reasonably well as methods for diagnosing violations of linear mixed model assumptions.
+There are 54 individuals that attempt the survey. While, we removed two tests, people who are not sincerely doing the survey such that they responded all the lineups with the same choice or they just answered several questions. Therefore, we accepted the responses from 50 valid independent individuals with 600 observations.
+
+Among 50 independent observers, 72% of them are female and the rest are male. 
+All most half of the participants are aged at 18 to 24 years old and second big proportion is followed by the age range from 25 to 34. There are 18 viewers who achieved Bachelor degree while 20 of them had the Master degree and 8 got the Doctorate degree. Besides, 90% of them have studied econometrics or statistics before.
+
+Based on the responses we got, we calculated the correctness from all these 50 observers. Table \@ref(tab:table) presents the summary of all lineups in evaluation. Three different data types (categorical, numerical and mixed) are combined in the result. We included four different purposes of lineups, where first two are detecting the outlying observation and the last two are checking the normality of the conditional errors and three different versions respectively. The ratio shown in the table is the division of number of observers who identifies the actual data plot among the total number of those who participated in the same version and lineup. The visual $p$-value is calculated based on the method provided by @majumder2013validation.
+There are only few observers who are able to identify the actual data plot in the version 1 no matter what types of lineups. It is consistent with our expectations because the version 1 is simulated from the 'best' model which does not have any obvious features. 
+While, from the result, increase in the ratio for the version 2 compared with version 1 may indicates that for version 2, the data plot has some features compared with the null plots. 9 out of 48 observers chose the data plot in the QQ plot for assessing the normality of conditional errors based on the standardised conditional residual, which result in a visual $p$-value of 0.00055. This leads us to reject the null hypothesis indicating overall, the conditional error does not follow a normal distribution.
+The version 3 performed best among these three versions since it got the most proportion that observers were able to point out the data plot among 19 null plots. The $p$-value of lineup are significant which is shown from all the results shown in the version 3, that is we are able to reject the null hypotheses.
+By comparing the ratio, we find that the standardised conditional stand out in checking the outlying observations than the standardised marginal residuals does. As 21 out of 55 viewers are able to identify the actual data plot in the residual plot for conditional residual while there are only 12 out of 58 participants under the marginal residuals. The result shown is on our expectation, because the conditional residuals squeeze the points which shows less information about the pattern but with more outstanding outlying observations. However, using the QQ plot to explore the normality of conditional errors, the standardised conditional residuals perform better than the least confounded conditional residual, which is surprised.
+<!-- table need to be fixed.. ugly -->
+
+```{r table, echo=FALSE}
+results <- data.frame(lineups = c("Marginal residual plot", "Condtional residual plot", "QQ plot for conditional residual", "QQ plot for confounded residual"), version1 = c('1/48', '0/42', '3/49', '2/44'), version2 = c('3/44', '4/53', '9/48 **', '5/49 .'), version3 = c('12/58 ***', '21/55 ***', '26/53 ***', '11/57 ***'))
+results %>% kable(caption = "Overview of all lineup evaluations") %>% kable_styling(full_width = TRUE, bootstrap_options = "basic") %>% footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$")
+```
+
+Furthermore, we want to identify if the position of the data plot matters in Table \@ref(tab:position). We only consider the cases from version 2 and version 3 since they have more correct responses compared with version 1. The "1" means that the first two replicates, and "2" represents the last two replicates. Since the lineups are generated as 4 rows and 5 columns by label 1 to 20 from left to right. The residual plot in version 2, the data plot is located at 5 for first and second replicates while at 15 for the rest two replicates. For the version 2 in QQ plot, the data plot is allocated at 8 and 20 respectively. From the result, we can imply that if the data plot is at the corner, then it seems to be easier to be identified. Besides, if the data plot on the first row, it will be picked out quicker for example in the version 3. The data plot of the residual plots is in 15 and 2 respectively. And 11 and 6 are the two positions that apply in the QQ plot for version 3.
+<!-- this result may got less evidence.. -->
+
+```{r position}
+tribble(~Lineups, ~V2.1, ~V2.2, ~V3.1, ~V3.2,
+        "Marginal residual plot", "3/25", "0/19", "4/28 *", "8/30 ***",
+        "Condtional residual plot", "3/29", "1/24", "9/26 ***", "12/29 ***",
+        "QQ plot for conditional residual", "2/23", "7/25 ***", "15/29 ***", "11/24 ***",
+        "QQ plot for confounded residual", "2/29", "3/20 .", "4/30 .", "7/27 ***") %>%
+  kable(caption = "Summary table of position for lineup") %>%
+  footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$") %>% 
+  kable_styling(bootstrap_options = c("bordered", "striped", "hover"))
+```
+
+Based on version 3, the data type may also affect the results. As there are three data sets that have been used in this project, that is Autism case, Sleep study case, and Linguistic case. Each data set represents a particular data type, where linguistic case is the representative of categorical data type, numerical data type belongs to sleep study case and the rest, autism is the mixed data type. From the Table \@ref(tab:data-type), it shows that the mixed data type behaves well than the others, as the observers are able to recognize the data plot at the most proportion. Nevertheless, the categorical data types perform least as there are few people point out the actual data plot even in the version 3. In addition, among the mixed data type, it is better to use the standardised conditional residual to detect the outlying observations than based on the standardised marginal residual. Otherwise, the QQ plot applied in least confounded conditional residuals for conditional error model checking is harder to identify the data plot compared with standardised conditional residuals.
+
+```{r data-type}
+tribble(~"Lineups", ~"Categorical", ~"Numerical", ~"Mixed",
+        "Marginal residual plot", "2/19", "2/21", "8/18 ***",
+        "Condtional residual plot", "4/19 *", "3/19 .", "14/17 ***",
+        "QQ plot for conditional residual", "0/11", "12/21 ***", "14/21 ***",
+        "QQ plot for confounded residual", "1/14", "2/17 .", "8/26 ***") %>%
+  kable(caption = "Summary table of position for lineup") %>%
+  footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$") %>% 
+  kable_styling(bootstrap_options = c("bordered", "striped", "hover"))
+```
+<!-- certainty -->
+<!--plotting conditional residual against predictors or against observation indices performed reasonably well as methods for diagnosing violations of linear mixed model assumptions. -->
 
 # Discussions
 
-There are three data sets with three different version with four replications for each version that is 144 lineups in total. If sample size is small, the result will become unreliable since some images may have few or even no responses.
+At this stage, there are some limitations that occurred when we built the survey and some unexpected things happened as well.
 
-On this survey, we did not test the visual ability of the observers. It will make the result bias since some observer may good at the plot reading. However, some of them may not. In order to make the images clear to read, we size the plots as big as possible and put the questions on the sub panel side. The observers may loss the patient because they need to scroll up and down the page to see the whole picture of the lineups, make the comparison and choose their responses by repeating the process for 12 times. Also, some viewers will miss the information about the last 4 panels of lineup if they are not carefully reading the maps although there may some important information are listed in the last panel of lineup. Moreover, it is not clear for participants to see the text that "Please click the SUBMIT button at the top of the window" at the last image in the small box. In addition, observers need to cross the whole page to click the SUBMIT button which is at the top right corner whereas the questions are listed at the bottom left. 
+There are three data types for three different versions with four replications each, that is 144 lineups in total. If total number of observers is small, the result will become unreliable since some images may have few or even no responses, so we tried to encourage more individuals to join us.
+Based on the survey that we created, we did not provide the reference lineup such that the visual ability of the individuals is not tested. It may result in the biases since we included the responses from those who are not well good at visual detecting. If the observers are able to identify the data plot from the reference lineup, their responses will be accepted otherwise, we will remove them.
+If we can add the tolerance interval/area for QQ-plots and residual plots, it can give us more benefits on the result since it will be better in reflecting the null distribution for a specific diagnostic feature and improving objectivity for interpreting these plots.
+In order to make the images clear for the viewers to read, we made the lineups as big as possible and put the questions on the sub panel side. The observers may lose patience because they need to scroll up and down the pages to see the whole picture of the lineups, make comparisons and answer the questions by repeating the process for 12 times. 
+Also, there may some important hits are listed in the last panel of lineup. For some viewers, they will miss the information about the last 4 panels of lineups if they are not carefully reading the maps. 
+Moreover, it is not clear for participants to see the text that "Please click the SUBMIT button at the top of the window" on the question panel for the last image. In addition, observers need to cross the whole page to click the SUBMIT button which is at the top right corner whereas the questions are listed at the bottom left. 
+Furthermore, the position of the data plot may also matter. Since we designed the location of each data plot among the null plots for each case whereas the position for residual plots are the same as well as the QQ plots.
+Adding some words to explain the goal of the questions may improve the responses. Because we did not tell any information about the aim of this project, when the individuals see the residual plots which have been coloured by diverse subjects, they might treat the plots as the cluster plots which means that they were looking for the cluster pattern. 
 
-Position of the data plot may also matters.
 
-If we can add the tolerance interval/area for QQ-plots and residual plots, it can gives us more benefits on the result since it's better in reflecting the null distribution for a specific diagnostic feature and improving objectivity for interpreting these plots.
-
-Since we colouring the residual plot by different subjects, then many observers are looking for the cluster pattern rather than the outlying observations. If we add one more sentence such as our project is focus on the residual analysis, it will have a better understanding for them to choose the plots.
