@@ -3,7 +3,7 @@ chapter: 2
 knit: "bookdown::render_book"
 ---
 
-# Linear Mixed Model
+# Linear Mixed Model {#ch:lmm}
 
 Linear mixed model is useful on dealing with the dependency structure with the data which is in groups.
 
