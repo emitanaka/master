@@ -1,20 +1,20 @@
 ---
 chapter: 2
-knit: "bookdown::render_book"
+#knit: "bookdown::render_book"
 ---
 
 # Linear Mixed Model {#ch:lmm}
 
-Linear mixed model is useful on dealing with the dependency structure with the data which is in groups.
+Linear mixed model (LMM) are more versatile in fitting complex, correlated data structures than linear models by taking into account the dependency structures between units. Linear mixed models are special case of what is generally known as mixed-effects model; named as such because the model consists a mix of fixed and random effects. Confusingly, mixed-effects models are known with a variety of other names such as panel data model (often in econometrics), hirarchical model or multi-level model (often in social science). To elucidate the model we are referring, the mathematical form of linear mixed models is presented next.
 
-The linear mixed model may be expressed as
+For $i = 1, 2, \ldots, n$ non-overlapping groups, a linear mixed model may be expressed as
 $$\underset{(m_i \times 1)}{\mathbf{y}_i} = \underset{(m_i \times p)}{\mathbf{X}_i} \underset{(p\times 1)}{\boldsymbol{\beta}} + \underset{(m_i \times q)}{\mathbf{Z}_i}\underset{(q \times 1)}{\mathbf{b}_i} + \underset{(m_i \times 1)}{\mathbf{e}_i}$$
 
-where there are $i = 1, 2, \ldots, n$ nonoverlapping groups. $\mathbf{y}_i$ is a $(m_i \times 1)$ vector of observed data, $\mathbf{X}_i$ is a $(m_i \times p)$ fixed-effects design or regressor matrix, $\mathbf{Z}$ is a $(m_i \times q)$ known specification matrix corresponding to the random effects, $\mathbf{b}_i$ is a $(q \times 1)$ vector of random effects describing the between-group covariance structure, $\boldsymbol \beta$ is a $(p \times 1)$vector of fixed effects governing the global mean structure, and $\mathbf e$ is an $(m_i \times 1)$ vector of random errors. The distributional assumptions are as follows: $\mathbf{b}_i$ is normal with mean $\mathbf{0}$ and variance $\mathbf{G}$; $\mathbf{e}_i$ is normal with mean $\mathbf{0}$ and variance $\mathbf{R}$; the random components $\mathbf{b}_i$ and $\mathbf{e}_i$ are independent.
+where $\mathbf{y}_i$ is a $m_i \times 1$ vector of response, $\mathbf{X}_i$ is a $m_i \times p$ fixed-effects design or regressor matrix, $\mathbf{Z}$ is a $m_i \times q$ known specification matrix corresponding to the random effects, $\mathbf{b}_i$ is a $q \times 1$ vector of random effects describing the between-group covariance structure, $\boldsymbol \beta$ is a $p \times 1$ vector of fixed effects governing the global mean structure, and $\mathbf e$ is an $m_i \times 1$ vector of random errors. The distributional assumptions are as follows: $\mathbf{b}_i \sim N(\boldsymbol{0}, \mathbf{G}_i)$; $\mathbf{e}_i \sim N(\boldsymbol{0}, \mathbf{R}_i)$; the random components $\mathbf{b}_i$ and $\mathbf{e}_i$ are independent. The matrices $\mathbf{G}_i$ and $\mathbf{R}_i$ are symmetrical, positive definite matrices. We assume $\mathbf{R}_i = \sigma^2\mathbf{I}_{m_i}$ throughout this thesis.
 
 We can rewrite the model as
 $$\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \mathbf{Zb}+\mathbf{e}$$
-where $\mathbf y = (\mathbf y_1^\top, \ldots, \mathbf y_n^\top)^\top, \mathbf X = (\mathbf X_1^\top, \ldots, \mathbf X_n^\top)^\top, Z = \oplus_{i=1}^n \mathbf Z_i, \mathbf b = (\mathbf b_1^\top, \ldots, \mathbf b_n^\top)^\top$ and $\mathbf e = (\mathbf e_1^\top, \ldots, \mathbf e_n^\top)^\top$.
+where $\mathbf y = (\mathbf y_1^\top, \ldots, \mathbf y_n^\top)^\top, \mathbf X = \oplus_{i=1}^n \mathbf X_i, Z = \oplus_{i=1}^n \mathbf Z_i, \mathbf b = (\mathbf b_1^\top, \ldots, \mathbf b_n^\top)^\top$ and $\mathbf e = (\mathbf e_1^\top, \ldots, \mathbf e_n^\top)^\top$. 
 
 The key assumption of LMMs is that the residual errors and random effects are normally distributed, namely
 \begin{align*}
@@ -37,7 +37,7 @@ with $\mathbb E(\mathbf y) = \boldsymbol{X\beta}$ and $\mathbb V(\mathbf y) = \b
 The joint density function of $\mathbf{y}$ and $\mathbf{b}$ is defined as
 \begin{align*}
    f(\mathbf{y}, \mathbf{b}) &= g(\mathbf{y}|\mathbf{b})h(\mathbf{b}) \\
-   &= const \times \exp\left(-\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})-\frac{1}{2}\mathbf{b}^\top \boldsymbol{\Gamma}^{-1} \mathbf{b}\right)
+   &= const \times \exp\left(-\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})-\frac{1}{2}\mathbf{b}^\top \boldsymbol{\Gamma}^{-1} \mathbf{b}\right).
 \end{align*}
 
 The parameters $\mathbf{b}$ and ${\boldsymbol{\beta}}$ can be estimated by maximising this function. Taking the first derivative and equating the derivatives to zero, the result is shown below.
