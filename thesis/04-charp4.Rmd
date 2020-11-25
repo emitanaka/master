@@ -132,8 +132,14 @@ By comparing the ratio, we find that the standardised conditional stand out in c
 <!-- table need to be fixed.. ugly -->
 
 ```{r table, echo=FALSE}
-results <- data.frame(lineups = c("Marginal residual plot", "Condtional residual plot", "QQ plot for conditional residual", "QQ plot for confounded residual"), version1 = c('1/48', '0/42', '3/49', '2/44'), version2 = c('3/44', '4/53', '9/48 **', '5/49 .'), version3 = c('12/58 ***', '21/55 ***', '26/53 ***', '11/57 ***'))
-results %>% kable(caption = "Overview of all lineup evaluations") %>% kable_styling(full_width = TRUE, bootstrap_options = "basic") %>% footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$")
+tribble(~Linups, ~'Version 1', ~'Version 2', ~'Version 3',
+        "Marginal residual plot", '1/48', '3/44', '12/58 ***',
+        "Condtional residual plot", '0/42', '4/53', '21/55 ***',
+        "QQ plot for conditional residual", '3/49', '9/48 **', '26/53 ***',
+        "QQ plot for confounded residual", '2/44', '5/49 .', '11/57 ***') %>% 
+  kable(caption = "Overview of all lineup evaluations") %>% 
+  footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$") %>% 
+  kable_styling(bootstrap_options = c("bordered", "striped", "hover"))
 ```
 
 Furthermore, we want to identify if the position of the data plot matters in Table \@ref(tab:position). We only consider the cases from version 2 and version 3 since they have more correct responses compared with version 1. The "1" means that the first two replicates, and "2" represents the last two replicates. Since the lineups are generated as 4 rows and 5 columns by label 1 to 20 from left to right. The residual plot in version 2, the data plot is located at 5 for first and second replicates while at 15 for the rest two replicates. For the version 2 in QQ plot, the data plot is allocated at 8 and 20 respectively. From the result, we can imply that if the data plot is at the corner, then it seems to be easier to be identified. Besides, if the data plot on the first row, it will be picked out quicker for example in the version 3. The data plot of the residual plots is in 15 and 2 respectively. And 11 and 6 are the two positions that apply in the QQ plot for version 3.
@@ -163,6 +169,13 @@ tribble(~"Lineups", ~"Categorical", ~"Numerical", ~"Mixed",
   kable_styling(bootstrap_options = c("bordered", "striped", "hover"))
 ```
 <!-- certainty -->
+
+We asked the independent viewers to record their confidence level when they choose the data that is the most different one. 1 means very uncertain, while 5 expresses very certain. From Fig. \@ref(fig:certainty), it is interesting to find that, for all three versions and data types, the neutral confidence level (3) has the biggest proportion. However, there is a dramatic increase from version 2 to version 3 with more amounts on higher confidence levels. Especially, in mixed data type, more observers are very certain when they make the choices. Furthermore, the correctness rates are rising from version 1 to version 3. Even they are not sure when they read the lineups, the data plot can be told from the null plots. In addition, with the confidence level from neutral above, there is an excellent ratio of identifying the data plot according to the mixed data type, which is followed by the numerical data type.
+
+```{r certainty, out.width="90%", fig.cap="Level of certainty that made by observers when they reading the lineups"}
+knitr::include_graphics("figures/certainty.png")
+```
+ 
 <!--plotting conditional residual against predictors or against observation indices performed reasonably well as methods for diagnosing violations of linear mixed model assumptions. -->
 
 # Discussions
