@@ -5,7 +5,8 @@ library(stringr)
 survey_df <- read_xlsx(here::here("data/survey-thesis.xlsx"), 
                        sheet = 1) %>% 
   mutate(gender = as.factor(gender), education = as.factor(education),
-         age = as.factor(age), eco = as.factor(eco), identifier = as.factor(identifier))
+         age = as.factor(age), eco = as.factor(eco), identifier = as.factor(identifier),
+         certainty = as.numeric(certainty))
 
 count(survey_df$identifier)
 
@@ -83,6 +84,55 @@ result %>% filter(str_detect(plot_name, 'slp_.3._2')) %>% summarise(sum(n), sum(
 result %>% filter(str_detect(plot_name, 'slp_.3._3')) %>% summarise(sum(n), sum(correct))
 result %>% filter(str_detect(plot_name, 'slp_.3._4')) %>% summarise(sum(n), sum(correct))
 
+
+# Certainty
+certainty <- survey_df %>%
+  mutate(detect = ifelse(responses == correct_response[plot_name], 1, 0)) %>% 
+  mutate(detect_f = factor(detect, levels = c(0, 1), 
+                           labels = c("Detected? No", "Detected? Yes"))) %>% 
+  mutate(Detected = ifelse(detect_f == "Detected? Yes", "Yes", "No")) %>% 
+  mutate(vers = case_when(
+    str_detect(plot_name, 'v1') ~ "Version 1",
+    str_detect(plot_name, 'v2') ~ "Version 2",
+    str_detect(plot_name, 'v3') ~ "Version 3"
+  )) %>% 
+  mutate(type = case_when(
+    str_detect(plot_name, 'aut') ~ "Mixed",
+    str_detect(plot_name, 'lin') ~ "Categorical",
+    str_detect(plot_name, 'slp') ~ "Numerical"
+  )) %>% 
+  group_by(vers, type) %>%
+  ggplot(aes(certainty, fill = Detected)) + geom_bar() + 
+  facet_grid(type ~ vers) +
+  theme(legend.position = "bottom") + 
+  xlab("Level of certainty")
+
+ggsave(filename = 
+         "~/Desktop/Masters/Master_Econometrics/S2 2020/ETF5550/master/thesis/figures/certainty.png", 
+       plot = certainty, device = "png", dpi = 300,
+       height = 12, width = 12)
+
+## v1
+certainty %>% filter(str_detect(plot_name, 'v1')) %>% 
+  group_by(certainty) %>% ggplot(aes(certainty)) + geom_bar()
+  #group_by(certainty) %>% tally()
+
+## v2
+certainty %>% filter(str_detect(plot_name, 'v2')) %>% 
+  group_by(certainty) %>% ggplot(aes(certainty)) + geom_bar()
+
+## v3
+certainty %>% filter(str_detect(plot_name, 'v3')) %>% 
+  group_by(certainty) %>% ggplot(aes(certainty)) + geom_bar()
+h <- certainty %>% filter(str_detect(plot_name, 'v1')) %>% 
+  group_by(certainty) %>% dplyr::summarise(n = n()) %>% 
+  ggplot(aes(certainty)) + geom_bar()
+
+certainty %>% filter(str_detect(plot_name, 'v2')) %>% 
+  group_by(certainty) %>% tally()
+
+certainty %>% filter(str_detect(plot_name, 'v3')) %>% 
+  group_by(certainty) %>% tally()
 
 correct_response <- c("aut_v11_1.png" = 7, "aut_v12_1.png" = 7, 
                       "aut_v13_1.png" = 13, "aut_v14_1.png" = 13,
