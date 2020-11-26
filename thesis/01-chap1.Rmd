@@ -9,6 +9,10 @@ knitr::opts_chunk$set(echo = FALSE,
                       fig.align = "center")
 ```
 
+# Abstract {-}
+
+Graphical diagnostics focusing on the residual analysis are alternative methods to test the hypotheses based on the simulation approaches applied in the lineup protocol. We use three different data types, namely categorical, numerical, and mixture of categorical and numerical to accommodate the three different versions of Gaussian linear mixed models. Four diagnostic maps are used to detect the existence of abnormal observations from marginal residuals versus conditional residuals, and to evaluate the normality of conditional errors based on conditional residuals versus confounding conditional residuals. We create a survey to validate the methods. From the result, we find that the conditional residuals are better at checking the presence of outlying observations and exploring whether the conditional errors follow a normal distribution. Furthermore, by comparing those three diverse types of data, the mixture performs better at identifying the data plot among the null plots. R code is provided on GitHub (https://github.com/kaiwenjanet/master).
+
 # Introduction {#ch:intro}
 
 Statistical graphics play an important role in exploratory data analysis, model checking and diagnostic. For residual diagnostics, a plot may be used to infer the appropriateness of the fitted model such as by searching for unusual patterns in the plot. Graphical diagnostics enable the analyst to not only find unexpected results but may also uncover the reason for the result. However, inferences from plots are made often without calibration and in an informal manner, unlike the treatment of hypothesis tests where a numerical test statistic is formulated and compared against certain thresholds (e.g. $p$-value, confidence intervals or Bayes factors). 
