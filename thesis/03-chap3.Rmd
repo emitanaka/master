@@ -3,7 +3,7 @@ chapter: 3
 knit: "bookdown::render_book"
 ---
 
-# Visual Inference
+# Literature review
 
 <!--what is a linear mixed model? what are the residuals?
 *why the visual inference is important?*
@@ -16,7 +16,8 @@ why the lmm is useful?-->
 <!--ET: here consider making headers informative, interweaving various literature in a narrative -->
 ## Residuals
 
-A marginal residual is the difference between the observed data and the estimated marginal mean,
+After introducing the linear mixed model, there are several literatures explain the residuals applied in the model.
+Similar to simple linear model, residuals are significant to diagnostics of linear mixed model. There are three various types of residuals based on @singer2017graphical, that is, marginal residuals $\boldsymbol{\hat{\xi}}$, conditional residuals $\mathbf{\hat{e}}$ and random effect residuals $\mathbf{Z\hat{b}}$. A marginal residual is the difference between the observed data and the estimated marginal mean,
 $$\boldsymbol{\hat{\xi}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}$$
 A conditional residual is the difference between observed data and predicted value of the observation,
 $$\mathbf{\hat{e}} = \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}} - \mathbf{Z}\hat{\mathbf{b}}$$
