@@ -34,7 +34,8 @@ with $\mathbb E(\mathbf y) = \boldsymbol{X\beta}$ and $\mathbb V(\mathbf y) = \b
    \mathbf{y}|\mathbf{b} \sim \mathcal{N}(\mathbf{X} \boldsymbol{\beta} + \mathbf{Zb},\mathbf{R})
 \end{align*}
 
-The joint density function of $\mathbf{y}$ and $\mathbf{b}$ is defined as
+Suppose we know the covariance matrices $\boldsymbol{\Gamma}$ and $\boldsymbol{R}$, the estimated best linear unbiased estimators (BLUE) of the fixed effects $\boldsymbol{\beta}$ and best linear predictors (BLUP) of the random effects $\mathbf{b}$ can be obtained.
+Given the marginal distribution of $\mathbf{y}$ and the conditional distribution of $\mathbf{y}|\mathbf{b}$, the joint density function of $\mathbf{y}$ and $\mathbf{b}$ is defined as
 \begin{align*}
    f(\mathbf{y}, \mathbf{b}) &= g(\mathbf{y}|\mathbf{b})h(\mathbf{b}) \\
    &= const \times \exp\left(-\frac{1}{2}(\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})^\top \mathbf{R}^{-1} (\mathbf{y}-\mathbf{X} \boldsymbol{\beta} - \mathbf{Zb})-\frac{1}{2}\mathbf{b}^\top \boldsymbol{\Gamma}^{-1} \mathbf{b}\right).
@@ -56,7 +57,7 @@ The parameters $\mathbf{b}$ and ${\boldsymbol{\beta}}$ can be estimated by maxim
     &\Rightarrow \mathbf{Z^\top R}^{-1}\mathbf{X}\boldsymbol{\beta} + \mathbf{Z^\top R}^{-1}\mathbf{Zb} + \boldsymbol{\Gamma}^{-1}\mathbf{b} = \mathbf{Z^\top R}^{-1}\mathbf{y}
 \end{align*}
 
-The mixed model equations (MME), which first proposed by @henderson1973sire, is listed as:
+Based on the two equations above, the mixed model equations (MME), which first proposed by @henderson1973sire, is listed as:
 \begin{align*}
     \begin{pmatrix} \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{X} & \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{Z} \\ \mathbf{Z^\top R}^{-1}\mathbf{X} & \mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} 
     \end{pmatrix}
@@ -66,7 +67,8 @@ The mixed model equations (MME), which first proposed by @henderson1973sire, is 
     \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y} \\ \mathbf{Z^\top R}^{-1}\mathbf{y}
     \end{pmatrix}
 \end{align*}
-And $\hat{\boldsymbol{\beta}}$ and $\hat{\boldsymbol{b}}$ refer to as "mixed model solutions".
+
+And $\hat{\boldsymbol{\beta}}$ and $\hat{\boldsymbol{b}}$ refer to as "mixed model solutions". However, the question is that how we can get the results. Next we will explain the procedure of solving the question.
 
 Based on the method provided by @smith1999multiplicative, we write the coefficient matrix as:
 
@@ -75,12 +77,15 @@ Based on the method provided by @smith1999multiplicative, we write the coefficie
 \end{align*}
 Then, the model can be shown as,
 \begin{align*}
-    \mathbf{C}_{XX}\boldsymbol{\beta} + \mathbf{C}_{XZ} \mathbf{b} &= \mathbf{c}_{Xy} \\
-    \mathbf{C}_{ZX}\boldsymbol{\beta} +\mathbf{C}_{ZZ} \mathbf{b} &= \mathbf{c}_{Zy}
+    \mathbf{C}_{XX}\boldsymbol{\beta} + \mathbf{C}_{XZ} \boldsymbol{b} &= \mathbf{c}_{Xy} \\
+    \mathbf{C}_{ZX}\boldsymbol{\beta} +\mathbf{C}_{ZZ} \boldsymbol{b} &= \mathbf{c}_{Zy}
 \end{align*}
+
+where the $\mathbf{c}_{Xy} = \mathbf{X}^\top \mathbf{R}^{-1} \mathbf{y}$ and $\mathbf{c}_{Zy} = \mathbf{Z^\top R}^{-1}\mathbf{y}$.
+
 From the second equation, we can get $$\mathbf{b} = \mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy} - \mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX}\boldsymbol{\beta}$$
 
-By substituting into the first equation,
+By substituting $\mathbf{b}$ into the first equation,
 $$(\mathbf{C}_{XX} - \mathbf{C}_{XZ}\mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX})\boldsymbol{\beta} = \mathbf{c}_{Xy} - \mathbf{C}_{XZ}\mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy}$$
 where
 \begin{align*}
@@ -96,7 +101,7 @@ Then the best linear unbiased estimators (BLUE) of the fixed effects $\boldsymbo
     &= (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y}
 \end{align*}
 
-Next, the best linear unbiased predictors (BLUP) of the random effects $\mathbf{b}$,
+Substituting the result for $\hat{\boldsymbol{\beta}}$ into $\mathbf{b} = \mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy} - \mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX}\boldsymbol{\beta}$, the best linear unbiased predictors (BLUP) of the random effects $\mathbf{b}$ is shown as,
 \begin{align*}
     \hat{\mathbf{b}} &= \mathbf{C}_{ZZ}^{-1}\mathbf{c}_{Zy} - \mathbf{C}_{ZZ}^{-1}\mathbf{C}_{ZX} (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y} \\
     &= \mathbf{C}_{ZZ}^{-1}(\mathbf{c}_{Zy} - \mathbf{C}_{ZX} (\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y}) \\
@@ -106,6 +111,10 @@ Next, the best linear unbiased predictors (BLUP) of the random effects $\mathbf{
     &= \boldsymbol{\Gamma}\mathbf{Z^\top}\boldsymbol{\Omega}^{-1} \mathbf{Q}\mathbf{y}
 \end{align*}
 where $$\mathbf{Q} = \boldsymbol{\Omega}^{-1} - \boldsymbol{\Omega}^{-1}\mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1}$$
+
+This implies that 
+$$\mathbb{E}(\hat{\boldsymbol{\beta}}) = \boldsymbol{\beta}, \mathbb{V}(\hat{\boldsymbol{\beta}}) = (\mathbf{X}^\top \Omega^{-1} \mathbf{X})^{-1}$$
+$$\mathbb{E}(\hat{\mathbf{b}}) = \mathbf{0}, \mathbb{V}(\hat{\mathbf{b}}) = \boldsymbol{\Gamma}\mathbf{Z}^\top\mathbf{Q}\mathbf{Z}\boldsymbol{\Gamma}$$
 
 @robinson1991blup gives an excellent introduction to the estimation of random effects and discusses its various fields of application.
 
