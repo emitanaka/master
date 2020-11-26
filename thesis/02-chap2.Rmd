@@ -109,4 +109,5 @@ where $$\mathbf{Q} = \boldsymbol{\Omega}^{-1} - \boldsymbol{\Omega}^{-1}\mathbf{
 
 @robinson1991blup gives an excellent introduction to the estimation of random effects and discusses its various fields of application.
 
-
+After introducing the linear mixed model, there are several literatures explain the residuals applied in the model.
+Similar to simple linear model, residuals are significant to diagnostics of linear mixed model. There are three various types of residuals based on @singer2017graphical, that is, marginal residuals $\boldsymbol{\hat{\xi}}$, conditional residuals $\mathbf{\hat{e}}$ and random effect residuals $\mathbf{Z\hat{b}}$.
