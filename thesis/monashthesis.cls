@@ -20,7 +20,7 @@
 \newif\ifdoublesp@
 \newif\ifsingleside@
 \doublesp@true
-\singleside@false
+\singleside@true
 \DeclareOption{singleside}{\singleside@true}
 \DeclareOption{doubleside}{\singleside@false}
 \DeclareOption{singlespace}{\singlesp@true}
