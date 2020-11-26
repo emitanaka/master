@@ -4,7 +4,6 @@ knit: "bookdown::render_book"
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, cache=TRUE)
-library(cowplot)
 library(grid)
 library(gridExtra)
 library(png)
@@ -45,8 +44,8 @@ The data contains 84 observations on the voice pitch (or frequency) from 6 subje
 
 _Exploration data analysis_ is a critical tool before fitting the model as this method can help us to identity the features of the raw data. In the sleep deprivation study data, we use the plot comparing the response and explanatory variable of interest using linear smoothers for each group. Fig. \@ref(fig:sleep-eda) illustrates the random intercept and random slope in reaction time versus days from day 0 to day 9 corresponding to different subjects. Hence, we treat the explanatory variable as the designed matrix of fixed effect and the subjects as the designed matrix of random effect. To test the dependency of random effects, based on the method provided by @loy2017model, a scatter plot of predicted random effects with overlaid regression lines. The null plots are simulated from the model whose random effects are not correlated and the data plot is made using the predicted random effects from original model fit to the observed data. While the regression lines show the amount of correlation between random effects. Based on the result, it is hard to distinguish the data plot from null plots although it has a little correlation between random effects. Therefore, there is no need for the correlated random effect, that is the random slope and random intercept are independent.
 
-```{r sleep-eda, fig.height=6, fig.width=6, fig.cap="Exploration Data Analysis example in the sleep study case. It shows the random intercept and random slope with different subjects."}
-ggdraw() + draw_plot(rasterGrob(readPNG("figures/sleep_eda.png")))
+```{r sleep-eda, out.width="90%", fig.cap="Exploration Data Analysis example in the sleep study case. It shows the random intercept and random slope with different subjects."}
+knitr::include_graphics("figures/sleep_eda.png")
 ```
 
 
@@ -108,8 +107,8 @@ We use the parametric bootstrap method which is illustrated below to generate th
 
 From the null data, the null plots are produced which is consistent with the null hypothesis. Afterwards, we insert the data plot among 19 null plots to form the lineup protocol using the `nullabor` package from @nullabor. We design the position of each data plot. According to Fig. \@ref(fig:design), based on the "best" model, the data plots which point the presence of outlying observations of both marginal or conditional residuals are at the position 7 in the lineup for the first two replicates. Then, for replicates 3 and 4, the position of data plot is 13. The data plot which refers to check the normality of conditional error for either standardised conditional residual or least confounded conditional residual is in panel 9 of 20 plots as the basis of the first two replicates of first version. The position for next two replicates are in 4. The location of the data plot for the remainder two versions are followed the Fig. \@ref(fig:design).
 
-```{r design, fig.height= 4,fig.width=6, fig.cap="Experimental design diagram",results='asis'}
-ggdraw() + draw_plot(rasterGrob(readPNG(("figures/diagram.png"))))
+```{r design, out.width="90%", fig.cap="Experimental design diagram"}
+knitr::include_graphics("figures/diagram.png")
 ```
 
 <!-- we use the experiment design -->
@@ -120,7 +119,7 @@ We download all the lineups to png files with first three letter for the data ty
 Using the Latin Squared Design method [@agricolae], we list the replicates 1 to 4 as the rows and four types of diagnostic plots are the column. A, B, C and D as the variates are listed in each cell without repeating in each row and column. Once the cell in the first row has been target, the corresponding row and column will be removed. And the matching diagnostic plot with version 1 will be presented to the observers for particular data type. This process will be iterated 4 times for each data type until we achieve the 12 lineups among 144 lineups for each individual.
 These lineups are from 3 different data types with four diverse replicates for 2 different plot types but without restricting the versions. 
 
-We use the `taipan` package (@taipan) to build our survey questions which include the demographic of audience and their responses. Volunteer's name, gender, age, education level and whether they have studied econometrics or statistics are recorded. In the next tab, they are asked to choose the most different map from their decision and how certainty they are to choose that map. There is a process hit for them as the number of lineups they have been seen. They will iterate the process by 12 times by answering the same question but looking at different lineups. If their answers are less than 12 plots before submitting, there will be a hit popped up to reminder them to complete the survey before they leave. After they click the submit button, the final tab is shown up as the thank you page. All the responses made by each individual are securely stored into the google sheet based on the private link through `googlesheets4` package (@googlesheets4) with authenticating. Besides, we also acquire the unique identifier for them in case they double submitted. It is also useful when participant does not leave their names. The plot name with data type, version, replicates and plot type is also recorded which will be used in the further analysis. The time period that the participant takes are displayed as the reference.
+We use the `taipan` package [@taipan] to build our survey questions which include the demographic of audience and their responses. Volunteer's name, gender, age, education level and whether they have studied econometrics or statistics are recorded. In the next tab, they are asked to choose the most different map from their decision and how certainty they are to choose that map. There is a process hit for them as the number of lineups they have been seen. They will iterate the process by 12 times by answering the same question but looking at different lineups. If their answers are less than 12 plots before submitting, there will be a hit popped up to reminder them to complete the survey before they leave. After they click the submit button, the final tab is shown up as the thank you page. All the responses made by each individual are securely stored into the google sheet based on the private link through `googlesheets4` package [@googlesheets4] with authenticating. Besides, we also acquire the unique identifier for them in case they double submitted. It is also useful when participant does not leave their names. The plot name with data type, version, replicates and plot type is also recorded which will be used in the further analysis. The time period that the participant takes are displayed as the reference.
 
 # Results {#ch:result}
 
@@ -142,9 +141,10 @@ tribble(~Linups, ~'Version 1', ~'Version 2', ~'Version 3',
         "Condtional residual plot", '0/42', '4/53', '21/55 ***',
         "QQ plot for conditional residual", '3/49', '9/48 **', '26/53 ***',
         "QQ plot for confounded residual", '2/44', '5/49 .', '11/57 ***') %>% 
-  kable(caption = "Overview of all lineup evaluations") %>% 
-  footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$") %>% 
-  kable_styling(bootstrap_options = c("bordered", "striped", "hover"))
+  kable(caption = "Overview of all lineup evaluations", booktabs = TRUE) %>% 
+  add_footnote(
+    c("Signif. codes: 0 $\\leq$ *** $\\leq$ 0.001 $\\leq$ ** $\\leq$ 0.01 $\\leq$ * $\\leq$ 0.05 $\\leq$ . $\\leq$ 0.1 $\\leq$ ' ' $\\leq$ 1"),
+    notation = "symbol", escape = FALSE) 
 ```
 
 Furthermore, we want to identify if the position of the data plot matters in Table \@ref(tab:position). We only consider the cases from version 2 and version 3 since they have more correct responses compared with version 1. The "1" means that the first two replicates, and "2" represents the last two replicates. Since the lineups are generated as 4 rows and 5 columns by label 1 to 20 from left to right. The residual plot in version 2, the data plot is located at 5 for first and second replicates while at 15 for the rest two replicates. For the version 2 in QQ plot, the data plot is allocated at 8 and 20 respectively. From the result, we can imply that if the data plot is at the corner, then it seems to be easier to be identified. Besides, if the data plot on the first row, it will be picked out quicker for example in the version 3. The data plot of the residual plots is in 15 and 2 respectively. And 11 and 6 are the two positions that apply in the QQ plot for version 3.
@@ -156,9 +156,10 @@ tribble(~Lineups, ~V2.1, ~V2.2, ~V3.1, ~V3.2,
         "Condtional residual plot", "3/29", "1/24", "9/26 ***", "12/29 ***",
         "QQ plot for conditional residual", "2/23", "7/25 ***", "15/29 ***", "11/24 ***",
         "QQ plot for confounded residual", "2/29", "3/20 .", "4/30 .", "7/27 ***") %>%
-  kable(caption = "Summary table of position for lineup") %>%
-  footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$") %>% 
-  kable_styling(bootstrap_options = c("bordered", "striped", "hover"))
+  kable(caption = "Summary table of position for lineup", booktabs = T)%>%
+  add_footnote(
+    c("Signif. codes: 0 $\\leq$ *** $\\leq$ 0.001 $\\leq$ ** $\\leq$ 0.01 $\\leq$ * $\\leq$ 0.05 $\\leq$ . $\\leq$ 0.1 $\\leq$ ' ' $\\leq$ 1"), 
+               notation = "symbol",escape = FALSE) 
 ```
 
 Based on version 3, the data type may also affect the results. As there are three data sets that have been used in this project, that is Autism case, Sleep study case, and Linguistic case. Each data set represents a particular data type, where linguistic case is the representative of categorical data type, numerical data type belongs to sleep study case and the rest, autism is the mixed data type. From the Table \@ref(tab:data-type), it shows that the mixed data type behaves well than the others, as the observers are able to recognize the data plot at the most proportion. Nevertheless, the categorical data types perform least as there are few people point out the actual data plot even in the version 3. In addition, among the mixed data type, it is better to use the standardised conditional residual to detect the outlying observations than based on the standardised marginal residual. Otherwise, the QQ plot applied in least confounded conditional residuals for conditional error model checking is harder to identify the data plot compared with standardised conditional residuals.
@@ -169,9 +170,10 @@ tribble(~"Lineups", ~"Categorical", ~"Numerical", ~"Mixed",
         "Condtional residual plot", "4/19 *", "3/19 .", "14/17 ***",
         "QQ plot for conditional residual", "0/11", "12/21 ***", "14/21 ***",
         "QQ plot for confounded residual", "1/14", "2/17 .", "8/26 ***") %>%
-  kable(caption = "Summary table of position for lineup") %>%
-  footnote(general = "Signif. codes: $0 \\leq *** \\leq 0.001 \\leq ** \\leq 0.01 \\leq * \\leq 0.05 \\leq . \\leq 0.1 \\leq ' ' \\leq 1$") %>% 
-  kable_styling(bootstrap_options = c("bordered", "striped", "hover"))
+  kable(caption = "Summary table of position for lineup", booktabs = T) %>%
+  add_footnote(
+    c("Signif. codes: 0 $\\leq$ *** $\\leq$ 0.001 $\\leq$ ** $\\leq$ 0.01 $\\leq$ * $\\leq$ 0.05 $\\leq$ . $\\leq$ 0.1 $\\leq$ ' ' $\\leq$ 1"), 
+    notation = "symbol", escape = FALSE)
 ```
 <!-- certainty -->
 
@@ -183,7 +185,7 @@ knitr::include_graphics("figures/certainty.png")
  
 <!--plotting conditional residual against predictors or against observation indices performed reasonably well as methods for diagnosing violations of linear mixed model assumptions. -->
 
-# Discussions {#ch:dis}
+# Discussion {#ch:dis}
 
 At this stage, there are some limitations that occurred when we built the survey and some unexpected things happened as well.
 
@@ -204,7 +206,7 @@ Using residual plot for identifying the outlying observations under the standard
 Lineup protocol is the alternative tool when we test the hypothesis. Instead of simply rejecting the null hypothesis, lineup also tells why we are rejecting the nulls. However, the graphical diagnostic does not only depend on the simulation methods, design of lineups, but also the observers. Theoretical power of the visual test may be greater than the conventional inference when the power of visual test increases with a large number of observers.
 We remove all the contextual information in the lineups in the survey, such as title, axis and labels in order to make sure that observers are purely picking the most different plots among the null plots.
 
-# Acknowledgments
+# Acknowledgments {-}
 
 The author would like to thank Dr. Emi Tanaka for weekly meetings with suggestions and comments, Prof. Di Cook providing useful hits and Stephanie Kobakian supports the ideas for experimental setup and shiny app codes. We are thankful for the coding of residuals in the linear mixed model and the lineup structure provided by Adam Loy and Julio M. Singer.
 
