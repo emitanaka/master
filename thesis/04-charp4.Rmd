@@ -1,6 +1,6 @@
 ---
 chapter: 4
-knit: "bookdown::render_book"
+#knit: "bookdown::render_book"
 ---
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE, message=FALSE, cache=TRUE)
@@ -14,9 +14,7 @@ library(tibble)
 
 # Methodology {#ch:method}
 
-In this section, we introduce three different data sets that represents three different data types (Numerical, Categorical and Mixed). The process of how we generate lineup based on three distinguishable residuals for each data set is going to be explained. As well as the experiment set up of the survey that we published will be illustrated. we use the two-level continuous-response linear mixed model (LMM), the error of which is an uncorrelated fit through maximum likelihood or restricted maximum likelihood. The linear mixed model is shown in Chapter \@ref(ch:lmm),
-<!-- The model should introduced in Sector 2. -->
-$$\mathbf{y} = \mathbf{X} \boldsymbol{\beta} + \mathbf{Zb}+\mathbf{e}$$
+In this section, we describe (i) the three data sets used as a basis for the simulation settings; (ii) the construction of the lineups and (iii) the experimental set up for the survey. 
 
 <!-- Our object is to find which residual (marginal versus conditional) is better in detecting the presence of outlying observation and which residual (conditional versus confounded) is better in checking the normality assumption. 
 
@@ -25,7 +23,7 @@ since our aim is to detect the residual diagnostics of linear mixed model.
 
 ## Data sets
 
-Although we used more than three data sets on the way of learning the project, there are three data sets that we used in this thesis. They are reaction times in a sleep deprivation study data set in the `R` package `lme4` [@lme4]; Autism study data set in `R` package `HLMdiag` [@HLMdiag]; and Linguistic data set [@winter2013linear]. The linguistic data set contains categorical dependent variables. For the sleep study data, it includes all the numerical variables. Besides, the autism data is the combination of numerical and categorical variables.
+The three data sets that we used in this thesis are: reaction times in a sleep deprivation study data set in the `R` package `lme4` [@lme4]; autism study data set in `R` package `HLMdiag` [@HLMdiag]; and linguistic data set [@winter2013linear]. Each of these data sets have different characteristics. More specifically, the linguistic data set contains only categorical dependent variables; the variables in the sleep study data are all numerical variables except the subject level; and finally, the autism data contains a combination of numerical and categorical variables. We describe briefly about each data in the following sections with more detailed variable summaries in the Appendix chapter.
 
 ### Reaction times in a sleep deprivation study
 
@@ -40,9 +38,9 @@ A prospective longitudinal study following 155 children between the ages of 2 an
 @winter2013linear introduced a linguistic study case on the voice pitch by identifying the gender, subjects, scenarios and attitudes. One of the scenarios was to ask different people for help. For example, one subject was asking the professor to help with polite attitude, or asking a peer for a favour on an informal condition.
 The data contains 84 observations on the voice pitch (or frequency) from 6 subjects (3 females and 3 males) under 7 scenarios with 2 attitudes (informal or polite).
 
-## EDA
+## Exploratory data analysis
 
-_Exploratory data analysis_ is a critical tool before fitting the model as this method can help us to identity the features of the raw data. In the sleep deprivation study data, we use the plot comparing the response and explanatory variable of interest using linear smoothers for each group. Fig. \@ref(fig:sleep-eda) illustrates the random intercept and random slope in reaction time versus days from day 0 to day 9 corresponding to different subjects. Hence, we treat the explanatory variable as the designed matrix of fixed effect and the subjects as the designed matrix of random effect. To test the dependency of random effects, based on the method provided by @loy2017model, a scatter plot of predicted random effects with overlaid regression lines. The null plots are simulated from the model with the fact that random effects are not correlated and the data plot is made using the predicted random effects from original model fit to the observed data. While the regression lines show the degree of correlation between random effects. According to the result, although the correlation between random effects is small, it is hard to distinguish the data plot from null plots. Therefore, there is no need for the correlated random effect, that is, the random slope and random intercept are independent.
+_Exploratory data analysis_ (EDA) is a critical tool before fitting the model as this method can help us to identity the features of the raw data. In the sleep deprivation study data, we use the plot comparing the response and explanatory variable of interest using linear smoothers for each group. Figure \@ref(fig:sleep-eda) illustrates the random intercept and random slope in reaction time versus days from day 0 to day 9 corresponding to different subjects. Hence, we treat the explanatory variable as the designed matrix of fixed effect and the subjects as the designed matrix of random effect. To test the dependency of random effects, based on the method provided by @loy2017model, a scatter plot of predicted random effects with overlaid regression lines. The null plots are simulated from the model with the fact that random effects are not correlated and the data plot is made using the predicted random effects from original model fit to the observed data. While the regression lines show the degree of correlation between random effects. According to the result, although the correlation between random effects is small, it is hard to distinguish the data plot from null plots. Therefore, there is no need for the correlated random effect, that is, the random slope and random intercept are independent.
 
 ```{r sleep-eda, out.width="90%", fig.cap="Exploratory data analysis example in the sleep study case. It shows the random intercept and random slope with different subjects."}
 knitr::include_graphics("figures/sleep_eda.png")
@@ -53,7 +51,7 @@ knitr::include_graphics("figures/sleep_eda.png")
 
 Residuals are used to examine model assumptions and to detect outliers and potentially influential data points.
 As @singer2017graphical listed eight uses of residuals for diagnostic purposes, we focus on three residuals with two diagnostic purposes in this thesis: (1) checking presence of outlying observations based on marginal residuals as well as conditional residuals, and (2) detecting normality of conditional error according to conditional residuals and confounded residuals.
-After fitting the data sets into "best" model, we can estimate the fixed effect $\hat{\boldsymbol{\beta}}$ and random effect $\hat{\mathbf{b}}$, whereas the variance covariance matrices for random effect and the error term are generated with $\hat{\mathbf{G}}$ and $\hat{\mathbf{R}}$ respectively. Then we apply the method that @singer2017graphical stated to obtain these residuals and then acquire the plots.
+After fitting the data sets into the "best" model, we can estimate the fixed effect $\hat{\boldsymbol{\beta}}$ and predict the random effect $\hat{\mathbf{b}}$, with latter generated as a realisation from a normal distribution with zero mean and  variance-covariance matrix estimated from the data using either maximum likelihood or residual maximum likelihood [FIXME: cite Patterson, H. D., and R. Thompson. 1971. “Recovery of Inter-Block Information When Block Sizes Are Unequal.” Biometrika 58 (3): 545–54.]. Then we apply the method that @singer2017graphical stated to obtain these residuals and then acquire the plots.
 
 Given the true variance of marginal residuals that $\mathbb{V}(\boldsymbol{\hat{\xi}}_i) = \boldsymbol{\Omega}_i - \mathbf{X}_i (\mathbf{X}_i^\top \boldsymbol{\Omega}_i^{-1}\mathbf{X}_i)^{-1}\mathbf{X}_i^\top$, the standardised marginal residuals can be generated as $\boldsymbol{\hat{\xi}}^*_{ij} = \boldsymbol{\hat{\xi}}_{ij}/[diag_j(\mathbb{\hat{V}}(\boldsymbol{\hat{\xi}}_i))]^{1/2}$, where $diag_j(\mathbb{\hat{V}}(\boldsymbol{\hat{\xi}}_i))$ is the $j$-th element of the main diagonal of $\mathbb{V}(\boldsymbol{\hat{\xi}}_i)$. 
 
@@ -62,7 +60,7 @@ With true variance of conditional residuals, $\mathbb{V}(\mathbf{\hat{e}}) = \ma
 To detect outlying observations, we draw the element of the standardised marginal or conditional residuals versus the observation indices recommended by @singer2017graphical.
 However, boxplot is applied for $\boldsymbol{\hat{\xi}}^*_{ij}$ or $\mathbf{\hat{e}}_{ij}^*$ versus the explanatory variables for the autism data set since the data size is big.
 
-@hilden1995multilevel introduced a linear transformation of the conditional residuals which is called least confounded conditional residuals $c_k^\top \mathbf{\hat{e}}^*$ in order to minimise the fraction of confounding. They thought the ability to check for normality of the conditional errors increases. Hence, we employ QQ plot of the standardised conditional residuals and standardised least confounded conditional residuals to check for normality. Whereas @pinheiro2006mixed considers QQ plot of $\hat{\mathbf{e}}/\hat{\sigma}$ for checking the normality of the conditional error, we stick with the method of generating the standardised conditional residuals with Singer, Rocha, and Nobre.
+@hilden1995multilevel introduced a linear transformation of the conditional residuals which is called least confounded conditional residuals $c_k^\top \mathbf{\hat{e}}^*$ in order to minimise the fraction of confounding. They thought the ability to check for normality of the conditional errors increases. Hence, we employ QQ plot of the standardised conditional residuals and standardised least confounded conditional residuals to check for normality. Whereas @pinheiro2006mixed considers QQ plot of $\hat{\mathbf{e}}/\hat{\sigma}$ for checking the normality of the conditional error, we stick with the method of generating the standardised conditional residuals with Singer, Rocha, and Nobre. [FIXME: Add citation not name]
 
 ## Experiment setup
 
@@ -74,7 +72,7 @@ On the basis of the data types that we have, three different versions are genera
 
 1. *Generated from the "best" model*: 
   
-  The estimated random effect and error term are following a normal distribution with mean $\mathbf{0}$ and variance $\hat{\boldsymbol{\Gamma}}$ and $\hat{\mathbf{R}}$ respectively from the "best" model as well as the estimated fixed effect. The sample can be generated through $\mathbf{y}^* \sim \mathcal(\mathbf{X}\hat{\boldsymbol{\beta}}, \hat{\boldsymbol{\Omega}})$ where $\hat{\boldsymbol{\Omega}} = \mathbf{Z}\hat{\boldsymbol{\Gamma}}\mathbf{Z}' + \hat{\mathbf{R}}$.
+  The estimated random effect and error term are following a normal distribution with mean $\mathbf{0}$ and variance $\hat{\boldsymbol{\Gamma}}$ and $\hat{\mathbf{R}}$ respectively from the "best" model as well as the estimated fixed effect. The sample can be generated through $\mathbf{y}^* \sim \mathcal(\mathbf{X}\hat{\boldsymbol{\beta}}, \hat{\boldsymbol{\Omega}})$ where $\hat{\boldsymbol{\Omega}} = \mathbf{Z}\hat{\boldsymbol{\Gamma}}\mathbf{Z}' + \hat{\mathbf{R}}$. This is a scenario where the fitted model and the data generating process match and thus, we do not expect any graphical diagnostics to indicate the model is inappropriate. 
   <!-- Linear mixed model is generated as $y = X\beta +Zb + e$ where random effect ($b$) and error term ($e$) follow a normal distribution with mean 0 and variance $G$ and $R$ respectively. Fixed effect can be obtained from the model. Hence, a new response variable is generated. -->
 
 2. *Added slight noises*:
@@ -82,6 +80,8 @@ On the basis of the data types that we have, three different versions are genera
   i) For sleep study case, within-unit correlated error terms have been introduced. For each subject, the error terms are correlated by value 25 which is round the standard deviation of the error term.
   ii) For linguistic case, we treat the error term under the $t$-distribution with $\nu = 1$ degree of freedom.
   iii) For autism case, we also treat the error term under the $t$-distribution with $\nu = 15$ degree of freedom at a random choice.
+
+In this scenario, the fitted model has a mild mis-specification there is some small chance that some diagnostics may detect this. 
 
 3. *Introduce extreme noises*:
 
@@ -93,19 +93,21 @@ On the basis of the data types that we have, three different versions are genera
 
 Therefore, 12 data sets are generated with corresponding 12 data plots constituting the residual plots for detecting the presence of outlying and checking the normality of conditional error.
 
+In this scenario, the added extreme noises should not be modelled well by the fitted model so diagnostic assessments should indicate the inappropriateness of the model fit. 
+
 <!--12 data plots are formed within each data type, where half of them are to check the normality and the others are to explore the outlying observations.-->
 
 ## Generating lineups
 
-We use the parametric bootstrap method which is illustrated below to generate the null data. The null data are created based on 3 different versions for each rather than the raw data set.
+We use a parametric bootstrap approach to generate the null data for each lineup based on the simulated data with zero to some noise added as described in the previous section. More specifically:
 
-1. We generate the vector of random effects from $\mathcal{N}(\mathbf{0}, \hat{\mathbf{G}})$ for each group, that is, generate $\mathbf{b}^*_i \sim \mathcal{N}(\mathbf{0}, \hat{\mathbf{G}})$ for $i = 1, 2, ..., n$
+1. We generate the vector of random effects from $\mathcal{N}(\mathbf{0}, \hat{\mathbf{G}})$ for each group, that is, generate $\mathbf{b}^*_i \sim \mathcal{N}(\mathbf{0}, \hat{\mathbf{G}})$ for $i = 1, 2, ..., n$ where $\hat{\mathbf{G}}$ is estimated from the fit of the "best" model to the simulated data.
 2. Vector of conditional residuals is generated from $\mathcal{N}(\mathbf{0}, \hat{\mathbf{R}})$ for each group, that is, generate $\mathbf{e}^*_i \sim \mathcal{N}(\mathbf{0}, \hat{\mathbf{R}})$ for $i = 1, 2, ..., n$
 3. Generate a bootstrap sample $\mathbf{y}^*_i$ from $\mathbf{y}_i = \mathbf{X}_i \hat{\boldsymbol{\beta}} + \mathbf{Z}_i \mathbf{b}^*_i + \mathbf{e}^*_i$ for each group $i = 1, 2, ...,n$
 4. Refit the model to the bootstrap sample.
 5. Repeat steps from 1 to 4 by 19 times.
 
-From the null data, the null plots are produced which is consistent with the null hypothesis. Afterwards, we insert the data plot among 19 null plots to form the lineup protocol using the `nullabor` package from @nullabor. We design the position of each data plot. According to Fig. \@ref(fig:design), based on the "best" model, the data plots which point the presence of outlying observations of both marginal or conditional residuals are at the position 7 in the lineup for the first two replicates. Then, for replicates 3 and 4, the position of data plot is 13. The data plot which refers to check the normality of conditional error for either standardised conditional residual or least confounded conditional residual is in panel 9 of 20 plots as the basis of the first two replicates of first version. The position for next two replicates are in 4. The location of the data plot for the remainder two versions are followed the Fig. \@ref(fig:design).
+From the null data, the null plots are produced which is consistent with the null hypothesis. Afterwards, we insert the data plot among 19 null plots to form the lineup protocol using the `nullabor` package [@nullabor]. We design the position of each data plot. According to Figure \@ref(fig:design), based on the "best" model, the data plots which point the presence of outlying observations of both marginal or conditional residuals are at the position 7 in the lineup for the first two replicates. Then, for replicates 3 and 4, the position of data plot is 13. The data plot which refers to check the normality of conditional error for either standardised conditional residual or least confounded conditional residual is in panel 9 of 20 plots as the basis of the first two replicates of first version. The position for next two replicates are in 4. The location of the data plot for the remainder two versions are followed the Figure \@ref(fig:design).
 
 ```{r design, out.width="90%", fig.cap="Experimental design diagram"}
 knitr::include_graphics("figures/diagram.png")
@@ -115,11 +117,15 @@ knitr::include_graphics("figures/diagram.png")
 
 ## Survey through Shiny app
 
-We download all the lineups to png files with first three letter for the data types (aut, lin and slp), followed by versions (1, 2, and 3) with replicates (1, 2, 3, and 4). The diagnostic purposes are listed as the last letter where 1 for residual plots in marginal residuals, 2 represents the residual plots in conditional residuals, 3 stands for QQ plot under conditional residuals and 4 signals the QQ plot in confounded conditional residuals.
+We download all the lineups to png files with first three letter for the data types (`aut`, `lin` and `slp`), followed by versions (`1`, `2`, and `3`) with replicates (`1`, `2`, `3`, and `4`). The diagnostic purposes are listed as the last letter where 1 for residual plots in marginal residuals, 2 represents the residual plots in conditional residuals, 3 stands for QQ plot under conditional residuals and 4 signals the QQ plot in confounded conditional residuals.
 Using the Latin Squared Design method [@agricolae], we list the replicates 1 to 4 as the rows and four types of diagnostic plots are the column. A, B, C and D as the variates are listed in each cell without repeating in each row and column. Once the cell in the first row has been target, the corresponding row and column will be removed. And the matching diagnostic plot with version 1 will be presented to the observers for particular data type. This process will be iterated 4 times for each data type until we achieve the 12 lineups among 144 lineups for each individual.
 These lineups are from 3 different data types with four diverse replicates for 2 different plot types but without restricting the versions. 
 
+<<<<<<< HEAD
+We use the `taipan` package [@taipan] to build our survey questions which include the demographic of audience and their responses. In the first tab, referred to Figure \@ref(fig.surveyd), volunteer's name, gender, age, education level and whether they have studied econometrics or statistics are recorded. Next tab in Figure \@ref(fig:surveyq), they are asked to choose the most different map from their decision and how certainty they are to choose that map. There is a process hit for them as the number of lineups they have been seen. They will iterate the process by 12 times by answering the same question but looking at different lineups. If their answers are less than 12 plots before submitting, there will be a hit popped up to reminder them to complete the survey before they leave. After they click the submit button, the final tab is shown up as the thank you page. All the responses made by each individual are securely stored into the google sheet based on the private link through `googlesheets4` package [@googlesheets4] with authenticating. Besides, we also acquire the unique identifier for them in case they double submitted. It is also useful when participant does not leave their names. The plot name with data type, version, replicates and plot type is also recorded which will be used in the further analysis. The time period that the participant takes are displayed as the reference.
+=======
 We use the `taipan` package [@taipan] to build our survey questions which include the demographic of audience and their responses. In the first tab, referred to Fig. \@ref(fig:surveyd), volunteer's name, gender, age, education level and whether they have studied econometrics or statistics are recorded. Next tab in Fig. \@ref(fig:surveyq), they are asked to choose the most different map from their decision and how certainty they are to choose that map. There is a process hit for them as the number of lineups they have been seen. They will iterate the process by 12 times by answering the same question but looking at different lineups. If their answers are less than 12 plots before submitting, there will be a hit popped up to reminder them to complete the survey before they leave. After they click the submit button, the final tab is shown up as the thank you page. All the responses made by each individual are securely stored into the google sheet based on the private link through `googlesheets4` package [@googlesheets4] with authenticating. Besides, we also acquire the unique identifier for them in case they double submitted. It is also useful when participant does not leave their names. The plot name with data type, version, replicates and plot type is also recorded which will be used in the further analysis. The time period that the participant takes are displayed as the reference.
+>>>>>>> b018f281a1d1e8d03c8d93520aee304a0c362b3b
 
 ```{r surveyd, out.width="90%", fig.cap="First tab in the survey created by shiny app. It contains the demographic information about the individuals."}
 knitr::include_graphics("figures/geo_ss.png")
@@ -138,6 +144,13 @@ There are 54 individuals that attempt the survey. While, we removed two tests, p
 Among 50 independent observers, 72% of them are female and the rest are male. 
 All most half of the participants are aged at 18 to 24 years old and second big proportion is followed by the age range from 25 to 34. There are 18 viewers who achieved Bachelor degree while 20 of them had the Master degree and 8 got the Doctorate degree. Besides, 90% of them have studied econometrics or statistics before.
 
+<<<<<<< HEAD
+Based on the responses we got, we calculated the correctness from all these 50 observers. Table \@ref(tab:table) presents the summary of all lineups in evaluation. Three different data types (categorical, numerical and mixed) are combined in the result. We included four different purposes of lineups, where first two are detecting the outlying observation and the last two are checking the normality of the conditional errors and three different versions respectively. The ratio shown in the table is the division of number of observers who identifies the actual data plot among the total number of those who participated in the same version and lineup. The visual $p$-value is calculated based on the method provided by @majumder2013validation.
+There are only few observers who are able to identify the actual data plot in the version 1 no matter what types of lineups. It is consistent with our expectations because the version 1 is simulated from the "best" model which does not have any obvious features. 
+While, from the result, increase in the ratio for the version 2 compared with version 1 may indicates that for version 2, the data plot has some features compared with the null plots. 9 out of 48 observers chose the data plot in the QQ plot for assessing the normality of conditional errors based on the standardised conditional residual, which result in a visual $p$-value of 0.00055. This leads us to reject the null hypothesis indicating overall, the conditional error does not follow a normal distribution.
+The version 3 performed best among these three versions since it got the most proportion that observers were able to point out the data plot among 19 null plots. The $p$-value of lineup are significant which is shown from all the results shown in the version 3, that is we are able to reject the null hypotheses.
+By comparing the ratio, we find that the standardised conditional stand out in checking the outlying observations than the standardised marginal residuals does. As 21 out of 55 viewers are able to identify the actual data plot in the residual plot for conditional residual while there are only 12 out of 58 participants under the marginal residuals. The result shown is on our expectation, because the conditional residuals squeeze the points which shows less information about the pattern but with more outstanding outlying observations. However, using the QQ plot to explore the normality of conditional errors, the standardised conditional residuals perform better than the least confounded conditional residual, which is surprised.
+=======
 
 Based on the responses we got, we calculated the correctness from all these 50 observers.
 Since we randomly select the versions of lineups based on our design, the total number of responses to each version is different. Referred to Fig. \@ref(fig:version), among 600 observations, 37% of the responses correspond to version 3, and version 3 obtains the most correct responses. 194 records are presented in version 2. The rest are listed in version 1 which has the least responses. There are fewer observers who can recognize the actual data plot in the version 1, which is in line with our expectations, because version 1 is simulated from the 'best' model, which may not have any obvious features.
@@ -151,6 +164,7 @@ From the results, the increase in the ratio for the version 2 compared with vers
 Version 3 performs best among these three versions since it accounts for the largest proportion, and observers are able to point out the data plot among 19 null plots. The $p$-values of lineup are significant from all the results shown in the version 3, which is where we are able to reject the null hypotheses.
 
 By comparing the ratios, we find that the standardised conditional residuals are more prominent than the standardised marginal residuals when checking the outlying observations. 21 out of 55 audiences are able to identify the actual data plot under the conditional residuals in the residual plot, while 12 out of 58 participants under the marginal residuals. The results shown are what we expected, because the conditional residuals squeeze the points which shows less information about the pattern but with more outstanding outlying observations. In addition, using quantile-quantile (QQ) plot to explore the normality of conditional errors, the performance of standardised conditional residuals is better than the performance of least confounded conditional residual, which is surprising.
+>>>>>>> b018f281a1d1e8d03c8d93520aee304a0c362b3b
 <!-- table need to be fixed.. ugly -->
 
 ```{r table, echo=FALSE}
