@@ -108,7 +108,7 @@ Substituting the result for $\hat{\boldsymbol{\beta}}$ into $\mathbf{b} = \mathb
     &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}(\mathbf{Z^\top R}^{-1}\mathbf{y} - \mathbf{Z^\top R}^{-1}\mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y}) \\
     &= (\mathbf{Z^\top R}^{-1}\mathbf{Z} +\boldsymbol{\Gamma}^{-1} )^{-1}\mathbf{Z^\top R}^{-1}(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} )\mathbf{y} \\
     &= \boldsymbol{\Gamma}\mathbf{Z^\top}\boldsymbol{\Omega}^{-1}(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} )\mathbf{y} \\
-    &= \boldsymbol{\Gamma}\mathbf{Z^\top}\boldsymbol{\Omega}^{-1} \mathbf{Q}\mathbf{y}
+    &= \boldsymbol{\Gamma}\mathbf{Z^\top}\mathbf{Q}\mathbf{y}
 \end{align*}
 where $$\mathbf{Q} = \boldsymbol{\Omega}^{-1} - \boldsymbol{\Omega}^{-1}\mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1}$$
 
@@ -116,7 +116,19 @@ This implies that
 $$\mathbb{E}(\hat{\boldsymbol{\beta}}) = \boldsymbol{\beta}, \mathbb{V}(\hat{\boldsymbol{\beta}}) = (\mathbf{X}^\top \Omega^{-1} \mathbf{X})^{-1}$$
 $$\mathbb{E}(\hat{\mathbf{b}}) = \mathbf{0}, \mathbb{V}(\hat{\mathbf{b}}) = \boldsymbol{\Gamma}\mathbf{Z}^\top\mathbf{Q}\mathbf{Z}\boldsymbol{\Gamma}$$
 
+Besides, the estimates of residuals are given by $\hat{\mathbf{e}} = \mathbf{R}\mathbf{Q}{\mathbf{y}}$, the proof is shown as,
+\begin{align*}
+  \hat{\mathbf{e}} &= \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}} - \mathbf{Z}\hat{\mathbf{b}} \\
+  &= \mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}} - \mathbf{Z}\boldsymbol{\Gamma}\mathbf{Z^\top}\boldsymbol{\Omega}^{-1}(\mathbf{y} - \mathbf{X}\hat{\boldsymbol{\beta}}) \\
+  &= (\mathbf{I} - \mathbf{Z}\boldsymbol{\Gamma}\mathbf{Z^\top}\boldsymbol{\Omega}^{-1})\mathbf{y} - (\mathbf{I} - \mathbf{Z}\boldsymbol{\Gamma}\mathbf{Z^\top}\boldsymbol{\Omega}^{-1})\mathbf{X}\hat{\boldsymbol{\beta}} \\
+  &= (\mathbf{I} - \mathbf{Z}\boldsymbol{\Gamma}\mathbf{Z^\top}\boldsymbol{\Omega}^{-1})\mathbf{y} - (\mathbf{I} - \mathbf{Z}\boldsymbol{\Gamma}\mathbf{Z^\top}\boldsymbol{\Omega}^{-1})\mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1} \mathbf{y} \\
+  &= (\mathbf{I} - \mathbf{Z}\boldsymbol{\Gamma}\mathbf{Z^\top}\boldsymbol{\Omega}^{-1})(\mathbf{I} - \mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1})\mathbf{y} \\
+  &= (\boldsymbol{\Omega} - \mathbf{Z}\boldsymbol{\Gamma}\mathbf{Z^\top})(\boldsymbol{\Omega}^{-1} - \boldsymbol{\Omega}^{-1}\mathbf{X}(\mathbf{X}^\top \boldsymbol{\Omega}^{-1}\mathbf{X})^{-1} \mathbf{X}^\top \boldsymbol{\Omega}^{-1})\mathbf{y} \\
+  &= \mathbf{R}\mathbf{Q}{\mathbf{y}}
+\end{align*} 
+
 @robinson1991blup gives an excellent introduction to the estimation of random effects and discusses its various fields of application.
 
 After introducing the linear mixed model, there are several literatures explain the residuals applied in the model.
-Similar to simple linear model, residuals are significant to diagnostics of linear mixed model. There are three various types of residuals based on @singer2017graphical, that is, marginal residuals $\boldsymbol{\hat{\xi}}$, conditional residuals $\mathbf{\hat{e}}$ and random effect residuals $\mathbf{Z\hat{b}}$.
+Similar to simple linear model, residuals are significant to diagnostics of linear mixed model. There are three various types of residuals based on @singer2017graphical, that is, marginal residuals $\boldsymbol{\hat{\xi}}$, conditional residuals $\mathbf{\hat{e}}$ and random effect residuals $\mathbf{Z\hat{b}}$. Besides, given that $\mathbf{\hat{e}} = \mathbf{R}\mathbf{Q}{\mathbf{e}} + \mathbf{R}\mathbf{Q}{\mathbf{Zb}}$, the conditional and random effects residuals may be confounded. It suggests that $\mathbf{\hat{e}}$ may not be adequate to check the normality of ${\mathbf{e}}$ because when $\mathbf{b}$ is grossly non-Gaussian, $\hat{\mathbf{e}}$ may not presented a Gaussian behaviour even when $\mathbf{e}$ is Gaussian. The further application of these residuals will be listed in Chapter \@ref(ch:lit) and Chapter \@ref(ch:method).
+
