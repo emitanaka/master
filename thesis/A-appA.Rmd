@@ -15,6 +15,7 @@ library(tibble)
 # Additional stuff
 
 Data sets that we used in this thesis are described in the following tables (Table \@ref(tab:slp), Table \@ref(tab:aut), and Table \@ref(tab:lin)).
+All the code and figures are in the GitHub, https://github.com/kaiwenjanet/master.
 
 ```{r slp}
 tribble(~Variable, ~Description, ~Min, ~Mean, ~Max,
@@ -119,14 +120,4 @@ tribble(~Predictors, ~Estimates, ~CI, ~p,
 knitr::include_graphics("figures/simulation.png")
 ```
 
-```{r lineup_aut, out.width="90%", fig.cap="Linup of quantile-quantile (QQ) plot of conditional errors based on the standardised conditional residuals in version 3 of autism data."}
-knitr::include_graphics("figures/aut_v32_3.png")
-```
 
-```{r linup_lin, out.width="90%", fig.cap="Lineup of residual plot of standardised conditional residuals in version 3 of linguistic data."}
-knitr::include_graphics("figures/lin_v32_2.png")
-```
-
-```{r linup_slp, out.width="90%", fig.cap="Lineup of residual plot of standardised marginal residuals in version 3 of sleep study data."}
-knitr::include_graphics("figures/slp_v31_1.png")
-```
